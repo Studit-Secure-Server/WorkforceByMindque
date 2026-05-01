@@ -1,0 +1,2746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Studit Attendance Admin</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, Arial, sans-serif;
+      background: linear-gradient(135deg, #eef7f3, #f8f7ef);
+      color: #111827;
+    }
+
+    .app {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 250px;
+      background: #ffffff;
+      padding: 28px 20px;
+      border-right: 1px solid #eef0f4;
+      position: fixed;
+      height: 100vh;
+    }
+
+    .brand {
+      margin-bottom: 42px;
+    }
+
+    .brand-logo {
+      display: block;
+      width: 180px;
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+
+    .nav-item {
+      padding: 14px 16px;
+      border-radius: 16px;
+      margin-bottom: 12px;
+      font-weight: 700;
+      color: #6b7280;
+      cursor: pointer;
+    }
+
+    .nav-item.active,
+    .nav-item:hover {
+      background: #eef4ff;
+      color: #2563eb;
+    }
+
+    .logout {
+      position: absolute;
+      bottom: 28px;
+      left: 20px;
+      right: 20px;
+      background: #fee2e2;
+      color: #dc2626;
+      border: 0;
+      padding: 14px;
+      border-radius: 16px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .main {
+      margin-left: 250px;
+      width: calc(100% - 250px);
+      padding: 34px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 34px;
+      font-weight: 900;
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      color: #6b7280;
+      font-size: 16px;
+    }
+
+    .search {
+      width: 320px;
+      height: 50px;
+      border-radius: 28px;
+      border: 0;
+      padding: 0 22px;
+      font-size: 15px;
+      background: #ffffff;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
+      outline: none;
+    }
+
+    .panel {
+      background: #ffffff;
+      border-radius: 34px;
+      padding: 28px;
+      margin-bottom: 28px;
+      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.06);
+    }
+
+    .view-section {
+      display: none;
+    }
+
+    .view-section.active {
+      display: block;
+    }
+
+    .section-title {
+      font-size: 24px;
+      font-weight: 900;
+      margin-bottom: 24px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+    }
+
+    .card {
+      background: #f5f6fa;
+      border-radius: 24px;
+      padding: 22px;
+      min-height: 120px;
+    }
+
+    .card-label {
+      color: #6b7280;
+      font-size: 15px;
+      margin-bottom: 8px;
+    }
+
+    .card-value {
+      font-size: 32px;
+      font-weight: 900;
+    }
+
+    .badge {
+      display: inline-block;
+      margin-top: 14px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .green { background: #d1fae5; color: #059669; }
+    .blue { background: #dbeafe; color: #2563eb; }
+    .yellow { background: #fef3c7; color: #ca8a04; }
+    .red { background: #fee2e2; color: #dc2626; }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 22px;
+    }
+
+    .chart-box {
+      background: #f5f6fa;
+      border-radius: 28px;
+      padding: 24px;
+      height: 300px;
+      display: flex;
+      align-items: end;
+      gap: 24px;
+      justify-content: center;
+    }
+
+    .bar-wrap {
+      text-align: center;
+      color: #6b7280;
+      font-weight: 700;
+    }
+
+    .bar {
+      width: 18px;
+      height: 120px;
+      background: #2563eb;
+      border-radius: 999px;
+      margin: 0 auto 12px;
+    }
+
+    .bar:nth-child(1) { background: #10b981; }
+
+    .donut {
+      background: #f5f6fa;
+      border-radius: 28px;
+      padding: 28px;
+      height: 300px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+    }
+
+    .circle {
+      width: 190px;
+      height: 190px;
+      border-radius: 50%;
+      background: conic-gradient(#2563eb 0 55%, #10b981 55% 78%, #facc15 78% 92%, #e5e7eb 92%);
+      display: grid;
+      place-items: center;
+    }
+
+    .circle-inner {
+      width: 120px;
+      height: 120px;
+      background: #ffffff;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+      font-weight: 900;
+    }
+
+    .action-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .action {
+      background: #f5f6fa;
+      border-radius: 22px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .action-title {
+      font-size: 17px;
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+
+    .action-sub {
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    .btn {
+      border: 0;
+      padding: 12px 18px;
+      border-radius: 18px;
+      font-weight: 800;
+      cursor: pointer;
+      color: #ffffff;
+      background: #2563eb;
+      white-space: nowrap;
+    }
+
+    .btn.green-btn { background: #10b981; }
+    .btn.yellow-btn { background: #facc15; color: #111827; }
+    .btn.red-btn { background: #dc2626; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    input, select, textarea {
+      height: 48px;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 0 16px;
+      outline: none;
+      font-size: 14px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 110px;
+      padding: 14px 16px;
+      resize: vertical;
+      font-family: inherit;
+      line-height: 1.45;
+    }
+
+    input[type="file"] {
+      padding: 12px 16px;
+    }
+
+    .time-field {
+      display: grid;
+      gap: 6px;
+      color: #6b7280;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .time-field input {
+      width: 100%;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+    }
+
+    th {
+      text-align: left;
+      padding: 16px;
+      color: #6b7280;
+      font-size: 14px;
+      background: #f5f6fa;
+    }
+
+    td {
+      padding: 16px;
+      border-bottom: 1px solid #eef0f4;
+      font-size: 14px;
+    }
+
+    .status {
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 12px;
+    }
+
+    .selfie {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      object-fit: cover;
+    }
+
+    .photo-button {
+      border: 0;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .photo-button:hover .selfie {
+      outline: 3px solid #dbeafe;
+    }
+
+    .photo-modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(17, 24, 39, 0.62);
+      z-index: 30;
+    }
+
+    .photo-modal.open {
+      display: flex;
+    }
+
+    .photo-modal-card {
+      width: min(100%, 560px);
+      border-radius: 28px;
+      padding: 24px;
+      background: #ffffff;
+      box-shadow: 0 30px 90px rgba(15, 23, 42, 0.28);
+    }
+
+    .photo-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .photo-modal-title {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 900;
+    }
+
+    .photo-modal-close {
+      width: 42px;
+      height: 42px;
+      border: 0;
+      border-radius: 14px;
+      background: #f3f4f6;
+      color: #111827;
+      font-size: 22px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .photo-modal-image {
+      display: block;
+      width: 100%;
+      max-height: 70vh;
+      border-radius: 20px;
+      object-fit: contain;
+      background: #111827;
+    }
+
+    .employee-photo {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      object-fit: cover;
+      background: #dbeafe;
+    }
+
+    .calendar-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(120px, 1fr));
+      gap: 10px;
+    }
+
+    .calendar-head {
+      color: #6b7280;
+      font-size: 13px;
+      font-weight: 900;
+      text-align: center;
+      padding: 8px;
+    }
+
+    .calendar-day {
+      min-height: 128px;
+      border: 1px solid #eef0f4;
+      border-radius: 18px;
+      padding: 12px;
+      background: #ffffff;
+      color: #111827;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .calendar-day:hover,
+    .calendar-day.selected {
+      border-color: #2563eb;
+      box-shadow: 0 12px 28px rgba(37, 99, 235, 0.12);
+    }
+
+    .calendar-day.muted {
+      background: #f9fafb;
+      cursor: default;
+    }
+
+    .calendar-date {
+      font-weight: 900;
+      margin-bottom: 10px;
+    }
+
+    .calendar-stat {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: #6b7280;
+      font-size: 12px;
+      font-weight: 800;
+      margin-top: 6px;
+    }
+
+    .calendar-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 6px;
+      background: #2563eb;
+    }
+
+    .calendar-dot.green { background: #10b981; }
+    .calendar-dot.red { background: #dc2626; }
+    .calendar-dot.yellow { background: #facc15; }
+
+    .inline-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .timesheet-panel {
+      padding: 0;
+      overflow: hidden;
+      border-radius: 28px;
+    }
+
+    .timesheet-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 20px 22px;
+      border-bottom: 1px solid #e5e7eb;
+      background: #ffffff;
+    }
+
+    .timesheet-title-row,
+    .timesheet-week-nav {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .timesheet-mode {
+      display: inline-flex;
+      padding: 4px;
+      border-radius: 14px;
+      background: #f3f4f6;
+    }
+
+    .mode-btn {
+      border: 0;
+      border-radius: 11px;
+      padding: 9px 14px;
+      background: transparent;
+      color: #6b7280;
+      font: inherit;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .mode-btn.active {
+      background: #ffffff;
+      color: #2563eb;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+    }
+
+    .nav-circle {
+      width: 36px;
+      height: 36px;
+      border: 0;
+      border-radius: 50%;
+      background: #eef0f4;
+      color: #6b7280;
+      font-size: 24px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .week-range {
+      color: #374151;
+      font-size: 20px;
+      font-weight: 900;
+    }
+
+    .week-picker {
+      width: 44px;
+      padding: 0;
+      color: transparent;
+      cursor: pointer;
+    }
+
+    .month-picker {
+      width: 150px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .filter-strip {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      padding: 18px 22px;
+      border-bottom: 1px solid #e5e7eb;
+      background: #f9fafb;
+      overflow-x: auto;
+    }
+
+    .filter-chip {
+      border: 0;
+      background: transparent;
+      color: #4b5563;
+      font: inherit;
+      font-weight: 900;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .filter-chip.add {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid #6b7280;
+      border-radius: 8px;
+      color: #374151;
+    }
+
+    .timesheet-search {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 260px;
+      color: #9ca3af;
+      font-weight: 900;
+    }
+
+    .timesheet-search input {
+      width: 100%;
+      height: 42px;
+      border: 0;
+      background: transparent;
+      color: #111827;
+      font: inherit;
+      outline: none;
+    }
+
+    .timesheet-wrap {
+      overflow-x: auto;
+      background: #ffffff;
+    }
+
+    .timesheet-wrap.hidden {
+      display: none;
+    }
+
+    .timesheet-table {
+      min-width: 1120px;
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    .timesheet-table th,
+    .timesheet-table td {
+      padding: 0;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .timesheet-table thead th {
+      height: 82px;
+      background: #f8fafc;
+      color: #6b7280;
+      font-weight: 800;
+    }
+
+    .monthly-table {
+      min-width: 2680px;
+    }
+
+    .member-head,
+    .member-cell {
+      width: 320px;
+      min-width: 320px;
+      text-align: left !important;
+      padding-left: 22px !important;
+    }
+
+    .day-head {
+      width: 118px;
+      min-width: 118px;
+    }
+
+    .month-day-head,
+    .month-cell {
+      width: 76px;
+      min-width: 76px;
+    }
+
+    .day-letter {
+      display: block;
+      margin-bottom: 6px;
+      color: #6b7280;
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .day-number {
+      color: #4b5563;
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .day-head.today .day-letter,
+    .day-head.today .day-number {
+      color: #111827;
+      font-weight: 900;
+    }
+
+    .total-head,
+    .total-cell {
+      width: 130px;
+      min-width: 130px;
+      font-weight: 900;
+    }
+
+    .monthly-table .total-head,
+    .monthly-table .total-cell {
+      position: sticky;
+      right: 0;
+      z-index: 3;
+      background: #ffffff;
+      box-shadow: -8px 0 18px rgba(15, 23, 42, 0.04);
+    }
+
+    .monthly-table thead .total-head {
+      background: #f8fafc;
+      z-index: 4;
+    }
+
+    .timesheet-row {
+      height: 104px;
+      background: #ffffff;
+    }
+
+    .timesheet-row:nth-child(even) {
+      background: #fbfcff;
+    }
+
+    .member-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .member-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #f3f4f6;
+    }
+
+    .member-initial {
+      display: grid;
+      width: 56px;
+      height: 56px;
+      place-items: center;
+      border-radius: 50%;
+      background: #f3f4f6;
+      color: #9ca3af;
+      font-weight: 900;
+    }
+
+    .member-name {
+      font-size: 16px;
+      font-weight: 900;
+      color: #111827;
+    }
+
+    .timesheet-cell {
+      position: relative;
+      height: 104px;
+      color: #111827;
+      font-size: 17px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .timesheet-cell.has-time {
+      color: #111827;
+    }
+
+    .timesheet-cell.warn {
+      color: #f97316;
+    }
+
+    .timesheet-cell.compact {
+      height: 78px;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .timesheet-cell.selected {
+      background: #eef4ff;
+    }
+
+    .rest-pill {
+      display: inline-flex;
+      padding: 6px 22px;
+      border-radius: 7px;
+      background: #9ca3af;
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .timesheet-popover {
+      position: absolute;
+      left: 50%;
+      bottom: 72px;
+      z-index: 15;
+      display: none;
+      width: 240px;
+      transform: translateX(-50%);
+      border-radius: 10px;
+      padding: 16px 18px;
+      background: #434b63;
+      color: #ffffff;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.28);
+      text-align: left;
+    }
+
+    .timesheet-cell:hover .timesheet-popover {
+      display: block;
+    }
+
+    .popover-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 8px;
+      color: #e5e7eb;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .popover-rule {
+      height: 1px;
+      margin: 12px 0;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .holiday-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .holiday-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px;
+      border-radius: 18px;
+      background: #f5f6fa;
+    }
+
+    .holiday-name {
+      font-weight: 900;
+    }
+
+    .holiday-date {
+      color: #6b7280;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .notification-message {
+      margin-top: 6px;
+      color: #4b5563;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .request-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .small-btn {
+      border: 0;
+      border-radius: 12px;
+      padding: 9px 12px;
+      color: #ffffff;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .small-btn.approve { background: #10b981; }
+    .small-btn.reject { background: #dc2626; }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; width: 100%; padding: 18px; }
+      .topbar { flex-direction: column; align-items: flex-start; gap: 16px; }
+      .search { width: 100%; }
+      .cards, .grid-2, .action-list, .form-grid, .calendar-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <img class="brand-logo" src="assets/studit-logo-cropped.png" alt="Studit logo">
+      </div>
+      <div id="navDashboard" class="nav-item active" onclick="switchView('dashboard')">Dashboard</div>
+      <div id="navEmployees" class="nav-item" onclick="switchView('employees')">Employees</div>
+      <div id="navAttendance" class="nav-item" onclick="switchView('attendance')">Attendance</div>
+      <div id="navReports" class="nav-item" onclick="switchView('reports')">Reports</div>
+      <button class="logout" onclick="logout()">Logout</button>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h1 id="pageTitle">Good Morning, Admin</h1>
+          <div id="pageSubtitle" class="subtitle">Attendance overview for your in-house team.</div>
+        </div>
+        <input class="search" id="searchInput" placeholder="Search employee..." onkeyup="handleSearch()">
+      </div>
+
+      <section class="panel view-section dashboard-view active">
+        <div class="section-title">Performance Snapshot</div>
+
+        <div class="cards">
+          <div class="card">
+            <div class="card-label">Total Employees</div>
+            <div class="card-value" id="totalEmployees">0</div>
+            <span class="badge blue">Team Size</span>
+          </div>
+
+          <div class="card">
+            <div class="card-label">Present Today</div>
+            <div class="card-value" id="presentToday">0</div>
+            <span class="badge green">Active</span>
+          </div>
+
+          <div class="card">
+            <div class="card-label">Absent</div>
+            <div class="card-value" id="absentToday">0</div>
+            <span class="badge red">Need Check</span>
+          </div>
+
+          <div class="card">
+            <div class="card-label">On Break</div>
+            <div class="card-value" id="onBreak">0</div>
+            <span class="badge yellow">Break Mode</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel view-section dashboard-view active">
+        <div class="section-title">Attendance Overview</div>
+
+        <div class="grid-2">
+          <div class="chart-box">
+            <div class="bar-wrap"><div class="bar" style="height:90px;background:#10b981"></div>Mon</div>
+            <div class="bar-wrap"><div class="bar" style="height:150px;background:#2563eb"></div>Tue</div>
+            <div class="bar-wrap"><div class="bar" style="height:110px;background:#facc15"></div>Wed</div>
+            <div class="bar-wrap"><div class="bar" style="height:170px;background:#2563eb"></div>Thu</div>
+            <div class="bar-wrap"><div class="bar" style="height:130px;background:#8b5cf6"></div>Fri</div>
+            <div class="bar-wrap"><div class="bar" style="height:70px;background:#10b981"></div>Sat</div>
+          </div>
+
+          <div class="donut">
+            <div>
+              <div class="circle">
+                <div class="circle-inner" id="attendancePercent">0%</div>
+              </div>
+              <p style="color:#6b7280;font-weight:700;">Today Attendance</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel view-section dashboard-view active">
+        <div class="section-title">Needs Action & Attention</div>
+
+        <div class="action-list">
+          <div class="action">
+            <div>
+              <div class="action-title">Employees not punched in</div>
+              <div class="action-sub">Check absent employees for today.</div>
+            </div>
+            <span class="badge red" id="actionAbsent">0</span>
+          </div>
+
+          <div class="action">
+            <div>
+              <div class="action-title">Pending punch out</div>
+              <div class="action-sub">Employees still working.</div>
+            </div>
+            <span class="badge yellow" id="pendingPunchOut">0</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel view-section employees-view">
+        <div class="section-title">Add / Update Employee</div>
+
+        <div class="form-grid">
+          <input type="text" id="empName" placeholder="Employee Name *" required>
+          <input type="email" id="empEmail" placeholder="Employee Email *" required>
+          <input type="text" id="empUID" placeholder="Firebase UID *" required>
+          <select id="empRole">
+            <option value="employee">Employee</option>
+            <option value="admin">Admin</option>
+          </select>
+          <label class="time-field">
+            Work Start
+            <input type="time" id="empWorkStart" title="Working Start Time" aria-label="Working Start Time">
+          </label>
+          <label class="time-field">
+            Work End
+            <input type="time" id="empWorkEnd" title="Working End Time" aria-label="Working End Time">
+          </label>
+          <input type="number" id="empLeaveAllowance" placeholder="Leave Allowance (default 12)" min="0">
+          <input type="file" id="empPhoto" accept="image/*">
+          <input type="tel" id="empPhone" placeholder="Phone Number (optional)">
+          <input type="text" id="empEmergency" placeholder="Emergency Contact (optional)">
+          <input type="text" id="empBlood" placeholder="Blood Group (optional)">
+          <input type="text" id="empBank" placeholder="Bank Account Number (optional)">
+          <input type="text" id="empIfsc" placeholder="IFSC Code (optional)">
+          <input type="text" id="empAddress" placeholder="Current Address (optional)">
+        </div>
+
+        <button class="btn green-btn" onclick="addEmployee()">Save Employee</button>
+      </section>
+
+      <section class="panel view-section employees-view">
+        <div class="section-title">All Employees</div>
+
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Photo</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Working Hours</th>
+                <th>Leave Balance</th>
+                <th>Phone</th>
+                <th>Emergency</th>
+                <th>Blood</th>
+                <th>Bank</th>
+                <th>IFSC</th>
+                <th>Address</th>
+                <th>UID</th>
+              </tr>
+            </thead>
+            <tbody id="employeeTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel view-section dashboard-view active">
+        <div class="section-title">Holiday Calendar</div>
+
+        <div class="form-grid">
+          <input type="date" id="holidayDate">
+          <input type="text" id="holidayName" placeholder="Holiday Name">
+          <select id="holidayType">
+            <option value="company">Company Holiday</option>
+            <option value="public">Public Holiday</option>
+            <option value="optional">Optional Holiday</option>
+          </select>
+          <button class="btn green-btn" onclick="addHoliday()">Add Holiday</button>
+        </div>
+
+        <div id="holidayList" class="holiday-list"></div>
+      </section>
+
+      <section class="panel view-section dashboard-view active">
+        <div class="section-title">Employee Notifications</div>
+
+        <div class="form-grid">
+          <input type="text" id="notificationTitle" placeholder="Notification Title">
+          <select id="notificationTarget" onchange="toggleNotificationEmployee()">
+            <option value="all">All Employees</option>
+            <option value="specific">Specific Employee</option>
+          </select>
+          <select id="notificationEmployee" disabled>
+            <option value="">Select Employee</option>
+          </select>
+          <button class="btn green-btn" onclick="addNotification()">Send Notification</button>
+        </div>
+
+        <textarea id="notificationMessage" placeholder="Write notification message"></textarea>
+
+        <div id="notificationList" class="holiday-list"></div>
+      </section>
+
+      <section class="panel view-section dashboard-view active">
+        <div class="section-title">Leave Requests</div>
+        <div id="adminLeaveList" class="holiday-list">
+          <div class="holiday-item">
+            <div>
+              <div class="holiday-name">Loading leave requests...</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel view-section attendance-view timesheet-panel">
+        <div class="timesheet-top">
+          <div class="timesheet-title-row">
+            <div class="timesheet-mode" aria-label="Timesheet view">
+              <button id="weeklyModeBtn" class="mode-btn active" type="button" onclick="switchTimesheetMode('weekly')">Weekly</button>
+              <button id="monthlyModeBtn" class="mode-btn" type="button" onclick="switchTimesheetMode('monthly')">Monthly</button>
+            </div>
+            <div id="weeklyControls" class="timesheet-week-nav">
+              <button class="nav-circle" type="button" onclick="changeTimesheetPeriod(-1)">‹</button>
+              <button class="nav-circle" type="button" onclick="changeTimesheetPeriod(1)">›</button>
+              <div id="weekRangeLabel" class="week-range">This Week</div>
+              <input class="week-picker" id="weekDatePicker" type="date" title="Pick week" onchange="setTimesheetWeek(this.value)">
+            </div>
+            <div id="monthlyControls" class="timesheet-week-nav" style="display:none;">
+              <button class="nav-circle" type="button" onclick="changeTimesheetPeriod(-1)">‹</button>
+              <button class="nav-circle" type="button" onclick="changeTimesheetPeriod(1)">›</button>
+              <div id="monthRangeLabel" class="week-range">This Month</div>
+              <input class="month-picker" id="monthlyTimesheetMonth" type="month" title="Pick month" onchange="setTimesheetMonth(this.value)">
+            </div>
+          </div>
+          <button id="timesheetExportBtn" class="btn" onclick="exportTimesheet()">Export Weekly</button>
+        </div>
+
+        <div class="filter-strip">
+          <button class="filter-chip" type="button">Payroll hours ▾</button>
+          <button class="filter-chip" type="button">Groups ▾</button>
+          <button class="filter-chip" type="button">Members ▾</button>
+          <button class="filter-chip" type="button">Schedules ▾</button>
+          <button class="filter-chip" type="button">Tracked hours ▾</button>
+          <button class="filter-chip add" type="button">＋ Add filter</button>
+        </div>
+
+        <div id="weeklyTimesheetWrap" class="timesheet-wrap">
+          <table class="timesheet-table">
+            <thead>
+              <tr>
+                <th class="member-head">
+                  <div class="timesheet-search">⌕ <input id="timesheetSearch" placeholder="Search..." onkeyup="syncTimesheetSearch(this.value)"></div>
+                </th>
+                <th id="weekDay0" class="day-head"></th>
+                <th id="weekDay1" class="day-head"></th>
+                <th id="weekDay2" class="day-head"></th>
+                <th id="weekDay3" class="day-head"></th>
+                <th id="weekDay4" class="day-head"></th>
+                <th id="weekDay5" class="day-head"></th>
+                <th id="weekDay6" class="day-head"></th>
+                <th class="total-head">Total</th>
+              </tr>
+            </thead>
+            <tbody id="weeklyTimesheetBody"></tbody>
+          </table>
+        </div>
+
+        <div id="monthlyTimesheetWrap" class="timesheet-wrap hidden">
+          <table class="timesheet-table monthly-table">
+            <thead>
+              <tr id="monthlyTimesheetHead"></tr>
+            </thead>
+            <tbody id="monthlyTimesheetBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel view-section attendance-view">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;">
+          <div class="section-title" style="margin:0;">Attendance Records</div>
+
+          <div class="inline-actions">
+            <input type="date" id="filterDate" onchange="loadData()">
+            <button class="btn" onclick="exportToExcel()">Export Excel</button>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto;margin-top:22px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Date</th>
+                <th>Punch In</th>
+                <th>Punch Out</th>
+                <th>Total Hours</th>
+                <th>Status</th>
+                <th>Punch In Photo</th>
+                <th>Punch Out Photo</th>
+                <th>Location</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel view-section reports-view">
+        <div class="calendar-toolbar">
+          <div>
+            <div class="section-title" style="margin:0;">Reports</div>
+            <div class="subtitle">Monthly summary for employees, attendance, missed punch outs, and hours.</div>
+          </div>
+          <div class="inline-actions">
+            <input type="month" id="reportMonth" onchange="loadData()">
+            <button class="btn" onclick="exportReportToExcel()">Export Report</button>
+          </div>
+        </div>
+
+        <div class="cards">
+          <div class="card">
+            <div class="card-label">Employees</div>
+            <div class="card-value" id="reportEmployees">0</div>
+            <span class="badge blue">Report Scope</span>
+          </div>
+          <div class="card">
+            <div class="card-label">Present Days</div>
+            <div class="card-value" id="reportPresentDays">0</div>
+            <span class="badge green">Total</span>
+          </div>
+          <div class="card">
+            <div class="card-label">Missed Punch Out</div>
+            <div class="card-value" id="reportMissed">0</div>
+            <span class="badge red">Needs Review</span>
+          </div>
+          <div class="card">
+            <div class="card-label">Total Hours</div>
+            <div class="card-value" id="reportHours">0h</div>
+            <span class="badge yellow">Worked</span>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto;margin-top:22px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Email</th>
+                <th>Present Days</th>
+                <th>Absent Days</th>
+                <th>Completed</th>
+                <th>Missed Punch Out</th>
+                <th>Total Hours</th>
+                <th>Last Status</th>
+              </tr>
+            </thead>
+            <tbody id="reportTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="photoModal" class="photo-modal" aria-hidden="true">
+    <div class="photo-modal-card">
+      <div class="photo-modal-header">
+        <h2 id="photoModalTitle" class="photo-modal-title">Attendance Photo</h2>
+        <button class="photo-modal-close" type="button" onclick="closeAttendancePhoto()">×</button>
+      </div>
+      <img id="photoModalImage" class="photo-modal-image" src="" alt="Attendance photo">
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs,
+      doc,
+      getDoc,
+      setDoc
+    } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCNeTvM8AR-hWitTD_MTK1AUHGTHUPWlcQ",
+      authDomain: "studit-attendance.firebaseapp.com",
+      projectId: "studit-attendance",
+      storageBucket: "studit-attendance.firebasestorage.app",
+      messagingSenderId: "891531257178",
+      appId: "1:891531257178:web:92679d4e304c514800bf63",
+      measurementId: "G-77M6T37TXJ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const today = new Date().toISOString().split("T")[0];
+    const attendancePhotoStore = {};
+    let latestReportRows = [];
+    let latestWeeklyRows = [];
+    let latestMonthlyRows = [];
+    let currentWeekStart = getWeekStart(new Date());
+    let currentTimesheetMode = "weekly";
+    let currentTimesheetMonth = getCurrentMonthValue();
+    let absenceAutomationRunning = false;
+    let absenceAutomationTimer = null;
+
+    const viewMeta = {
+      dashboard: {
+        title: "Good Morning, Admin",
+        subtitle: "Attendance overview for your in-house team.",
+        search: "Search employee..."
+      },
+      employees: {
+        title: "Employees",
+        subtitle: "View employee profiles, schedules, and HR details.",
+        search: "Search employees..."
+      },
+      attendance: {
+        title: "Attendance",
+        subtitle: "Weekly timesheets for the team.",
+        search: "Search attendance..."
+      },
+      reports: {
+        title: "Reports",
+        subtitle: "Monthly reports, summaries, and exports.",
+        search: "Search reports..."
+      }
+    };
+
+    function getCurrentMonthValue() {
+      const now = new Date();
+      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    }
+
+    function getDateInputValue(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function getWeekStart(date) {
+      const weekStart = new Date(date);
+      weekStart.setHours(0, 0, 0, 0);
+      const day = weekStart.getDay();
+      const diff = day === 0 ? -6 : 1 - day;
+      weekStart.setDate(weekStart.getDate() + diff);
+      return weekStart;
+    }
+
+    function getWeekDates() {
+      return Array.from({ length: 7 }, (_, index) => {
+        const date = new Date(currentWeekStart);
+        date.setDate(currentWeekStart.getDate() + index);
+        return date;
+      });
+    }
+
+    function formatWeekRange(dates) {
+      const start = dates[0];
+      const end = dates[6];
+      const startMonth = start.toLocaleDateString(undefined, { month: "short" });
+      const endMonth = end.toLocaleDateString(undefined, { month: "short" });
+      const startDay = start.getDate();
+      const endDay = end.getDate();
+
+      if (start.getFullYear() !== end.getFullYear()) {
+        return `${startMonth} ${startDay}, ${start.getFullYear()} - ${endMonth} ${endDay}, ${end.getFullYear()}`;
+      }
+
+      if (startMonth === endMonth) {
+        return `${startMonth} ${startDay} - ${endDay}`;
+      }
+
+      return `${startMonth} ${startDay} - ${endMonth} ${endDay}`;
+    }
+
+    function setDefaultMonthInputs() {
+      const monthValue = getCurrentMonthValue();
+      document.getElementById("reportMonth").value ||= monthValue;
+      document.getElementById("monthlyTimesheetMonth").value ||= currentTimesheetMonth;
+      document.getElementById("weekDatePicker").value ||= getDateInputValue(currentWeekStart);
+    }
+
+    function updateTimesheetModeUI() {
+      const isWeekly = currentTimesheetMode === "weekly";
+
+      document.getElementById("weeklyModeBtn").classList.toggle("active", isWeekly);
+      document.getElementById("monthlyModeBtn").classList.toggle("active", !isWeekly);
+      document.getElementById("weeklyControls").style.display = isWeekly ? "flex" : "none";
+      document.getElementById("monthlyControls").style.display = isWeekly ? "none" : "flex";
+      document.getElementById("weeklyTimesheetWrap").classList.toggle("hidden", !isWeekly);
+      document.getElementById("monthlyTimesheetWrap").classList.toggle("hidden", isWeekly);
+      document.getElementById("timesheetExportBtn").innerText = isWeekly ? "Export Weekly" : "Export Monthly";
+    }
+
+    window.switchTimesheetMode = function (mode) {
+      currentTimesheetMode = mode === "monthly" ? "monthly" : "weekly";
+      document.getElementById("filterDate").value = "";
+      updateTimesheetModeUI();
+      loadData();
+    };
+
+    window.changeTimesheetPeriod = function (offset) {
+      if (currentTimesheetMode === "monthly") {
+        const monthDate = new Date(`${currentTimesheetMonth}-01T00:00:00`);
+        monthDate.setMonth(monthDate.getMonth() + offset);
+        currentTimesheetMonth = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, "0")}`;
+        document.getElementById("monthlyTimesheetMonth").value = currentTimesheetMonth;
+      } else {
+        currentWeekStart.setDate(currentWeekStart.getDate() + offset * 7);
+        document.getElementById("weekDatePicker").value = getDateInputValue(currentWeekStart);
+      }
+
+      document.getElementById("filterDate").value = "";
+      loadData();
+    };
+
+    window.setTimesheetWeek = function (dateText) {
+      if (!dateText) return;
+
+      currentWeekStart = getWeekStart(new Date(dateText + "T00:00:00"));
+      document.getElementById("weekDatePicker").value = getDateInputValue(currentWeekStart);
+      document.getElementById("filterDate").value = "";
+      loadData();
+    };
+
+    window.setTimesheetMonth = function (monthText) {
+      if (!monthText) return;
+
+      currentTimesheetMonth = monthText;
+      document.getElementById("monthlyTimesheetMonth").value = currentTimesheetMonth;
+      document.getElementById("filterDate").value = "";
+      loadData();
+    };
+
+    window.switchView = function (viewName) {
+      const meta = viewMeta[viewName] || viewMeta.dashboard;
+
+      document.querySelectorAll(".view-section").forEach((section) => {
+        section.classList.toggle("active", section.classList.contains(`${viewName}-view`));
+      });
+
+      document.querySelectorAll(".nav-item").forEach((item) => {
+        item.classList.remove("active");
+      });
+
+      const navId = `nav${viewName.charAt(0).toUpperCase()}${viewName.slice(1)}`;
+      document.getElementById(navId)?.classList.add("active");
+      document.getElementById("pageTitle").innerText = meta.title;
+      document.getElementById("pageSubtitle").innerText = meta.subtitle;
+      document.getElementById("searchInput").placeholder = meta.search;
+      const timesheetSearch = document.getElementById("timesheetSearch");
+
+      if (timesheetSearch) {
+        timesheetSearch.value = document.getElementById("searchInput").value;
+      }
+
+      loadData();
+    };
+
+    window.handleSearch = function () {
+      const timesheetSearch = document.getElementById("timesheetSearch");
+
+      if (timesheetSearch) {
+        timesheetSearch.value = document.getElementById("searchInput").value;
+      }
+
+      loadData();
+    };
+
+    window.syncTimesheetSearch = function (value) {
+      document.getElementById("searchInput").value = value;
+      loadData();
+    };
+
+    function renderAttendancePhoto(photoUrl, key, label) {
+      if (!photoUrl) {
+        return "-";
+      }
+
+      attendancePhotoStore[key] = photoUrl;
+
+      return `
+        <button class="photo-button" type="button" onclick="openAttendancePhoto('${key}', '${label}')">
+          <img class="selfie" src="${photoUrl}" alt="${label}">
+        </button>
+      `;
+    }
+
+    window.openAttendancePhoto = function (key, title) {
+      const photoUrl = attendancePhotoStore[key];
+
+      if (!photoUrl) {
+        alert("Photo not found");
+        return;
+      }
+
+      document.getElementById("photoModalTitle").innerText = title;
+      document.getElementById("photoModalImage").src = photoUrl;
+      document.getElementById("photoModal").classList.add("open");
+      document.getElementById("photoModal").setAttribute("aria-hidden", "false");
+    };
+
+    window.closeAttendancePhoto = function () {
+      document.getElementById("photoModal").classList.remove("open");
+      document.getElementById("photoModal").setAttribute("aria-hidden", "true");
+      document.getElementById("photoModalImage").src = "";
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+
+      const userSnap = await getDoc(doc(db, "employees", user.uid));
+
+      if (!userSnap.exists() || userSnap.data().role !== "admin") {
+        alert("Access denied");
+        window.location.href = "dashboard.html";
+        return;
+      }
+
+      setDefaultMonthInputs();
+      await autoMarkAbsences();
+      startAbsenceAutomation();
+      loadData();
+      loadHolidays();
+      loadNotifications();
+    });
+
+    window.logout = async function () {
+      if (absenceAutomationTimer) {
+        clearInterval(absenceAutomationTimer);
+      }
+      await signOut(auth);
+      window.location.href = "index.html";
+    };
+
+    function imageFileToDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+
+        img.onload = () => {
+          const maxSize = 480;
+          const scale = Math.min(maxSize / img.width, maxSize / img.height, 1);
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          URL.revokeObjectURL(objectUrl);
+          resolve(canvas.toDataURL("image/jpeg", 0.78));
+        };
+
+        img.onerror = () => {
+          URL.revokeObjectURL(objectUrl);
+          reject(new Error("Could not read employee photo"));
+        };
+
+        img.src = objectUrl;
+      });
+    }
+
+    window.addEmployee = async function () {
+      const name = document.getElementById("empName").value.trim();
+      const email = document.getElementById("empEmail").value.trim();
+      const uid = document.getElementById("empUID").value.trim();
+      const role = document.getElementById("empRole").value;
+      const workStart = document.getElementById("empWorkStart").value;
+      const workEnd = document.getElementById("empWorkEnd").value;
+      const leaveAllowanceInput = document.getElementById("empLeaveAllowance").value.trim();
+      const photoFile = document.getElementById("empPhoto").files[0];
+      const phone = document.getElementById("empPhone").value.trim();
+      const emergencyContact = document.getElementById("empEmergency").value.trim();
+      const bloodGroup = document.getElementById("empBlood").value.trim();
+      const bankAccount = document.getElementById("empBank").value.trim();
+      const ifscCode = document.getElementById("empIfsc").value.trim();
+      const currentAddress = document.getElementById("empAddress").value.trim();
+
+      if (!name || !email || !uid) {
+        alert("Please enter employee name, email and Firebase UID");
+        return;
+      }
+
+      const employeeRef = doc(db, "employees", uid);
+      const existingEmployeeSnap = await getDoc(employeeRef);
+      const existingEmployee = existingEmployeeSnap.exists() ? existingEmployeeSnap.data() : {};
+      const leaveAllowance = leaveAllowanceInput
+        ? Number(leaveAllowanceInput)
+        : Number(existingEmployee.leaveAllowance ?? existingEmployee.leaveBalance ?? 12);
+      const employeeData = {
+        name,
+        email,
+        role,
+        userId: uid,
+        workStart,
+        workEnd,
+        leaveAllowance: Number.isFinite(leaveAllowance) ? leaveAllowance : 12,
+        graceMinutes: 30,
+        phone,
+        emergencyContact,
+        bloodGroup,
+        bankAccount,
+        ifscCode,
+        currentAddress,
+        updatedAt: new Date().toISOString()
+      };
+
+      if (!existingEmployeeSnap.exists()) {
+        employeeData.createdDate = getDateInputValue(new Date());
+      }
+
+      if (photoFile) {
+        employeeData.photo = await imageFileToDataUrl(photoFile);
+      }
+
+      await setDoc(employeeRef, employeeData, { merge: true });
+
+      alert("Employee added successfully");
+
+      document.getElementById("empName").value = "";
+      document.getElementById("empEmail").value = "";
+      document.getElementById("empUID").value = "";
+      document.getElementById("empRole").value = "employee";
+      document.getElementById("empWorkStart").value = "";
+      document.getElementById("empWorkEnd").value = "";
+      document.getElementById("empLeaveAllowance").value = "";
+      document.getElementById("empPhoto").value = "";
+      document.getElementById("empPhone").value = "";
+      document.getElementById("empEmergency").value = "";
+      document.getElementById("empBlood").value = "";
+      document.getElementById("empBank").value = "";
+      document.getElementById("empIfsc").value = "";
+      document.getElementById("empAddress").value = "";
+
+      loadData();
+    };
+
+    window.toggleNotificationEmployee = function () {
+      const target = document.getElementById("notificationTarget").value;
+      const employeeSelect = document.getElementById("notificationEmployee");
+      employeeSelect.disabled = target !== "specific";
+
+      if (target !== "specific") {
+        employeeSelect.value = "";
+      }
+    };
+
+    function formatDisplayDate(dateText) {
+      return new Date(dateText + "T00:00:00").toLocaleDateString(undefined, {
+        day: "numeric",
+        month: "short",
+        year: "numeric"
+      });
+    }
+
+    window.addHoliday = async function () {
+      const date = document.getElementById("holidayDate").value;
+      const name = document.getElementById("holidayName").value.trim();
+      const type = document.getElementById("holidayType").value;
+
+      if (!date || !name) {
+        alert("Please enter holiday date and name");
+        return;
+      }
+
+      await setDoc(doc(db, "holidays", date), {
+        date,
+        name,
+        type
+      });
+
+      alert("Holiday added successfully");
+
+      document.getElementById("holidayDate").value = "";
+      document.getElementById("holidayName").value = "";
+      document.getElementById("holidayType").value = "company";
+
+      loadHolidays();
+    };
+
+    window.loadHolidays = async function () {
+      const holidaySnap = await getDocs(collection(db, "holidays"));
+      const holidayList = document.getElementById("holidayList");
+      const holidays = [];
+
+      holidaySnap.forEach((docSnap) => {
+        holidays.push(docSnap.data());
+      });
+
+      holidays.sort((a, b) => a.date.localeCompare(b.date));
+      holidayList.innerHTML = "";
+
+      if (!holidays.length) {
+        holidayList.innerHTML = `<div class="holiday-item"><span class="holiday-name">No holidays added yet</span></div>`;
+        return;
+      }
+
+      holidays.forEach((holiday) => {
+        holidayList.innerHTML += `
+          <div class="holiday-item">
+            <div>
+              <div class="holiday-name">${holiday.name}</div>
+              <div class="holiday-date">${formatDisplayDate(holiday.date)}</div>
+            </div>
+            <span class="badge blue">${holiday.type || "company"}</span>
+          </div>
+        `;
+      });
+    };
+
+    function renderNotificationEmployeeOptions(employees) {
+      const employeeSelect = document.getElementById("notificationEmployee");
+      const currentValue = employeeSelect.value;
+
+      employeeSelect.innerHTML = `<option value="">Select Employee</option>`;
+
+      employees
+        .filter((employee) => employee.role === "employee")
+        .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
+        .forEach((employee) => {
+          employeeSelect.innerHTML += `<option value="${employee.uid}" data-email="${employee.email || ""}">${employee.name || employee.email || employee.uid}</option>`;
+        });
+
+      employeeSelect.value = currentValue;
+    }
+
+    window.addNotification = async function () {
+      const title = document.getElementById("notificationTitle").value.trim();
+      const message = document.getElementById("notificationMessage").value.trim();
+      const target = document.getElementById("notificationTarget").value;
+      const employeeUid = document.getElementById("notificationEmployee").value;
+      const selectedEmployee = document.getElementById("notificationEmployee").selectedOptions[0];
+      const employeeName = selectedEmployee?.textContent || "";
+      const employeeEmail = selectedEmployee?.dataset.email || "";
+
+      if (!title || !message) {
+        alert("Please enter notification title and message");
+        return;
+      }
+
+      if (target === "specific" && !employeeUid) {
+        alert("Please select an employee");
+        return;
+      }
+
+      const notificationId = `${Date.now()}`;
+
+      await setDoc(doc(db, "notifications", notificationId), {
+        title,
+        message,
+        targetType: target,
+        targetUid: target === "specific" ? employeeUid : "",
+        targetEmail: target === "specific" ? employeeEmail : "",
+        targetName: target === "specific" ? employeeName : "All Employees",
+        createdAt: new Date().toISOString()
+      });
+
+      alert("Notification sent successfully");
+
+      document.getElementById("notificationTitle").value = "";
+      document.getElementById("notificationMessage").value = "";
+      document.getElementById("notificationTarget").value = "all";
+      document.getElementById("notificationEmployee").value = "";
+      toggleNotificationEmployee();
+      loadNotifications();
+    };
+
+    window.loadNotifications = async function () {
+      const notificationSnap = await getDocs(collection(db, "notifications"));
+      const notificationList = document.getElementById("notificationList");
+      const notifications = [];
+
+      notificationSnap.forEach((docSnap) => {
+        notifications.push(docSnap.data());
+      });
+
+      notifications.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+      notificationList.innerHTML = "";
+
+      if (!notifications.length) {
+        notificationList.innerHTML = `<div class="holiday-item"><span class="holiday-name">No notifications sent yet</span></div>`;
+        return;
+      }
+
+      notifications.slice(0, 8).forEach((notification) => {
+        const createdDate = notification.createdAt
+          ? new Date(notification.createdAt).toLocaleString()
+          : "-";
+
+        notificationList.innerHTML += `
+          <div class="holiday-item">
+            <div>
+              <div class="holiday-name">${notification.title}</div>
+              <div class="holiday-date">To: ${notification.targetName || "All Employees"} · ${createdDate}</div>
+              <div class="notification-message">${notification.message}</div>
+            </div>
+            <span class="badge blue">${notification.targetType || "all"}</span>
+          </div>
+        `;
+      });
+    };
+
+    function getDatesFromMonthStart() {
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      const dates = [];
+
+      for (const date = new Date(start); date <= now; date.setDate(date.getDate() + 1)) {
+        dates.push(getDateInputValue(date));
+      }
+
+      return dates;
+    }
+
+    function getEmployeeAbsenceCutoff(employee, dateText) {
+      if (employee.workEnd) {
+        const end = new Date(`${dateText}T${employee.workEnd}:00`);
+
+        if (employee.workStart) {
+          const start = new Date(`${dateText}T${employee.workStart}:00`);
+
+          if (end <= start) {
+            end.setDate(end.getDate() + 1);
+          }
+        }
+
+        const graceMinutes = Number(employee.graceMinutes) || 30;
+        end.setMinutes(end.getMinutes() + graceMinutes);
+        return end;
+      }
+
+      return new Date(`${dateText}T23:59:59`);
+    }
+
+    function shouldSkipAbsenceDate(dateText, holidaySet) {
+      const date = new Date(`${dateText}T00:00:00`);
+      const isSunday = date.getDay() === 0;
+      return isSunday || holidaySet.has(dateText);
+    }
+
+    function isBeforeEmployeeCreated(employee, dateText) {
+      const createdDate = employee.createdDate || (employee.createdAt ? String(employee.createdAt).split("T")[0] : "");
+      return Boolean(createdDate) && dateText < createdDate;
+    }
+
+    function getDateRange(startDate, endDate) {
+      if (!startDate || !endDate || endDate < startDate) {
+        return [];
+      }
+
+      const dates = [];
+      const current = new Date(startDate + "T00:00:00");
+      const end = new Date(endDate + "T00:00:00");
+
+      while (current <= end) {
+        dates.push(getDateInputValue(current));
+        current.setDate(current.getDate() + 1);
+      }
+
+      return dates;
+    }
+
+    async function autoMarkAbsences() {
+      if (absenceAutomationRunning) {
+        return false;
+      }
+
+      absenceAutomationRunning = true;
+
+      try {
+        const employeeSnap = await getDocs(collection(db, "employees"));
+        const attendanceSnap = await getDocs(collection(db, "attendance"));
+        const holidaySnap = await getDocs(collection(db, "holidays"));
+        const leaveSnap = await getDocs(collection(db, "leaves"));
+        const employees = [];
+        const attendanceKeys = new Set();
+        const holidaySet = new Set();
+        const approvedLeaveKeys = new Set();
+        const datesToCheck = getDatesFromMonthStart();
+        const now = new Date();
+        const writes = [];
+
+        employeeSnap.forEach((docSnap) => {
+          const data = docSnap.data();
+
+          if ((data.role || "employee") === "employee") {
+            employees.push({ uid: docSnap.id, ...data });
+          }
+        });
+
+        attendanceSnap.forEach((docSnap) => {
+          const data = docSnap.data();
+          attendanceKeys.add(`${data.userId}_${data.date}`);
+        });
+
+        holidaySnap.forEach((docSnap) => {
+          const data = docSnap.data();
+
+          if (data.date) {
+            holidaySet.add(data.date);
+          }
+        });
+
+        leaveSnap.forEach((docSnap) => {
+          const data = docSnap.data();
+
+          if (data.status === "approved") {
+            getDateRange(data.startDate, data.endDate).forEach((dateText) => {
+              approvedLeaveKeys.add(`${data.userId}_${dateText}`);
+            });
+          }
+        });
+
+        employees.forEach((employee) => {
+          datesToCheck.forEach((dateText) => {
+            const key = `${employee.uid}_${dateText}`;
+
+            if (
+              attendanceKeys.has(key) ||
+              approvedLeaveKeys.has(key) ||
+              shouldSkipAbsenceDate(dateText, holidaySet) ||
+              isBeforeEmployeeCreated(employee, dateText)
+            ) {
+              return;
+            }
+
+            if (now < getEmployeeAbsenceCutoff(employee, dateText)) {
+              return;
+            }
+
+            writes.push(setDoc(doc(db, "attendance", `absent_${employee.uid}_${dateText}`), {
+              userId: employee.uid,
+              employeeName: employee.name || "",
+              date: dateText,
+              status: "absent",
+              absent: true,
+              autoMarked: true,
+              totalHours: "0h 0m",
+              punchIn: null,
+              punchOut: null,
+              markedAt: new Date().toISOString()
+            }));
+          });
+        });
+
+        if (writes.length) {
+          await Promise.all(writes);
+          return true;
+        }
+
+        return false;
+      } catch (error) {
+        console.error("Auto absent check failed:", error);
+        return false;
+      } finally {
+        absenceAutomationRunning = false;
+      }
+    }
+
+    function startAbsenceAutomation() {
+      if (absenceAutomationTimer) {
+        clearInterval(absenceAutomationTimer);
+      }
+
+      absenceAutomationTimer = setInterval(async () => {
+        const changed = await autoMarkAbsences();
+
+        if (changed) {
+          loadData();
+        }
+      }, 60000);
+    }
+
+    function getStatusClass(status) {
+      if (status === "completed") return "green";
+      if (status === "working") return "blue";
+      if (status === "break") return "yellow";
+      if (status === "absent") return "red";
+      return "red";
+    }
+
+    function formatTimeValue(timeText) {
+      if (!timeText) return "--";
+
+      return new Date(`${today}T${timeText}:00`).toLocaleTimeString(undefined, {
+        hour: "numeric",
+        minute: "2-digit"
+      });
+    }
+
+    function formatWorkHours(employee) {
+      if (!employee.workStart || !employee.workEnd) {
+        return "--";
+      }
+
+      return `${formatTimeValue(employee.workStart)} - ${formatTimeValue(employee.workEnd)}`;
+    }
+
+    function durationToMinutes(durationText) {
+      if (!durationText) return 0;
+
+      const hoursMatch = String(durationText).match(/(\d+(?:\.\d+)?)\s*h/);
+      const minutesMatch = String(durationText).match(/(\d+)\s*m/);
+
+      if (hoursMatch || minutesMatch) {
+        return Math.round((Number(hoursMatch?.[1] || 0) * 60) + Number(minutesMatch?.[1] || 0));
+      }
+
+      const decimalHours = Number(durationText);
+      return Number.isFinite(decimalHours) ? Math.round(decimalHours * 60) : 0;
+    }
+
+    function formatMinutes(totalMinutes) {
+      const safeMinutes = Math.max(totalMinutes, 0);
+      const hours = Math.floor(safeMinutes / 60);
+      const minutes = safeMinutes % 60;
+      return `${hours}h ${minutes}m`;
+    }
+
+    function getSearchText() {
+      return document.getElementById("searchInput").value.trim().toLowerCase();
+    }
+
+    function matchesEmployeeSearch(employee, searchText) {
+      if (!searchText) return true;
+
+      return [
+        employee.name,
+        employee.email,
+        employee.role,
+        employee.phone,
+        employee.uid
+      ].some((value) => String(value || "").toLowerCase().includes(searchText));
+    }
+
+    function getLeaveAllowance(employee) {
+      const allowance = Number(employee?.leaveAllowance ?? employee?.leaveBalance);
+      return Number.isFinite(allowance) && allowance >= 0 ? allowance : 12;
+    }
+
+    function getApprovedLeaveDays(leaves, uid, excludeLeaveId = "") {
+      return leaves
+        .filter((leave) => leave.userId === uid && leave.status === "approved" && leave.id !== excludeLeaveId)
+        .reduce((sum, leave) => sum + Number(leave.days || 0), 0);
+    }
+
+    function getLeaveBalance(employee, leaves, excludeLeaveId = "") {
+      return Math.max(getLeaveAllowance(employee) - getApprovedLeaveDays(leaves, employee.uid, excludeLeaveId), 0);
+    }
+
+    function findLeaveForDate(leaves, uid, dateText) {
+      return leaves.find((leave) => {
+        if (leave.userId !== uid || leave.status === "rejected") {
+          return false;
+        }
+
+        return dateText >= leave.startDate && dateText <= leave.endDate;
+      });
+    }
+
+    function renderEmployeeDirectory(employees, leaves = []) {
+      const tableBody = document.getElementById("employeeTableBody");
+      const searchText = getSearchText();
+      const visibleEmployees = employees
+        .filter((employee) => matchesEmployeeSearch(employee, searchText))
+        .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+
+      tableBody.innerHTML = "";
+
+      if (!visibleEmployees.length) {
+        tableBody.innerHTML = `<tr><td colspan="13">No employees found</td></tr>`;
+        return;
+      }
+
+      visibleEmployees.forEach((employee) => {
+        const balance = getLeaveBalance(employee, leaves);
+        const allowance = getLeaveAllowance(employee);
+
+        tableBody.innerHTML += `
+          <tr>
+            <td><img class="employee-photo" src="${employee.photo || "assets/studit-logo-cropped.png"}" alt="${employee.name || "Employee"}"></td>
+            <td><strong>${employee.name || "-"}</strong></td>
+            <td>${employee.email || "-"}</td>
+            <td><span class="status ${employee.role === "admin" ? "blue" : "green"}">${employee.role || "employee"}</span></td>
+            <td>${formatWorkHours(employee)}</td>
+            <td><strong>${balance}</strong> / ${allowance}</td>
+            <td>${employee.phone || "-"}</td>
+            <td>${employee.emergencyContact || "-"}</td>
+            <td>${employee.bloodGroup || "-"}</td>
+            <td>${employee.bankAccount || "-"}</td>
+            <td>${employee.ifscCode || "-"}</td>
+            <td>${employee.currentAddress || "-"}</td>
+            <td>${employee.uid}</td>
+          </tr>
+        `;
+      });
+    }
+
+    function renderLeaveRequests(leaves, employees) {
+      const leaveList = document.getElementById("adminLeaveList");
+      const employeeMap = {};
+
+      employees.forEach((employee) => {
+        employeeMap[employee.uid] = employee;
+      });
+
+      const sortedLeaves = [...leaves].sort((a, b) => {
+        const statusOrder = { pending: 0, approved: 1, rejected: 2 };
+        const statusDiff = (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9);
+
+        if (statusDiff) return statusDiff;
+        return (b.appliedAt || "").localeCompare(a.appliedAt || "");
+      });
+
+      leaveList.innerHTML = "";
+
+      if (!sortedLeaves.length) {
+        leaveList.innerHTML = `
+          <div class="holiday-item">
+            <div>
+              <div class="holiday-name">No leave requests yet</div>
+              <div class="holiday-date">Employee leave requests will appear here.</div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      sortedLeaves.slice(0, 12).forEach((leave) => {
+        const employee = employeeMap[leave.userId] || {};
+        const balance = employee.uid ? getLeaveBalance(employee, leaves, leave.id) : 0;
+        const statusClass =
+          leave.status === "approved" ? "green" :
+          leave.status === "rejected" ? "red" : "yellow";
+
+        leaveList.innerHTML += `
+          <div class="holiday-item">
+            <div>
+              <div class="holiday-name">${leave.employeeName || employee.name || "Employee"} · ${leave.leaveType || "Leave"}</div>
+              <div class="holiday-date">${formatDisplayDate(leave.startDate)} - ${formatDisplayDate(leave.endDate)} · ${leave.days || 0} day(s) · Balance: ${balance}</div>
+              <div class="notification-message">${leave.reason || ""}</div>
+            </div>
+            <div class="request-actions">
+              <span class="badge ${statusClass}">${leave.status || "pending"}</span>
+              ${leave.status === "pending" ? `
+                <button class="small-btn approve" type="button" onclick="reviewLeave('${leave.id}', 'approved')">Approve</button>
+                <button class="small-btn reject" type="button" onclick="reviewLeave('${leave.id}', 'rejected')">Reject</button>
+              ` : ""}
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    window.reviewLeave = async function (leaveId, status) {
+      const leaveRef = doc(db, "leaves", leaveId);
+      const leaveSnap = await getDoc(leaveRef);
+
+      if (!leaveSnap.exists()) {
+        alert("Leave request not found");
+        return;
+      }
+
+      const leave = { id: leaveId, ...leaveSnap.data() };
+
+      if (status === "approved") {
+        const employeeSnap = await getDoc(doc(db, "employees", leave.userId));
+        const leaveSnapAll = await getDocs(collection(db, "leaves"));
+        const leaves = [];
+
+        leaveSnapAll.forEach((docSnap) => {
+          leaves.push({ id: docSnap.id, ...docSnap.data() });
+        });
+
+        const employee = employeeSnap.exists()
+          ? { uid: leave.userId, ...employeeSnap.data() }
+          : { uid: leave.userId, leaveAllowance: 12 };
+        const balance = getLeaveBalance(employee, leaves, leaveId);
+
+        if (Number(leave.days || 0) > balance) {
+          alert("Insufficient leave balance");
+          return;
+        }
+      }
+
+      await setDoc(leaveRef, {
+        status,
+        reviewedAt: new Date().toISOString(),
+        reviewedBy: auth.currentUser?.email || "admin"
+      }, { merge: true });
+
+      alert(`Leave ${status}`);
+      loadData();
+    };
+
+    window.selectAttendanceDate = function (dateText) {
+      document.getElementById("filterDate").value = dateText;
+      switchView("attendance");
+    };
+
+    window.clearAttendanceDate = function () {
+      document.getElementById("filterDate").value = "";
+      loadData();
+    };
+
+    function getEmployeeInitial(employee) {
+      return String(employee.name || employee.email || "E").trim().charAt(0).toUpperCase();
+    }
+
+    function getRecordMinutes(record) {
+      const savedMinutes = durationToMinutes(record.totalHours);
+
+      if (savedMinutes) {
+        return savedMinutes;
+      }
+
+      if (record.punchIn && record.punchOut) {
+        return Math.max(Math.round((record.punchOut.toDate() - record.punchIn.toDate()) / 60000), 0);
+      }
+
+      return 0;
+    }
+
+    function formatRecordTime(timestamp) {
+      if (!timestamp) return "-";
+
+      return timestamp.toDate().toLocaleTimeString(undefined, {
+        hour: "numeric",
+        minute: "2-digit"
+      });
+    }
+
+    function renderWeeklyTimesheet(employees, attendanceRecords, leaves = []) {
+      const weekDates = getWeekDates();
+      const weekDateTexts = weekDates.map(getDateInputValue);
+      const searchText = getSearchText();
+      const weeklyBody = document.getElementById("weeklyTimesheetBody");
+      const employeesToShow = employees
+        .filter((employee) => employee.role === "employee")
+        .filter((employee) => matchesEmployeeSearch(employee, searchText))
+        .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+
+      document.getElementById("weekRangeLabel").innerText = formatWeekRange(weekDates);
+      document.getElementById("weekDatePicker").value = getDateInputValue(currentWeekStart);
+      latestWeeklyRows = [];
+
+      weekDates.forEach((date, index) => {
+        const dateText = getDateInputValue(date);
+        const isToday = dateText === today;
+        const dayLetter = date.toLocaleDateString(undefined, { weekday: "short" }).charAt(0);
+        const dayNumber = date.getDate();
+        const header = document.getElementById(`weekDay${index}`);
+
+        header.className = `day-head${isToday ? " today" : ""}`;
+        header.innerHTML = `
+          <span class="day-letter">${dayLetter}</span>
+          <span class="day-number">${dayNumber}</span>
+        `;
+      });
+
+      weeklyBody.innerHTML = "";
+
+      if (!employeesToShow.length) {
+        weeklyBody.innerHTML = `<tr><td colspan="9" style="padding:28px;text-align:left;">No employees found</td></tr>`;
+        return;
+      }
+
+      employeesToShow.forEach((employee) => {
+        let totalMinutes = 0;
+        const rowData = {
+          Employee: employee.name || "-",
+          Email: employee.email || "-"
+        };
+
+        const dayCells = weekDateTexts.map((dateText, index) => {
+          const dayRecords = attendanceRecords.filter((record) => record.userId === employee.uid && record.date === dateText);
+          const record = dayRecords[0];
+          const leave = findLeaveForDate(leaves, employee.uid, dateText);
+          const isSunday = weekDates[index].getDay() === 0;
+          const isSelected = document.getElementById("filterDate").value === dateText;
+
+          if (!record) {
+            if (leave) {
+              const leaveLabel = leave.status === "approved" ? "Leave" : "Pending";
+              rowData[dateText] = leaveLabel;
+              return `
+                <td class="timesheet-cell${isSelected ? " selected" : ""}" onclick="selectAttendanceDate('${dateText}')">
+                  <span class="rest-pill">${leaveLabel}</span>
+                </td>
+              `;
+            }
+
+            rowData[dateText] = isSunday ? "Rest day" : "-";
+            return `
+              <td class="timesheet-cell${isSelected ? " selected" : ""}" onclick="selectAttendanceDate('${dateText}')">
+                ${isSunday ? `<span class="rest-pill">Rest day</span>` : "-"}
+              </td>
+            `;
+          }
+
+          const minutes = dayRecords.reduce((sum, item) => sum + getRecordMinutes(item), 0);
+          totalMinutes += minutes;
+          const displayHours = minutes ? formatMinutes(minutes) : (record.status || "-");
+          const firstIn = formatRecordTime(record.punchIn);
+          const lastOut = formatRecordTime(record.punchOut);
+          const warnClass = record.status === "missed-punch-out" || record.status === "absent" ? " warn" : "";
+
+          rowData[dateText] = displayHours;
+
+          return `
+            <td class="timesheet-cell has-time${warnClass}${isSelected ? " selected" : ""}" onclick="selectAttendanceDate('${dateText}')">
+              ${displayHours}
+              <div class="timesheet-popover">
+                <div class="popover-row"><span>First in</span><strong>${firstIn}</strong></div>
+                <div class="popover-row"><span>Last out</span><strong>${lastOut}</strong></div>
+                <div class="popover-rule"></div>
+                <div class="popover-row"><span>${record.status || "Regular"}</span><strong>${displayHours}</strong></div>
+              </div>
+            </td>
+          `;
+        }).join("");
+
+        const totalText = totalMinutes ? formatMinutes(totalMinutes) : "-";
+        rowData.Total = totalText;
+        latestWeeklyRows.push(rowData);
+
+        weeklyBody.innerHTML += `
+          <tr class="timesheet-row">
+            <td class="member-cell">
+              <div class="member-info">
+                ${employee.photo
+                  ? `<img class="member-avatar" src="${employee.photo}" alt="${employee.name || "Employee"}">`
+                  : `<span class="member-initial">${getEmployeeInitial(employee)}</span>`
+                }
+                <div class="member-name">${employee.name || employee.email || employee.uid}</div>
+              </div>
+            </td>
+            ${dayCells}
+            <td class="total-cell">${totalText}</td>
+          </tr>
+        `;
+      });
+    }
+
+    function renderMonthlyTimesheet(employees, attendanceRecords, leaves = []) {
+      const [year, month] = currentTimesheetMonth.split("-").map(Number);
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const monthDates = Array.from({ length: daysInMonth }, (_, index) => {
+        const date = new Date(year, month - 1, index + 1);
+        return {
+          date,
+          text: getDateInputValue(date)
+        };
+      });
+      const searchText = getSearchText();
+      const monthlyHead = document.getElementById("monthlyTimesheetHead");
+      const monthlyBody = document.getElementById("monthlyTimesheetBody");
+      const employeesToShow = employees
+        .filter((employee) => employee.role === "employee")
+        .filter((employee) => matchesEmployeeSearch(employee, searchText))
+        .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+
+      document.getElementById("monthRangeLabel").innerText = new Date(`${currentTimesheetMonth}-01T00:00:00`).toLocaleDateString(undefined, {
+        month: "long",
+        year: "numeric"
+      });
+      document.getElementById("monthlyTimesheetMonth").value = currentTimesheetMonth;
+
+      monthlyHead.innerHTML = `
+        <th class="member-head">
+          <div class="timesheet-search">Month View</div>
+        </th>
+        ${monthDates.map(({ date }) => {
+          const dateText = getDateInputValue(date);
+          const isToday = dateText === today;
+          const dayLetter = date.toLocaleDateString(undefined, { weekday: "short" }).charAt(0);
+
+          return `
+            <th class="month-day-head day-head${isToday ? " today" : ""}">
+              <span class="day-letter">${dayLetter}</span>
+              <span class="day-number">${date.getDate()}</span>
+            </th>
+          `;
+        }).join("")}
+        <th class="total-head">Total</th>
+      `;
+
+      monthlyBody.innerHTML = "";
+      latestMonthlyRows = [];
+
+      if (!employeesToShow.length) {
+        monthlyBody.innerHTML = `<tr><td colspan="${daysInMonth + 2}" style="padding:28px;text-align:left;">No employees found</td></tr>`;
+        return;
+      }
+
+      employeesToShow.forEach((employee) => {
+        let totalMinutes = 0;
+        const rowData = {
+          Employee: employee.name || "-",
+          Email: employee.email || "-"
+        };
+
+        const dayCells = monthDates.map(({ date, text }) => {
+          const dayRecords = attendanceRecords.filter((record) => record.userId === employee.uid && record.date === text);
+          const record = dayRecords[0];
+          const leave = findLeaveForDate(leaves, employee.uid, text);
+          const isSunday = date.getDay() === 0;
+          const isSelected = document.getElementById("filterDate").value === text;
+
+          if (!record) {
+            if (leave) {
+              const leaveLabel = leave.status === "approved" ? "Leave" : "Pending";
+              rowData[text] = leaveLabel;
+              return `
+                <td class="timesheet-cell compact month-cell${isSelected ? " selected" : ""}" onclick="selectAttendanceDate('${text}')">
+                  <span class="rest-pill">${leaveLabel}</span>
+                </td>
+              `;
+            }
+
+            rowData[text] = isSunday ? "Rest day" : "-";
+            return `
+              <td class="timesheet-cell compact month-cell${isSelected ? " selected" : ""}" onclick="selectAttendanceDate('${text}')">
+                ${isSunday ? `<span class="rest-pill">Rest</span>` : "-"}
+              </td>
+            `;
+          }
+
+          const minutes = dayRecords.reduce((sum, item) => sum + getRecordMinutes(item), 0);
+          totalMinutes += minutes;
+          const displayHours = minutes ? formatMinutes(minutes) : (record.status || "-");
+          const firstIn = formatRecordTime(record.punchIn);
+          const lastOut = formatRecordTime(record.punchOut);
+          const warnClass = record.status === "missed-punch-out" || record.status === "absent" ? " warn" : "";
+
+          rowData[text] = displayHours;
+
+          return `
+            <td class="timesheet-cell compact month-cell has-time${warnClass}${isSelected ? " selected" : ""}" onclick="selectAttendanceDate('${text}')">
+              ${displayHours}
+              <div class="timesheet-popover">
+                <div class="popover-row"><span>First in</span><strong>${firstIn}</strong></div>
+                <div class="popover-row"><span>Last out</span><strong>${lastOut}</strong></div>
+                <div class="popover-rule"></div>
+                <div class="popover-row"><span>${record.status || "Regular"}</span><strong>${displayHours}</strong></div>
+              </div>
+            </td>
+          `;
+        }).join("");
+
+        const totalText = totalMinutes ? formatMinutes(totalMinutes) : "-";
+        rowData.Total = totalText;
+        latestMonthlyRows.push(rowData);
+
+        monthlyBody.innerHTML += `
+          <tr class="timesheet-row">
+            <td class="member-cell">
+              <div class="member-info">
+                ${employee.photo
+                  ? `<img class="member-avatar" src="${employee.photo}" alt="${employee.name || "Employee"}">`
+                  : `<span class="member-initial">${getEmployeeInitial(employee)}</span>`
+                }
+                <div class="member-name">${employee.name || employee.email || employee.uid}</div>
+              </div>
+            </td>
+            ${dayCells}
+            <td class="total-cell">${totalText}</td>
+          </tr>
+        `;
+      });
+    }
+
+    function renderReports(employees, attendanceRecords) {
+      const reportMonth = document.getElementById("reportMonth").value || getCurrentMonthValue();
+      const searchText = getSearchText();
+      const reportEmployees = employees
+        .filter((employee) => employee.role === "employee")
+        .filter((employee) => matchesEmployeeSearch(employee, searchText))
+        .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+      const tableBody = document.getElementById("reportTableBody");
+
+      latestReportRows = [];
+      tableBody.innerHTML = "";
+
+      let totalPresentDays = 0;
+      let totalAbsentDays = 0;
+      let totalMissed = 0;
+      let totalMinutes = 0;
+
+      reportEmployees.forEach((employee) => {
+        const records = attendanceRecords
+          .filter((record) => record.userId === employee.uid && String(record.date || "").startsWith(reportMonth))
+          .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
+        const presentDays = new Set(records.filter((record) => record.status !== "absent").map((record) => record.date)).size;
+        const absentDays = records.filter((record) => record.status === "absent").length;
+        const completed = records.filter((record) => record.status === "completed").length;
+        const missed = records.filter((record) => record.status === "missed-punch-out").length;
+        const minutes = records.reduce((sum, record) => sum + durationToMinutes(record.totalHours), 0);
+        const lastStatus = records.length ? records[records.length - 1].status : "-";
+        const totalHours = formatMinutes(minutes);
+
+        totalPresentDays += presentDays;
+        totalAbsentDays += absentDays;
+        totalMissed += missed;
+        totalMinutes += minutes;
+
+        const reportRow = {
+          Employee: employee.name || "-",
+          Email: employee.email || "-",
+          PresentDays: presentDays,
+          AbsentDays: absentDays,
+          Completed: completed,
+          MissedPunchOut: missed,
+          TotalHours: totalHours,
+          LastStatus: lastStatus || "-"
+        };
+
+        latestReportRows.push(reportRow);
+
+        tableBody.innerHTML += `
+          <tr>
+            <td><strong>${reportRow.Employee}</strong></td>
+            <td>${reportRow.Email}</td>
+            <td>${presentDays}</td>
+            <td>${absentDays}</td>
+            <td>${completed}</td>
+            <td>${missed}</td>
+            <td>${totalHours}</td>
+            <td><span class="status ${getStatusClass(lastStatus)}">${lastStatus}</span></td>
+          </tr>
+        `;
+      });
+
+      if (!reportEmployees.length) {
+        tableBody.innerHTML = `<tr><td colspan="8">No report data found</td></tr>`;
+      }
+
+      document.getElementById("reportEmployees").innerText = reportEmployees.length;
+      document.getElementById("reportPresentDays").innerText = totalPresentDays;
+      document.getElementById("reportMissed").innerText = totalMissed;
+      document.getElementById("reportHours").innerText = formatMinutes(totalMinutes);
+    }
+
+    window.loadData = async function () {
+      const employeeSnap = await getDocs(collection(db, "employees"));
+      const attendanceSnap = await getDocs(collection(db, "attendance"));
+      const leaveSnap = await getDocs(collection(db, "leaves"));
+
+      const employeeMap = {};
+      const employees = [];
+      const attendanceRecords = [];
+      const leaves = [];
+
+      employeeSnap.forEach((docSnap) => {
+        const data = docSnap.data();
+        employeeMap[docSnap.id] = data.name;
+        employees.push({ uid: docSnap.id, ...data });
+      });
+
+      attendanceSnap.forEach((docSnap) => {
+        attendanceRecords.push({ id: docSnap.id, ...docSnap.data() });
+      });
+
+      leaveSnap.forEach((docSnap) => {
+        leaves.push({ id: docSnap.id, ...docSnap.data() });
+      });
+
+      renderNotificationEmployeeOptions(employees);
+      renderEmployeeDirectory(employees, leaves);
+      renderLeaveRequests(leaves, employees);
+      updateTimesheetModeUI();
+      renderWeeklyTimesheet(employees, attendanceRecords, leaves);
+      renderMonthlyTimesheet(employees, attendanceRecords, leaves);
+      renderReports(employees, attendanceRecords);
+
+      const tableBody = document.getElementById("tableBody");
+      const searchText = getSearchText();
+      const selectedDate = document.getElementById("filterDate").value;
+
+      tableBody.innerHTML = "";
+      Object.keys(attendancePhotoStore).forEach((key) => {
+        delete attendancePhotoStore[key];
+      });
+
+      let presentToday = 0;
+      let workingToday = 0;
+      let onBreak = 0;
+      let visibleAttendanceRows = 0;
+      const presentTodayUsers = new Set();
+      const employeeIds = new Set(
+        employees
+          .filter((employee) => employee.role === "employee")
+          .map((employee) => employee.uid)
+      );
+
+      attendanceRecords.forEach((data) => {
+        if (data.date === today && employeeIds.has(data.userId) && data.status !== "absent") {
+          presentTodayUsers.add(data.userId);
+          if (data.status === "working") workingToday++;
+          if (data.status === "break") onBreak++;
+        }
+      });
+
+      attendanceRecords.forEach((data) => {
+        const punchInPhotoKey = `${data.id}_punch_in`;
+        const punchOutPhotoKey = `${data.id}_punch_out`;
+
+        const name = employeeMap[data.userId] || "Unknown";
+        const matchSearch = name.toLowerCase().includes(searchText);
+        const matchDate = selectedDate ? data.date === selectedDate : true;
+
+        if (!matchSearch || !matchDate) return;
+        visibleAttendanceRows++;
+
+        const row = `
+          <tr>
+            <td><strong>${name}</strong></td>
+            <td>${data.date || "-"}</td>
+            <td>${data.punchIn ? data.punchIn.toDate().toLocaleTimeString() : "-"}</td>
+            <td>${data.punchOut ? data.punchOut.toDate().toLocaleTimeString() : "-"}</td>
+            <td>${data.totalHours || "-"}</td>
+            <td><span class="status ${getStatusClass(data.status)}">${data.status || "-"}</span></td>
+            <td>${renderAttendancePhoto(data.selfie, punchInPhotoKey, "Punch In Photo")}</td>
+            <td>${renderAttendancePhoto(data.punchOutSelfie, punchOutPhotoKey, "Punch Out Photo")}</td>
+            <td>
+              ${data.location
+                ? `<a target="_blank" href="https://www.google.com/maps?q=${data.location.lat},${data.location.lng}">View</a>`
+                : "-"
+              }
+            </td>
+          </tr>
+        `;
+
+        tableBody.innerHTML += row;
+      });
+
+      if (!visibleAttendanceRows) {
+        tableBody.innerHTML = `<tr><td colspan="9">No attendance records found</td></tr>`;
+      }
+
+      const totalEmployees = employeeIds.size;
+      presentToday = presentTodayUsers.size;
+      const absent = Math.max(totalEmployees - presentToday, 0);
+      const percent = totalEmployees ? Math.round((presentToday / totalEmployees) * 100) : 0;
+
+      document.getElementById("totalEmployees").innerText = totalEmployees;
+      document.getElementById("presentToday").innerText = presentToday;
+      document.getElementById("absentToday").innerText = absent;
+      document.getElementById("onBreak").innerText = onBreak;
+      document.getElementById("attendancePercent").innerText = percent + "%";
+      document.getElementById("actionAbsent").innerText = absent;
+      document.getElementById("pendingPunchOut").innerText = workingToday;
+    };
+
+    window.filterData = async function () {
+      await loadData();
+    };
+
+    window.exportToExcel = async function () {
+      const employeeSnap = await getDocs(collection(db, "employees"));
+      const attendanceSnap = await getDocs(collection(db, "attendance"));
+
+      const employeeMap = {};
+      employeeSnap.forEach((docSnap) => {
+        employeeMap[docSnap.id] = docSnap.data().name;
+      });
+
+      const selectedDate = document.getElementById("filterDate").value;
+      const exportData = [];
+
+      attendanceSnap.forEach((docSnap) => {
+        const data = docSnap.data();
+        if (selectedDate && data.date !== selectedDate) return;
+
+        exportData.push({
+          Employee: employeeMap[data.userId] || "Unknown",
+          Date: data.date || "-",
+          PunchIn: data.punchIn ? data.punchIn.toDate().toLocaleString() : "-",
+          PunchOut: data.punchOut ? data.punchOut.toDate().toLocaleString() : "-",
+          TotalHours: data.totalHours || "-",
+          Status: data.status || "-"
+        });
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
+      XLSX.writeFile(workbook, "Studit_Attendance_Report.xlsx");
+    };
+
+    window.exportWeeklyTimesheet = function () {
+      if (!latestWeeklyRows.length) {
+        alert("No weekly timesheet data to export");
+        return;
+      }
+
+      const worksheet = XLSX.utils.json_to_sheet(latestWeeklyRows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Weekly Timesheet");
+      XLSX.writeFile(workbook, "Studit_Weekly_Timesheet.xlsx");
+    };
+
+    window.exportMonthlyTimesheet = function () {
+      if (!latestMonthlyRows.length) {
+        alert("No monthly timesheet data to export");
+        return;
+      }
+
+      const worksheet = XLSX.utils.json_to_sheet(latestMonthlyRows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Monthly Timesheet");
+      XLSX.writeFile(workbook, "Studit_Monthly_Timesheet.xlsx");
+    };
+
+    window.exportTimesheet = function () {
+      if (currentTimesheetMode === "monthly") {
+        window.exportMonthlyTimesheet();
+        return;
+      }
+
+      window.exportWeeklyTimesheet();
+    };
+
+    window.exportReportToExcel = function () {
+      if (!latestReportRows.length) {
+        alert("No report data to export");
+        return;
+      }
+
+      const worksheet = XLSX.utils.json_to_sheet(latestReportRows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Monthly Report");
+      XLSX.writeFile(workbook, "Studit_Monthly_Report.xlsx");
+    };
+  </script>
+</body>
+</html>

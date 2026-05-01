@@ -1,0 +1,2369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Dashboard</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, Arial, sans-serif;
+      background: linear-gradient(135deg, #eef7f3, #f8f7ef);
+      color: #111827;
+    }
+
+    .shell {
+      width: min(100% - 36px, 1120px);
+      margin: 0 auto;
+      padding: 34px 0;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 24px;
+      font-weight: 900;
+      color: #2563eb;
+    }
+
+    .brand img {
+      width: 150px;
+      height: auto;
+      object-fit: contain;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .profile-trigger {
+      width: 54px;
+      height: 54px;
+      border: 0;
+      border-radius: 18px;
+      padding: 4px;
+      background: #ffffff;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .profile-trigger:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
+    }
+
+    .profile-trigger img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: 15px;
+      object-fit: cover;
+      background: #dbeafe;
+    }
+
+    .logout-btn,
+    .btn {
+      border: 0;
+      border-radius: 18px;
+      padding: 13px 18px;
+      color: #ffffff;
+      font: inherit;
+      font-weight: 900;
+      cursor: pointer;
+      background: #2563eb;
+      transition: transform 0.2s, background 0.2s, opacity 0.2s;
+    }
+
+    .logout-btn {
+      background: #111827;
+    }
+
+    .logout-btn:hover,
+    .btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+      gap: 24px;
+      align-items: stretch;
+    }
+
+    .panel {
+      background: #ffffff;
+      border-radius: 34px;
+      padding: 30px;
+      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.06);
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+      font-size: 38px;
+      line-height: 1.12;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin-bottom: 28px;
+      color: #6b7280;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 38px;
+      margin-bottom: 22px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: #eef4ff;
+      color: #2563eb;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .timer {
+      margin-bottom: 10px;
+      font-size: clamp(48px, 8vw, 86px);
+      line-height: 1;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0;
+    }
+
+    .total-hours {
+      margin-bottom: 14px;
+      color: #374151;
+      font-size: 24px;
+      font-weight: 900;
+    }
+
+    .schedule-notice {
+      margin-bottom: 28px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: #f5f6fa;
+      color: #4b5563;
+      font-size: 14px;
+      font-weight: 900;
+      line-height: 1.45;
+    }
+
+    .schedule-notice.warning {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .schedule-notice.danger {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .btn {
+      min-height: 56px;
+    }
+
+    .btn-green {
+      background: #10b981;
+    }
+
+    .btn-red {
+      background: #dc2626;
+    }
+
+    .btn-yellow {
+      background: #facc15;
+      color: #111827;
+    }
+
+    .btn-purple {
+      background: #4f46e5;
+    }
+
+    .btn-muted {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .steps {
+      display: grid;
+      gap: 14px;
+    }
+
+    .holiday-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .holiday-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 16px;
+      border-radius: 18px;
+      background: #f5f6fa;
+    }
+
+    .holiday-name {
+      font-weight: 900;
+    }
+
+    .holiday-date {
+      margin-top: 4px;
+      color: #6b7280;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .holiday-badge {
+      align-self: flex-start;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: #dbeafe;
+      color: #2563eb;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .holiday-badge.green {
+      background: #d1fae5;
+      color: #059669;
+    }
+
+    .holiday-badge.yellow {
+      background: #fef3c7;
+      color: #ca8a04;
+    }
+
+    .holiday-badge.red {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .notification-message {
+      margin-top: 6px;
+      color: #4b5563;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .leave-summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 16px 0;
+    }
+
+    .leave-stat {
+      padding: 14px;
+      border-radius: 18px;
+      background: #f5f6fa;
+    }
+
+    .leave-stat strong {
+      display: block;
+      margin-top: 5px;
+      font-size: 24px;
+      font-weight: 900;
+    }
+
+    .leave-form {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .leave-form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .leave-control {
+      width: 100%;
+      min-height: 48px;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 12px 14px;
+      color: #111827;
+      font: inherit;
+      outline: none;
+      background: #ffffff;
+    }
+
+    textarea.leave-control {
+      min-height: 88px;
+      resize: vertical;
+    }
+
+    .link-button {
+      display: none;
+      width: 100%;
+      margin-top: 12px;
+      border: 0;
+      background: transparent;
+      color: #2563eb;
+      font: inherit;
+      font-weight: 900;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .profile-head {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .profile-photo {
+      width: 76px;
+      height: 76px;
+      border-radius: 24px;
+      background: #dbeafe;
+      object-fit: cover;
+    }
+
+    .profile-name {
+      margin: 0 0 6px;
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .profile-role {
+      display: inline-flex;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: #dbeafe;
+      color: #2563eb;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .profile-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .profile-field {
+      padding: 14px;
+      border-radius: 18px;
+      background: #f5f6fa;
+    }
+
+    .profile-label {
+      margin-bottom: 5px;
+      color: #6b7280;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .profile-value {
+      color: #111827;
+      font-size: 14px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .profile-modal-card {
+      width: min(100%, 760px);
+    }
+
+    .profile-editor-head {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 20px;
+      padding: 18px;
+      border-radius: 24px;
+      background: #f5f6fa;
+    }
+
+    .profile-editor-copy {
+      margin: 6px 0 0;
+      color: #6b7280;
+      line-height: 1.45;
+    }
+
+    .profile-form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .profile-input-field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .profile-input-field.full {
+      grid-column: 1 / -1;
+    }
+
+    .profile-input-field label {
+      color: #374151;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .profile-input-field input,
+    .profile-input-field textarea {
+      width: 100%;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 13px 14px;
+      color: #111827;
+      font: inherit;
+      font-size: 14px;
+      outline: none;
+      background: #ffffff;
+    }
+
+    .profile-input-field textarea {
+      min-height: 92px;
+      resize: vertical;
+    }
+
+    .profile-input-field input[readonly] {
+      background: #f3f4f6;
+      color: #6b7280;
+    }
+
+    .profile-input-field input[type="file"] {
+      padding: 11px 14px;
+    }
+
+    .step {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 18px;
+      border-radius: 24px;
+      background: #f5f6fa;
+    }
+
+    .step-number {
+      display: grid;
+      flex: 0 0 34px;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      border-radius: 50%;
+      background: #2563eb;
+      color: #ffffff;
+      font-weight: 900;
+    }
+
+    .step-title {
+      margin-bottom: 5px;
+      font-weight: 900;
+    }
+
+    .step-copy {
+      margin: 0;
+      color: #6b7280;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(17, 24, 39, 0.58);
+      z-index: 20;
+    }
+
+    .modal.open {
+      display: flex;
+    }
+
+    .modal-card {
+      width: min(100%, 940px);
+      max-height: min(92vh, 900px);
+      overflow: auto;
+      background: #ffffff;
+      border-radius: 30px;
+      padding: 26px;
+      box-shadow: 0 30px 90px rgba(15, 23, 42, 0.28);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+
+    .modal-title {
+      margin: 0 0 8px;
+      font-size: 28px;
+      font-weight: 900;
+    }
+
+    .modal-subtitle {
+      margin: 0;
+      color: #6b7280;
+      line-height: 1.45;
+    }
+
+    .modal-close {
+      width: 42px;
+      height: 42px;
+      border: 0;
+      border-radius: 14px;
+      background: #f3f4f6;
+      color: #111827;
+      font-size: 22px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .modal-grid {
+      display: grid;
+      grid-template-columns: minmax(280px, 0.95fr) minmax(300px, 1.05fr);
+      gap: 18px;
+    }
+
+    .modal-section {
+      padding: 18px;
+      border-radius: 24px;
+      background: #f5f6fa;
+    }
+
+    .modal-section-title {
+      margin-bottom: 12px;
+      font-size: 16px;
+      font-weight: 900;
+    }
+
+    video,
+    .selfie-preview {
+      display: block;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      border-radius: 20px;
+      background: #111827;
+      object-fit: cover;
+    }
+
+    .selfie-preview {
+      display: none;
+      margin-top: 12px;
+    }
+
+    .map-frame {
+      width: 100%;
+      height: 240px;
+      border: 0;
+      border-radius: 20px;
+      background: #e5e7eb;
+    }
+
+    .location-row {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+      color: #4b5563;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .radius-status {
+      display: inline-flex;
+      width: fit-content;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #fee2e2;
+      color: #dc2626;
+      font-weight: 900;
+    }
+
+    .radius-status.ok {
+      background: #d1fae5;
+      color: #059669;
+    }
+
+    .modal-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .confirm-help {
+      width: 100%;
+      margin: 0 0 4px;
+      color: #6b7280;
+      font-size: 14px;
+      font-weight: 800;
+      text-align: right;
+    }
+
+    @media (max-width: 880px) {
+      .topbar,
+      .hero,
+      .modal-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        display: grid;
+      }
+
+      .actions {
+        grid-template-columns: 1fr;
+      }
+
+      .leave-summary,
+      .leave-form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .profile-form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .brand img {
+        width: 130px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <img src="assets/studit-logo-cropped.png" alt="Studit logo">
+      </div>
+      <div class="top-actions">
+        <button class="profile-trigger" type="button" onclick="openProfileModal()" aria-label="Open profile">
+          <img id="topProfilePhoto" src="assets/studit-logo-cropped.png" alt="Profile photo">
+        </button>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+      </div>
+    </header>
+
+    <main class="hero">
+      <section class="panel">
+        <div id="status" class="status-pill">Checking...</div>
+        <h1 id="greetingTitle">Employee Dashboard</h1>
+        <p class="subtitle">Punch in with selfie and location confirmation, manage breaks, then punch out with the same verification flow.</p>
+
+        <div id="timer" class="timer">00:00:00</div>
+        <div id="totalHours" class="total-hours">Total Hours: --</div>
+        <div id="scheduleNotice" class="schedule-notice">Working hours: Not assigned</div>
+
+        <div class="actions">
+          <button id="punchInBtn" class="btn btn-green" onclick="startPunchIn()">Punch In</button>
+          <button id="punchOutBtn" class="btn btn-red" onclick="startPunchOut()">Punch Out</button>
+          <button id="breakStartBtn" class="btn btn-yellow" onclick="startBreak()">Start Break</button>
+          <button id="breakEndBtn" class="btn btn-purple" onclick="endBreak()">Resume</button>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <h2>Today’s Flow</h2>
+        <div class="steps">
+          <div class="step">
+            <div class="step-number">1</div>
+            <div>
+              <div class="step-title">Open confirmation</div>
+              <p class="step-copy">Punch In opens a guided modal instead of saving immediately.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">2</div>
+            <div>
+              <div class="step-title">Verify face and place</div>
+              <p class="step-copy">Camera, map, and office radius status appear before confirmation.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">3</div>
+            <div>
+              <div class="step-title">Confirm attendance</div>
+              <p class="step-copy">Selfie and location are saved with punch in and punch out records.</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <aside class="panel">
+        <h2>Upcoming Holidays</h2>
+        <p class="subtitle">Plan your week around the next company holidays.</p>
+        <div id="holidayList" class="holiday-list">
+          <div class="holiday-item">
+            <div>
+              <div class="holiday-name">Loading holidays...</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <aside class="panel">
+        <h2>Notifications</h2>
+        <p class="subtitle">Important updates from your admin team.</p>
+        <div id="notificationList" class="holiday-list">
+          <div class="holiday-item">
+            <div>
+              <div class="holiday-name">Loading notifications...</div>
+            </div>
+          </div>
+        </div>
+        <button id="notificationToggle" class="link-button" type="button" onclick="toggleNotifications()">Show All</button>
+      </aside>
+
+      <aside class="panel">
+        <h2>Leave Management</h2>
+        <p class="subtitle">Apply for leave and track your available balance.</p>
+
+        <div class="leave-summary">
+          <div class="leave-stat">
+            <span>Balance</span>
+            <strong id="leaveBalance">--</strong>
+          </div>
+          <div class="leave-stat">
+            <span>Used</span>
+            <strong id="leaveUsed">--</strong>
+          </div>
+          <div class="leave-stat">
+            <span>Pending</span>
+            <strong id="leavePending">--</strong>
+          </div>
+        </div>
+
+        <div class="leave-form">
+          <select id="leaveType" class="leave-control">
+            <option value="Casual Leave">Casual Leave</option>
+            <option value="Sick Leave">Sick Leave</option>
+            <option value="Paid Leave">Paid Leave</option>
+            <option value="Unpaid Leave">Unpaid Leave</option>
+          </select>
+          <div class="leave-form-row">
+            <input id="leaveStartDate" class="leave-control" type="date">
+            <input id="leaveEndDate" class="leave-control" type="date">
+          </div>
+          <textarea id="leaveReason" class="leave-control" placeholder="Reason"></textarea>
+          <button class="btn btn-green" type="button" onclick="applyLeave()">Apply Leave</button>
+        </div>
+
+        <div id="leaveList" class="holiday-list">
+          <div class="holiday-item">
+            <div>
+              <div class="holiday-name">Loading leave requests...</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <div id="punchModal" class="modal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h2 id="modalTitle" class="modal-title">Confirm Punch In</h2>
+          <p id="modalSubtitle" class="modal-subtitle">Capture your selfie and confirm your location before continuing.</p>
+        </div>
+        <button class="modal-close" type="button" onclick="closePunchModal()">×</button>
+      </div>
+
+      <div class="modal-grid">
+        <section class="modal-section">
+          <div class="modal-section-title">Camera Preview</div>
+          <video id="video" autoplay playsinline></video>
+          <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+          <img id="selfiePreview" class="selfie-preview" alt="Captured selfie">
+          <button id="selfieBtn" class="btn" type="button" style="width:100%;margin-top:12px;" onclick="captureSelfie()">Capture Selfie</button>
+        </section>
+
+        <section class="modal-section">
+          <div class="modal-section-title">Live Location</div>
+          <iframe id="mapFrame" class="map-frame" title="Current location map"></iframe>
+          <div class="location-row">
+            <span id="locationText">Getting your location...</span>
+            <span id="distanceText">Distance: --</span>
+            <span id="radiusStatus" class="radius-status">Checking radius</span>
+          </div>
+        </section>
+      </div>
+
+      <div class="modal-actions">
+        <p id="confirmHelp" class="confirm-help">Capture selfie and wait for location check.</p>
+        <button class="btn btn-muted" type="button" onclick="closePunchModal()">Cancel</button>
+        <button id="confirmPunchBtn" class="btn btn-green" type="button" onclick="confirmPunch()" disabled>Confirm Punch In</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="profileModal" class="modal" aria-hidden="true">
+    <div class="modal-card profile-modal-card">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title">My Profile</h2>
+          <p class="modal-subtitle">Update your personal details for HR records.</p>
+        </div>
+        <button class="modal-close" type="button" onclick="closeProfileModal()">×</button>
+      </div>
+
+      <div class="profile-editor-head">
+        <img id="profilePreviewPhoto" class="profile-photo" src="assets/studit-logo-cropped.png" alt="Profile preview">
+        <div>
+          <div id="profilePreviewName" class="profile-name">Employee</div>
+          <span id="profilePreviewRole" class="profile-role">employee</span>
+          <p class="profile-editor-copy">Your profile photo is shown in the top corner of the dashboard.</p>
+        </div>
+      </div>
+
+      <div class="profile-form-grid">
+        <div class="profile-input-field">
+          <label for="profileEditPhoto">Profile Photo</label>
+          <input id="profileEditPhoto" type="file" accept="image/*">
+        </div>
+        <div class="profile-input-field">
+          <label for="profileEditName">Employee Name</label>
+          <input id="profileEditName" type="text" placeholder="Employee Name">
+        </div>
+        <div class="profile-input-field">
+          <label for="profileEditPhone">Phone Number</label>
+          <input id="profileEditPhone" type="tel" placeholder="Phone Number">
+        </div>
+        <div class="profile-input-field">
+          <label for="profileEditEmail">Email ID</label>
+          <input id="profileEditEmail" type="email" placeholder="Email ID">
+        </div>
+        <div class="profile-input-field">
+          <label for="profileEditRole">Role</label>
+          <input id="profileEditRole" type="text" readonly>
+        </div>
+        <div class="profile-input-field">
+          <label for="profileEditEmergency">Emergency Contact</label>
+          <input id="profileEditEmergency" type="tel" placeholder="Emergency Contact">
+        </div>
+        <div class="profile-input-field">
+          <label for="profileEditBlood">Blood Group</label>
+          <input id="profileEditBlood" type="text" placeholder="Blood Group">
+        </div>
+        <div class="profile-input-field">
+          <label for="profileEditBank">Bank Account Number</label>
+          <input id="profileEditBank" type="text" placeholder="Bank Account Number">
+        </div>
+        <div class="profile-input-field">
+          <label for="profileEditIfsc">IFSC Code</label>
+          <input id="profileEditIfsc" type="text" placeholder="IFSC Code">
+        </div>
+        <div class="profile-input-field full">
+          <label for="profileEditAddress">Current Address</label>
+          <textarea id="profileEditAddress" placeholder="Current Address"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-muted" type="button" onclick="closeProfileModal()">Cancel</button>
+        <button id="saveProfileBtn" class="btn btn-green" type="button" onclick="saveProfile()">Save Profile</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      query,
+      where,
+      getDocs,
+      updateDoc,
+      doc,
+      getDoc,
+      setDoc,
+      Timestamp
+    } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+    const firebaseConfig = {
+      apiKey: "AIzaSyCNeTvM8AR-hWitTD_MTK1AUHGTHUPWlcQ",
+      authDomain: "studit-attendance.firebaseapp.com",
+      projectId: "studit-attendance",
+      storageBucket: "studit-attendance.firebasestorage.app",
+      messagingSenderId: "891531257178",
+      appId: "1:891531257178:web:92679d4e304c514800bf63",
+      measurementId: "G-77M6T37TXJ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const today = new Date().toISOString().split("T")[0];
+    const officeLat = 20.3255339;
+    const officeLng = 85.8158527;
+    const allowedRadius = 100;
+    const attendanceSelfieWidth = 320;
+    const attendanceSelfieHeight = 240;
+    const attendanceSelfieQuality = 0.45;
+    const defaultGraceMinutes = 30;
+
+    const statusEl = document.getElementById("status");
+    const greetingTitle = document.getElementById("greetingTitle");
+    const timerEl = document.getElementById("timer");
+    const totalHoursEl = document.getElementById("totalHours");
+    const scheduleNotice = document.getElementById("scheduleNotice");
+    const punchInBtn = document.getElementById("punchInBtn");
+    const punchOutBtn = document.getElementById("punchOutBtn");
+    const breakStartBtn = document.getElementById("breakStartBtn");
+    const breakEndBtn = document.getElementById("breakEndBtn");
+    const modal = document.getElementById("punchModal");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalSubtitle = document.getElementById("modalSubtitle");
+    const confirmPunchBtn = document.getElementById("confirmPunchBtn");
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const selfiePreview = document.getElementById("selfiePreview");
+    const selfieBtn = document.getElementById("selfieBtn");
+    const locationText = document.getElementById("locationText");
+    const distanceText = document.getElementById("distanceText");
+    const radiusStatus = document.getElementById("radiusStatus");
+    const mapFrame = document.getElementById("mapFrame");
+    const confirmHelp = document.getElementById("confirmHelp");
+    const holidayList = document.getElementById("holidayList");
+    const notificationList = document.getElementById("notificationList");
+    const notificationToggle = document.getElementById("notificationToggle");
+    const leaveBalance = document.getElementById("leaveBalance");
+    const leaveUsed = document.getElementById("leaveUsed");
+    const leavePending = document.getElementById("leavePending");
+    const leaveList = document.getElementById("leaveList");
+    const topProfilePhoto = document.getElementById("topProfilePhoto");
+    const profileModal = document.getElementById("profileModal");
+    const profilePreviewPhoto = document.getElementById("profilePreviewPhoto");
+    const profilePreviewName = document.getElementById("profilePreviewName");
+    const profilePreviewRole = document.getElementById("profilePreviewRole");
+    const profileEditPhoto = document.getElementById("profileEditPhoto");
+    const profileEditName = document.getElementById("profileEditName");
+    const profileEditPhone = document.getElementById("profileEditPhone");
+    const profileEditEmail = document.getElementById("profileEditEmail");
+    const profileEditRole = document.getElementById("profileEditRole");
+    const profileEditAddress = document.getElementById("profileEditAddress");
+    const profileEditEmergency = document.getElementById("profileEditEmergency");
+    const profileEditBlood = document.getElementById("profileEditBlood");
+    const profileEditBank = document.getElementById("profileEditBank");
+    const profileEditIfsc = document.getElementById("profileEditIfsc");
+    const saveProfileBtn = document.getElementById("saveProfileBtn");
+
+    let timerInterval = null;
+    let stream = null;
+    let currentAction = "in";
+    let currentLocation = null;
+    let currentDistance = null;
+    let capturedSelfieBlob = null;
+    let latestAttendanceDoc = null;
+    let latestAttendanceData = null;
+    let employeeNotifications = [];
+    let showAllNotifications = false;
+    let currentEmployeeProfile = null;
+    let selfiePreviewUrl = null;
+    let scheduleInterval = null;
+    let autoLogoutInProgress = false;
+
+    window.logout = async function () {
+      stopScheduleWatcher();
+      stopCamera();
+      await signOut(auth);
+      window.location.href = "index.html";
+    };
+
+    function formatDuration(ms) {
+      const safeMs = Math.max(ms, 0);
+      const hrs = Math.floor(safeMs / 3600000);
+      const mins = Math.floor((safeMs % 3600000) / 60000);
+      return `${hrs}h ${mins}m`;
+    }
+
+    function formatTimer(ms) {
+      const safeMs = Math.max(ms, 0);
+      const hours = String(Math.floor(safeMs / 3600000)).padStart(2, "0");
+      const mins = String(Math.floor((safeMs % 3600000) / 60000)).padStart(2, "0");
+      const secs = String(Math.floor((safeMs % 60000) / 1000)).padStart(2, "0");
+      return `${hours}:${mins}:${secs}`;
+    }
+
+    function formatDisplayDate(dateText) {
+      return new Date(dateText + "T00:00:00").toLocaleDateString(undefined, {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+        year: "numeric"
+      });
+    }
+
+    function countLeaveDays(startDate, endDate) {
+      if (!startDate || !endDate || endDate < startDate) {
+        return 0;
+      }
+
+      let days = 0;
+      const current = new Date(startDate + "T00:00:00");
+      const end = new Date(endDate + "T00:00:00");
+
+      while (current <= end) {
+        if (current.getDay() !== 0) {
+          days++;
+        }
+
+        current.setDate(current.getDate() + 1);
+      }
+
+      return days;
+    }
+
+    function getLeaveAllowance(profile) {
+      const allowance = Number(profile?.leaveAllowance ?? profile?.leaveBalance);
+      return Number.isFinite(allowance) && allowance >= 0 ? allowance : 12;
+    }
+
+    function formatScheduleTime(timeText) {
+      if (!timeText) return "--";
+
+      return new Date(`${today}T${timeText}:00`).toLocaleTimeString(undefined, {
+        hour: "numeric",
+        minute: "2-digit"
+      });
+    }
+
+    function getAssignedScheduleEnd(profile) {
+      if (!profile?.workEnd) {
+        return null;
+      }
+
+      const endDate = new Date(`${today}T${profile.workEnd}:00`);
+
+      if (profile.workStart) {
+        const startDate = new Date(`${today}T${profile.workStart}:00`);
+
+        if (endDate <= startDate) {
+          endDate.setDate(endDate.getDate() + 1);
+        }
+      }
+
+      return endDate;
+    }
+
+    function getGraceMinutes(profile) {
+      const graceMinutes = Number(profile?.graceMinutes);
+      return Number.isFinite(graceMinutes) && graceMinutes > 0
+        ? graceMinutes
+        : defaultGraceMinutes;
+    }
+
+    function setScheduleNotice(message, state = "normal") {
+      scheduleNotice.innerText = message;
+      scheduleNotice.classList.remove("warning", "danger");
+
+      if (state !== "normal") {
+        scheduleNotice.classList.add(state);
+      }
+    }
+
+    function updateScheduleNotice(profile, attendanceData = latestAttendanceData) {
+      if (!profile?.workStart || !profile?.workEnd) {
+        setScheduleNotice("Working hours: Not assigned");
+        return;
+      }
+
+      const startText = formatScheduleTime(profile.workStart);
+      const endText = formatScheduleTime(profile.workEnd);
+      const scheduleEnd = getAssignedScheduleEnd(profile);
+
+      if (!attendanceData || attendanceData.status === "completed" || attendanceData.status === "missed-punch-out") {
+        setScheduleNotice(`Working hours: ${startText} to ${endText}`);
+        return;
+      }
+
+      const now = new Date();
+      const graceMinutes = getGraceMinutes(profile);
+      const graceEnd = new Date(scheduleEnd.getTime() + graceMinutes * 60000);
+
+      if (now < scheduleEnd) {
+        setScheduleNotice(`Working hours: ${startText} to ${endText}`);
+        return;
+      }
+
+      if (now < graceEnd) {
+        const minutesLeft = Math.max(Math.ceil((graceEnd - now) / 60000), 1);
+        setScheduleNotice(`Please punch out before auto logout. ${minutesLeft} min left.`, "warning");
+        return;
+      }
+
+      setScheduleNotice("Grace period ended. Auto logout is processing.", "danger");
+    }
+
+    async function getLocation() {
+      return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            resolve({
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude
+            });
+          },
+          (err) => reject(err),
+          {
+            enableHighAccuracy: true,
+            timeout: 12000,
+            maximumAge: 0
+          }
+        );
+      });
+    }
+
+    function getDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371e3;
+      const phi1 = lat1 * Math.PI / 180;
+      const phi2 = lat2 * Math.PI / 180;
+      const deltaPhi = (lat2 - lat1) * Math.PI / 180;
+      const deltaLambda = (lon2 - lon1) * Math.PI / 180;
+
+      const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+                Math.cos(phi1) * Math.cos(phi2) *
+                Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    function setButtonsForStatus(status) {
+      if (status === "working") {
+        punchInBtn.disabled = true;
+        punchOutBtn.disabled = false;
+        breakStartBtn.disabled = false;
+        breakEndBtn.disabled = true;
+        return;
+      }
+
+      if (status === "break") {
+        punchInBtn.disabled = true;
+        punchOutBtn.disabled = false;
+        breakStartBtn.disabled = true;
+        breakEndBtn.disabled = false;
+        return;
+      }
+
+      if (status === "completed" || status === "missed-punch-out") {
+        punchInBtn.disabled = true;
+        punchOutBtn.disabled = true;
+        breakStartBtn.disabled = true;
+        breakEndBtn.disabled = true;
+        return;
+      }
+
+      punchInBtn.disabled = false;
+      punchOutBtn.disabled = true;
+      breakStartBtn.disabled = true;
+      breakEndBtn.disabled = true;
+    }
+
+    function startTimer(startTime) {
+      clearInterval(timerInterval);
+
+      timerInterval = setInterval(() => {
+        const now = new Date();
+        const diff = now - startTime;
+        timerEl.innerText = formatTimer(diff);
+      }, 1000);
+    }
+
+    function stopTimer(displayText = null) {
+      clearInterval(timerInterval);
+      if (displayText) {
+        timerEl.innerText = displayText;
+      }
+    }
+
+    async function getTodayAttendance(user) {
+      const attendanceQuery = query(
+        collection(db, "attendance"),
+        where("userId", "==", user.uid),
+        where("date", "==", today)
+      );
+
+      const attendanceSnap = await getDocs(attendanceQuery);
+
+      if (attendanceSnap.empty) {
+        return null;
+      }
+
+      const docSnap = attendanceSnap.docs[0];
+      return {
+        id: docSnap.id,
+        ref: doc(db, "attendance", docSnap.id),
+        data: docSnap.data()
+      };
+    }
+
+    async function getTotalBreakMs(user, fallbackEndTime = null) {
+      const breakQuery = query(
+        collection(db, "breaks"),
+        where("userId", "==", user.uid),
+        where("date", "==", today)
+      );
+
+      const breakSnap = await getDocs(breakQuery);
+      let totalBreakMs = 0;
+
+      breakSnap.forEach((breakDoc) => {
+        const breakData = breakDoc.data();
+        if (breakData.breakStart) {
+          const endTime = breakData.breakEnd ? breakData.breakEnd.toDate() : fallbackEndTime;
+
+          if (endTime) {
+            totalBreakMs += endTime - breakData.breakStart.toDate();
+          }
+        }
+      });
+
+      return totalBreakMs;
+    }
+
+    async function closeOpenBreaks(user) {
+      const breakQuery = query(
+        collection(db, "breaks"),
+        where("userId", "==", user.uid),
+        where("date", "==", today)
+      );
+
+      const snapshot = await getDocs(breakQuery);
+      const updates = [];
+
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+
+        if (!data.breakEnd) {
+          updates.push(updateDoc(doc(db, "breaks", docSnap.id), {
+            breakEnd: Timestamp.now()
+          }));
+        }
+      });
+
+      await Promise.all(updates);
+    }
+
+    async function refreshStatus(user) {
+      const attendance = await getTodayAttendance(user);
+      latestAttendanceDoc = attendance;
+      latestAttendanceData = attendance ? attendance.data : null;
+
+      if (!attendance) {
+        statusEl.innerText = "Not Checked In";
+        timerEl.innerText = "00:00:00";
+        totalHoursEl.innerText = "Total Hours: --";
+        totalHoursEl.style.color = "#374151";
+        setButtonsForStatus("none");
+        stopTimer();
+        updateScheduleNotice(currentEmployeeProfile, null);
+        return;
+      }
+
+      const data = attendance.data;
+      updateScheduleNotice(currentEmployeeProfile, data);
+
+      if (data.status === "working") {
+        statusEl.innerText = "Working";
+        totalHoursEl.innerText = "Total Hours: --";
+        totalHoursEl.style.color = "#374151";
+        setButtonsForStatus("working");
+        startTimer(data.punchIn.toDate());
+        return;
+      }
+
+      if (data.status === "break") {
+        statusEl.innerText = "On Break";
+        setButtonsForStatus("break");
+        startTimer(data.punchIn.toDate());
+        return;
+      }
+
+      if (data.status === "completed") {
+        statusEl.innerText = "Completed";
+        totalHoursEl.innerText = "Total Hours: " + (data.totalHours || "0h 0m");
+        totalHoursEl.style.color = "green";
+        setButtonsForStatus("completed");
+        stopTimer("Finished");
+      }
+
+      if (data.status === "missed-punch-out") {
+        statusEl.innerText = "Missed Punch Out";
+        totalHoursEl.innerText = "Total Hours: " + (data.totalHours || "0h 0m");
+        totalHoursEl.style.color = "#b91c1c";
+        setButtonsForStatus("missed-punch-out");
+        stopTimer("Auto Logged Out");
+      }
+    }
+
+    async function markMissedPunchOutAndLogout(user, attendance, profile) {
+      if (autoLogoutInProgress) {
+        return;
+      }
+
+      autoLogoutInProgress = true;
+      const autoLogoutTime = new Date();
+
+      try {
+        await closeOpenBreaks(user);
+
+        const totalMs = autoLogoutTime - attendance.data.punchIn.toDate();
+        const totalBreakMs = await getTotalBreakMs(user, autoLogoutTime);
+        const workingMs = totalMs - totalBreakMs;
+        const hours = formatDuration(workingMs);
+
+        await updateDoc(attendance.ref, {
+          punchOut: Timestamp.fromDate(autoLogoutTime),
+          autoLogoutAt: Timestamp.fromDate(autoLogoutTime),
+          assignedWorkStart: profile?.workStart || "",
+          assignedWorkEnd: profile?.workEnd || "",
+          missedPunchOut: true,
+          punchOutType: "auto",
+          status: "missed-punch-out",
+          totalHours: hours
+        });
+
+        statusEl.innerText = "Missed Punch Out";
+        totalHoursEl.innerText = "Total Hours: " + hours;
+        totalHoursEl.style.color = "#b91c1c";
+        setButtonsForStatus("missed-punch-out");
+        stopTimer("Auto Logged Out");
+        setScheduleNotice("You missed punch out. Attendance was auto closed.", "danger");
+
+        alert("You missed punch out. Attendance was auto closed and you will be logged out.");
+      } catch (error) {
+        console.error(error);
+        alert("Auto logout failed: " + error.message);
+      } finally {
+        stopScheduleWatcher();
+        stopCamera();
+        await signOut(auth);
+        window.location.href = "index.html";
+      }
+    }
+
+    async function evaluateWorkingHours(user) {
+      if (!user || autoLogoutInProgress) {
+        return;
+      }
+
+      const profile = currentEmployeeProfile;
+      const scheduleEnd = getAssignedScheduleEnd(profile);
+
+      if (!profile?.workEnd || !scheduleEnd) {
+        updateScheduleNotice(profile);
+        return;
+      }
+
+      const attendance = await getTodayAttendance(user);
+      latestAttendanceDoc = attendance;
+      latestAttendanceData = attendance ? attendance.data : null;
+
+      updateScheduleNotice(profile, latestAttendanceData);
+
+      if (!attendance) {
+        return;
+      }
+
+      const status = attendance.data.status;
+      const isActive = status === "working" || status === "break";
+
+      if (!isActive) {
+        return;
+      }
+
+      const graceMinutes = getGraceMinutes(profile);
+      const graceEnd = new Date(scheduleEnd.getTime() + graceMinutes * 60000);
+
+      if (new Date() >= graceEnd) {
+        await markMissedPunchOutAndLogout(user, attendance, profile);
+      }
+    }
+
+    function startScheduleWatcher(user) {
+      stopScheduleWatcher();
+      autoLogoutInProgress = false;
+      evaluateWorkingHours(user).catch((error) => console.error(error));
+      scheduleInterval = setInterval(() => {
+        evaluateWorkingHours(user).catch((error) => console.error(error));
+      }, 30000);
+    }
+
+    function stopScheduleWatcher() {
+      if (scheduleInterval) {
+        clearInterval(scheduleInterval);
+        scheduleInterval = null;
+      }
+    }
+
+    async function linkUserToEmployee(user) {
+      const employeeQuery = query(
+        collection(db, "employees"),
+        where("email", "==", user.email)
+      );
+
+      const snapshot = await getDocs(employeeQuery);
+
+      snapshot.forEach(async (docSnap) => {
+        await updateDoc(doc(db, "employees", docSnap.id), {
+          userId: user.uid
+        });
+      });
+    }
+
+    function getGreetingText() {
+      const hour = new Date().getHours();
+
+      if (hour < 12) return "Good Morning";
+      if (hour < 17) return "Good Afternoon";
+      return "Good Evening";
+    }
+
+    async function getEmployeeProfile(user) {
+      const directSnap = await getDoc(doc(db, "employees", user.uid));
+
+      if (directSnap.exists()) {
+        return {
+          uid: user.uid,
+          ...directSnap.data()
+        };
+      }
+
+      const employeeQuery = query(
+        collection(db, "employees"),
+        where("email", "==", user.email)
+      );
+      const snapshot = await getDocs(employeeQuery);
+
+      if (!snapshot.empty) {
+        return {
+          uid: snapshot.docs[0].id,
+          ...snapshot.docs[0].data()
+        };
+      }
+
+      return null;
+    }
+
+    async function loadEmployeeProfile(user) {
+      const profile = await getEmployeeProfile(user);
+      const fallbackName = user.email ? user.email.split("@")[0] : "Employee";
+      const employeeName = profile?.name || fallbackName;
+      const photo = profile?.photo || "assets/studit-logo-cropped.png";
+
+      currentEmployeeProfile = profile || {
+        uid: user.uid,
+        name: employeeName,
+        email: user.email || "",
+        role: "employee"
+      };
+      greetingTitle.innerText = `${getGreetingText()}, ${employeeName}`;
+      topProfilePhoto.src = photo;
+      topProfilePhoto.alt = `${employeeName} profile photo`;
+      updateScheduleNotice(currentEmployeeProfile);
+    }
+
+    async function imageFileToDataUrl(file) {
+      const imageUrl = URL.createObjectURL(file);
+
+      try {
+        const image = await new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = reject;
+          img.src = imageUrl;
+        });
+
+        const maxSize = 520;
+        const scale = Math.min(maxSize / image.width, maxSize / image.height, 1);
+        const previewCanvas = document.createElement("canvas");
+        previewCanvas.width = Math.round(image.width * scale);
+        previewCanvas.height = Math.round(image.height * scale);
+
+        const ctx = previewCanvas.getContext("2d");
+        ctx.drawImage(image, 0, 0, previewCanvas.width, previewCanvas.height);
+
+        return previewCanvas.toDataURL("image/jpeg", 0.78);
+      } finally {
+        URL.revokeObjectURL(imageUrl);
+      }
+    }
+
+    function fillProfileModal(user) {
+      const profile = currentEmployeeProfile || {};
+      const fallbackName = user.email ? user.email.split("@")[0] : "Employee";
+      const employeeName = profile.name || fallbackName;
+      const role = profile.role || "employee";
+      const photo = profile.photo || "assets/studit-logo-cropped.png";
+
+      profilePreviewPhoto.src = photo;
+      profilePreviewName.innerText = employeeName;
+      profilePreviewRole.innerText = role;
+      profileEditPhoto.value = "";
+      profileEditName.value = employeeName;
+      profileEditPhone.value = profile.phone || "";
+      profileEditEmail.value = profile.email || user.email || "";
+      profileEditRole.value = role;
+      profileEditAddress.value = profile.currentAddress || "";
+      profileEditEmergency.value = profile.emergencyContact || "";
+      profileEditBlood.value = profile.bloodGroup || "";
+      profileEditBank.value = profile.bankAccount || "";
+      profileEditIfsc.value = profile.ifscCode || "";
+    }
+
+    profileEditPhoto.addEventListener("change", async () => {
+      const file = profileEditPhoto.files[0];
+
+      if (!file) {
+        profilePreviewPhoto.src = currentEmployeeProfile?.photo || "assets/studit-logo-cropped.png";
+        return;
+      }
+
+      try {
+        profilePreviewPhoto.src = await imageFileToDataUrl(file);
+      } catch (error) {
+        console.error(error);
+        alert("Profile photo preview failed");
+        profileEditPhoto.value = "";
+      }
+    });
+
+    profileEditName.addEventListener("input", () => {
+      profilePreviewName.innerText = profileEditName.value.trim() || "Employee";
+    });
+
+    window.openProfileModal = async function () {
+      const user = auth.currentUser;
+
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+
+      if (!currentEmployeeProfile) {
+        await loadEmployeeProfile(user);
+      }
+
+      fillProfileModal(user);
+      profileModal.classList.add("open");
+      profileModal.setAttribute("aria-hidden", "false");
+    };
+
+    window.closeProfileModal = function () {
+      profileModal.classList.remove("open");
+      profileModal.setAttribute("aria-hidden", "true");
+      profileEditPhoto.value = "";
+    };
+
+    window.saveProfile = async function () {
+      const user = auth.currentUser;
+
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+
+      const updatedProfile = {
+        name: profileEditName.value.trim(),
+        phone: profileEditPhone.value.trim(),
+        email: profileEditEmail.value.trim(),
+        role: currentEmployeeProfile?.role || profileEditRole.value || "employee",
+        userId: user.uid,
+        currentAddress: profileEditAddress.value.trim(),
+        emergencyContact: profileEditEmergency.value.trim(),
+        bloodGroup: profileEditBlood.value.trim(),
+        bankAccount: profileEditBank.value.trim(),
+        ifscCode: profileEditIfsc.value.trim()
+      };
+
+      if (!updatedProfile.name || !updatedProfile.email) {
+        alert("Name and email are required");
+        return;
+      }
+
+      saveProfileBtn.disabled = true;
+      saveProfileBtn.innerText = "Saving...";
+
+      try {
+        const file = profileEditPhoto.files[0];
+
+        if (file) {
+          updatedProfile.photo = await imageFileToDataUrl(file);
+        }
+
+        await setDoc(doc(db, "employees", user.uid), updatedProfile, { merge: true });
+
+        currentEmployeeProfile = {
+          ...currentEmployeeProfile,
+          uid: user.uid,
+          ...updatedProfile
+        };
+
+        await loadEmployeeProfile(user);
+        closeProfileModal();
+        alert("Profile updated successfully");
+      } catch (error) {
+        console.error(error);
+        alert(error.message);
+      } finally {
+        saveProfileBtn.disabled = false;
+        saveProfileBtn.innerText = "Save Profile";
+      }
+    };
+
+    async function loadUpcomingHolidays() {
+      const holidaySnap = await getDocs(collection(db, "holidays"));
+      const holidays = [];
+
+      holidaySnap.forEach((docSnap) => {
+        const data = docSnap.data();
+
+        if (data.date >= today) {
+          holidays.push(data);
+        }
+      });
+
+      holidays.sort((a, b) => a.date.localeCompare(b.date));
+      holidayList.innerHTML = "";
+
+      if (!holidays.length) {
+        holidayList.innerHTML = `
+          <div class="holiday-item">
+            <div>
+              <div class="holiday-name">No upcoming holidays</div>
+              <div class="holiday-date">New holidays will appear here.</div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      holidays.slice(0, 5).forEach((holiday) => {
+        holidayList.innerHTML += `
+          <div class="holiday-item">
+            <div>
+              <div class="holiday-name">${holiday.name}</div>
+              <div class="holiday-date">${formatDisplayDate(holiday.date)}</div>
+            </div>
+            <span class="holiday-badge">${holiday.type || "company"}</span>
+          </div>
+        `;
+      });
+    }
+
+    async function loadEmployeeNotifications(user) {
+      try {
+        const notificationSnap = await getDocs(collection(db, "notifications"));
+        employeeNotifications = [];
+        showAllNotifications = false;
+
+        notificationSnap.forEach((docSnap) => {
+          const data = docSnap.data();
+          const targetType = data.targetType || "all";
+          const isForAll = targetType === "all";
+          const isForUid = data.targetUid && data.targetUid === user.uid;
+          const isForEmail = data.targetEmail && data.targetEmail === user.email;
+
+          if (isForAll || isForUid || isForEmail) {
+            employeeNotifications.push(data);
+          }
+        });
+
+        employeeNotifications.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+        renderNotifications();
+      } catch (error) {
+        console.error(error);
+        notificationToggle.style.display = "none";
+        notificationList.innerHTML = `
+          <div class="holiday-item">
+            <div>
+              <div class="holiday-name">Notifications could not load</div>
+              <div class="holiday-date">${error.message}</div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function renderNotifications() {
+      notificationList.innerHTML = "";
+
+      if (!employeeNotifications.length) {
+        notificationToggle.style.display = "none";
+        notificationList.innerHTML = `
+          <div class="holiday-item">
+            <div>
+              <div class="holiday-name">No notifications</div>
+              <div class="holiday-date">Updates from admin will appear here.</div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      const visibleNotifications = showAllNotifications
+        ? employeeNotifications
+        : employeeNotifications.slice(0, 1);
+
+      visibleNotifications.forEach((notification) => {
+        const createdDate = notification.createdAt
+          ? new Date(notification.createdAt).toLocaleString()
+          : "";
+
+        notificationList.innerHTML += `
+          <div class="holiday-item">
+            <div>
+              <div class="holiday-name">${notification.title}</div>
+              <div class="holiday-date">${createdDate}</div>
+              <div class="notification-message">${notification.message}</div>
+            </div>
+            <span class="holiday-badge">${(notification.targetType || "all") === "all" ? "all" : "you"}</span>
+          </div>
+        `;
+      });
+
+      notificationToggle.style.display = employeeNotifications.length > 1 ? "block" : "none";
+      notificationToggle.innerText = showAllNotifications
+        ? "Show Recent"
+        : `Show All (${employeeNotifications.length})`;
+    }
+
+    window.toggleNotifications = function () {
+      showAllNotifications = !showAllNotifications;
+      renderNotifications();
+    };
+
+    async function loadEmployeeLeaves(user) {
+      try {
+        const leaveSnap = await getDocs(collection(db, "leaves"));
+        const leaves = [];
+
+        leaveSnap.forEach((docSnap) => {
+          const data = docSnap.data();
+
+          if (data.userId === user.uid) {
+            leaves.push({ id: docSnap.id, ...data });
+          }
+        });
+
+        leaves.sort((a, b) => (b.appliedAt || "").localeCompare(a.appliedAt || ""));
+
+        const allowance = getLeaveAllowance(currentEmployeeProfile);
+        const approvedDays = leaves
+          .filter((leave) => leave.status === "approved")
+          .reduce((sum, leave) => sum + Number(leave.days || 0), 0);
+        const pendingDays = leaves
+          .filter((leave) => leave.status === "pending")
+          .reduce((sum, leave) => sum + Number(leave.days || 0), 0);
+        const balance = Math.max(allowance - approvedDays, 0);
+
+        leaveBalance.innerText = balance;
+        leaveUsed.innerText = approvedDays;
+        leavePending.innerText = pendingDays;
+        leaveList.innerHTML = "";
+
+        if (!leaves.length) {
+          leaveList.innerHTML = `
+            <div class="holiday-item">
+              <div>
+                <div class="holiday-name">No leave requests yet</div>
+                <div class="holiday-date">Your requests will appear here.</div>
+              </div>
+            </div>
+          `;
+          return;
+        }
+
+        leaves.slice(0, 5).forEach((leave) => {
+          const statusClass =
+            leave.status === "approved" ? "green" :
+            leave.status === "rejected" ? "red" : "yellow";
+
+          leaveList.innerHTML += `
+            <div class="holiday-item">
+              <div>
+                <div class="holiday-name">${leave.leaveType || "Leave"} · ${leave.days || 0} day(s)</div>
+                <div class="holiday-date">${formatDisplayDate(leave.startDate)} - ${formatDisplayDate(leave.endDate)}</div>
+                <div class="notification-message">${leave.reason || ""}</div>
+              </div>
+              <span class="holiday-badge ${statusClass}">${leave.status || "pending"}</span>
+            </div>
+          `;
+        });
+      } catch (error) {
+        console.error(error);
+        leaveList.innerHTML = `
+          <div class="holiday-item">
+            <div>
+              <div class="holiday-name">Leave requests could not load</div>
+              <div class="holiday-date">${error.message}</div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    window.applyLeave = async function () {
+      const user = auth.currentUser;
+
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+
+      const leaveType = document.getElementById("leaveType").value;
+      const startDate = document.getElementById("leaveStartDate").value;
+      const endDate = document.getElementById("leaveEndDate").value;
+      const reason = document.getElementById("leaveReason").value.trim();
+      const days = countLeaveDays(startDate, endDate);
+
+      if (!startDate || !endDate || !reason) {
+        alert("Please select dates and enter reason");
+        return;
+      }
+
+      if (!days) {
+        alert("Please select a valid leave date range");
+        return;
+      }
+
+      const leaveSnap = await getDocs(collection(db, "leaves"));
+      let approvedDays = 0;
+
+      leaveSnap.forEach((docSnap) => {
+        const leave = docSnap.data();
+
+        if (leave.userId === user.uid && leave.status === "approved") {
+          approvedDays += Number(leave.days || 0);
+        }
+      });
+
+      const availableDays = Math.max(getLeaveAllowance(currentEmployeeProfile) - approvedDays, 0);
+
+      if (days > availableDays) {
+        alert("You do not have enough leave balance");
+        return;
+      }
+
+      const leaveId = `${user.uid}_${Date.now()}`;
+
+      await setDoc(doc(db, "leaves", leaveId), {
+        userId: user.uid,
+        employeeName: currentEmployeeProfile?.name || user.email || "Employee",
+        employeeEmail: currentEmployeeProfile?.email || user.email || "",
+        leaveType,
+        startDate,
+        endDate,
+        days,
+        reason,
+        status: "pending",
+        appliedAt: new Date().toISOString()
+      });
+
+      alert("Leave request submitted");
+
+      document.getElementById("leaveStartDate").value = "";
+      document.getElementById("leaveEndDate").value = "";
+      document.getElementById("leaveReason").value = "";
+
+      loadEmployeeLeaves(user);
+    };
+
+    async function openCamera() {
+      stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      video.srcObject = stream;
+    }
+
+    function stopCamera() {
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+        stream = null;
+      }
+      video.srcObject = null;
+    }
+
+    function updateConfirmState() {
+      const locationOk = currentDistance !== null && currentDistance <= allowedRadius;
+      const ready = Boolean(capturedSelfieBlob) && locationOk;
+
+      confirmPunchBtn.disabled = !ready;
+
+      if (ready) {
+        confirmPunchBtn.removeAttribute("disabled");
+        confirmPunchBtn.style.opacity = "1";
+        confirmPunchBtn.style.cursor = "pointer";
+        confirmHelp.innerText = "Ready to confirm.";
+        return;
+      }
+
+      if (!capturedSelfieBlob && !locationOk) {
+        confirmHelp.innerText = "Capture selfie and wait for location check.";
+      } else if (!capturedSelfieBlob) {
+        confirmHelp.innerText = "Capture selfie to continue.";
+      } else {
+        confirmHelp.innerText = "You must be inside the office radius.";
+      }
+    }
+
+    async function loadLiveLocation() {
+      locationText.innerText = "Getting your location...";
+      distanceText.innerText = "Distance: --";
+      radiusStatus.innerText = "Checking radius";
+      radiusStatus.classList.remove("ok");
+
+      currentLocation = await getLocation();
+      currentDistance = getDistance(
+        currentLocation.lat,
+        currentLocation.lng,
+        officeLat,
+        officeLng
+      );
+
+      const roundedDistance = Math.round(currentDistance);
+      const mapDelta = 0.003;
+      const left = currentLocation.lng - mapDelta;
+      const right = currentLocation.lng + mapDelta;
+      const top = currentLocation.lat + mapDelta;
+      const bottom = currentLocation.lat - mapDelta;
+
+      mapFrame.src = `https://www.openstreetmap.org/export/embed.html?bbox=${left},${bottom},${right},${top}&layer=mapnik&marker=${currentLocation.lat},${currentLocation.lng}`;
+      locationText.innerText = `Lat: ${currentLocation.lat.toFixed(6)}, Lng: ${currentLocation.lng.toFixed(6)}`;
+      distanceText.innerText = `Distance from office: ${roundedDistance}m / ${allowedRadius}m`;
+
+      if (currentDistance <= allowedRadius) {
+        radiusStatus.innerText = "Inside office radius";
+        radiusStatus.classList.add("ok");
+      } else {
+        radiusStatus.innerText = "Outside office radius";
+        radiusStatus.classList.remove("ok");
+      }
+
+      updateConfirmState();
+    }
+
+    async function openPunchModal(action) {
+      currentAction = action;
+      capturedSelfieBlob = null;
+      currentLocation = null;
+      currentDistance = null;
+
+      const isPunchOut = action === "out";
+      modalTitle.innerText = isPunchOut ? "Confirm Punch Out" : "Confirm Punch In";
+      modalSubtitle.innerText = isPunchOut
+        ? "Capture a selfie and confirm your location before ending your work day."
+        : "Capture a selfie and confirm your location before starting your timer.";
+      confirmPunchBtn.innerText = isPunchOut ? "Confirm Punch Out" : "Confirm Punch In";
+      confirmPunchBtn.className = isPunchOut ? "btn btn-red" : "btn btn-green";
+      confirmPunchBtn.disabled = true;
+      confirmPunchBtn.style.opacity = "";
+      confirmPunchBtn.style.cursor = "";
+      confirmHelp.innerText = "Capture selfie and wait for location check.";
+      selfiePreview.style.display = "none";
+      selfiePreview.removeAttribute("src");
+      selfieBtn.innerText = "Capture Selfie";
+      selfieBtn.disabled = false;
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+
+      try {
+        await Promise.all([
+          openCamera(),
+          loadLiveLocation()
+        ]);
+      } catch (error) {
+        console.error(error);
+        alert(error.message);
+        closePunchModal();
+      }
+    }
+
+    window.closePunchModal = function () {
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+      stopCamera();
+      capturedSelfieBlob = null;
+      if (selfiePreviewUrl) {
+        URL.revokeObjectURL(selfiePreviewUrl);
+        selfiePreviewUrl = null;
+      }
+      currentLocation = null;
+      currentDistance = null;
+      confirmPunchBtn.disabled = true;
+    };
+
+    window.startPunchIn = async function () {
+      const user = auth.currentUser;
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+
+      await refreshStatus(user);
+
+      if (latestAttendanceData && ["working", "break"].includes(latestAttendanceData.status)) {
+        alert("You are already punched in today");
+        return;
+      }
+
+      if (latestAttendanceData && ["completed", "missed-punch-out"].includes(latestAttendanceData.status)) {
+        alert("Today is already completed");
+        return;
+      }
+
+      await openPunchModal("in");
+    };
+
+    window.startPunchOut = async function () {
+      const user = auth.currentUser;
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+
+      await refreshStatus(user);
+
+      if (!latestAttendanceDoc || !["working", "break"].includes(latestAttendanceData.status)) {
+        alert("No active punch in found");
+        return;
+      }
+
+      await openPunchModal("out");
+    };
+
+    function drawCompressedSelfieFrame() {
+      canvas.width = attendanceSelfieWidth;
+      canvas.height = attendanceSelfieHeight;
+
+      const ctx = canvas.getContext("2d");
+      const videoWidth = video.videoWidth;
+      const videoHeight = video.videoHeight;
+
+      if (!videoWidth || !videoHeight) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        return;
+      }
+
+      const targetRatio = canvas.width / canvas.height;
+      const videoRatio = videoWidth / videoHeight;
+
+      let sourceX = 0;
+      let sourceY = 0;
+      let sourceWidth = videoWidth;
+      let sourceHeight = videoHeight;
+
+      if (videoRatio > targetRatio) {
+        sourceWidth = videoHeight * targetRatio;
+        sourceX = (videoWidth - sourceWidth) / 2;
+      } else {
+        sourceHeight = videoWidth / targetRatio;
+        sourceY = (videoHeight - sourceHeight) / 2;
+      }
+
+      ctx.drawImage(
+        video,
+        sourceX,
+        sourceY,
+        sourceWidth,
+        sourceHeight,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+    }
+
+    window.captureSelfie = function () {
+      selfieBtn.disabled = true;
+      drawCompressedSelfieFrame();
+
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          alert("Selfie capture failed");
+          selfieBtn.disabled = false;
+          return;
+        }
+
+        capturedSelfieBlob = blob;
+        if (selfiePreviewUrl) {
+          URL.revokeObjectURL(selfiePreviewUrl);
+        }
+        selfiePreviewUrl = URL.createObjectURL(blob);
+        selfiePreview.src = selfiePreviewUrl;
+        selfiePreview.style.display = "block";
+        selfieBtn.innerText = "Retake Selfie";
+        selfieBtn.disabled = false;
+        updateConfirmState();
+      }, "image/jpeg", attendanceSelfieQuality);
+    };
+
+    function blobToDataUrl(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    async function uploadSelfie() {
+      return blobToDataUrl(capturedSelfieBlob);
+    }
+
+    function withTimeout(promise, message) {
+      return Promise.race([
+        promise,
+        new Promise((_, reject) => {
+          setTimeout(() => reject(new Error(message)), 15000);
+        })
+      ]);
+    }
+
+    window.confirmPunch = async function () {
+      const user = auth.currentUser;
+
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+
+      if (!capturedSelfieBlob) {
+        alert("Please capture selfie first");
+        return;
+      }
+
+      if (!currentLocation || currentDistance > allowedRadius) {
+        alert("You must be inside the office radius");
+        return;
+      }
+
+      confirmPunchBtn.disabled = true;
+      confirmPunchBtn.innerText = currentAction === "in" ? "Saving Punch In..." : "Saving Punch Out...";
+      confirmHelp.innerText = "Saving attendance. Please wait...";
+
+      try {
+        if (currentAction === "in") {
+          const punchInTime = new Date();
+          confirmHelp.innerText = "Preparing selfie...";
+          const imageUrl = await uploadSelfie();
+
+          confirmHelp.innerText = "Saving punch in...";
+          await withTimeout(addDoc(collection(db, "attendance"), {
+            userId: user.uid,
+            date: today,
+            punchIn: Timestamp.fromDate(punchInTime),
+            location: currentLocation,
+            selfie: imageUrl,
+            assignedWorkStart: currentEmployeeProfile?.workStart || "",
+            assignedWorkEnd: currentEmployeeProfile?.workEnd || "",
+            graceMinutes: getGraceMinutes(currentEmployeeProfile),
+            status: "working"
+          }), "Punch in save timed out. Please check Firestore rules or internet connection.");
+
+          statusEl.innerText = "Working";
+          setButtonsForStatus("working");
+          startTimer(punchInTime);
+          alert("Punch In Successful");
+        } else {
+          const attendance = await getTodayAttendance(user);
+
+          if (!attendance || !["working", "break"].includes(attendance.data.status)) {
+            alert("No active punch in found");
+            return;
+          }
+
+          confirmHelp.innerText = "Preparing selfie...";
+          const imageUrl = await uploadSelfie();
+          const punchOutTime = new Date();
+          const totalMs = punchOutTime - attendance.data.punchIn.toDate();
+          const totalBreakMs = await getTotalBreakMs(user, punchOutTime);
+          const workingMs = totalMs - totalBreakMs;
+          const hours = formatDuration(workingMs);
+
+          await closeOpenBreaks(user);
+
+          confirmHelp.innerText = "Saving punch out...";
+          await withTimeout(updateDoc(attendance.ref, {
+            punchOut: Timestamp.fromDate(punchOutTime),
+            punchOutLocation: currentLocation,
+            punchOutSelfie: imageUrl,
+            punchOutType: "manual",
+            missedPunchOut: false,
+            status: "completed",
+            totalHours: hours
+          }), "Punch out save timed out. Please check Firestore rules or internet connection.");
+
+          statusEl.innerText = "Completed";
+          totalHoursEl.innerText = "Total Hours: " + hours;
+          totalHoursEl.style.color = "green";
+          setButtonsForStatus("completed");
+          stopTimer("Finished");
+          alert("Punch Out Successful. Total Working Hours: " + hours);
+        }
+
+        closePunchModal();
+        await refreshStatus(user);
+      } catch (error) {
+        console.error(error);
+        alert(error.message);
+        confirmPunchBtn.disabled = false;
+        confirmPunchBtn.innerText = currentAction === "in" ? "Confirm Punch In" : "Confirm Punch Out";
+        confirmHelp.innerText = "Try again or retake selfie.";
+      }
+    };
+
+    window.startBreak = async function () {
+      const user = auth.currentUser;
+
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+
+      const attendance = await getTodayAttendance(user);
+
+      if (!attendance || attendance.data.status !== "working") {
+        alert("You must be working to start a break");
+        return;
+      }
+
+      await addDoc(collection(db, "breaks"), {
+        userId: user.uid,
+        date: today,
+        breakStart: Timestamp.now(),
+        breakEnd: null
+      });
+
+      await updateDoc(attendance.ref, {
+        status: "break"
+      });
+
+      await refreshStatus(user);
+      alert("Break Started");
+    };
+
+    window.endBreak = async function () {
+      const user = auth.currentUser;
+
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+
+      const breakQuery = query(
+        collection(db, "breaks"),
+        where("userId", "==", user.uid),
+        where("date", "==", today)
+      );
+
+      const snapshot = await getDocs(breakQuery);
+      const updates = [];
+
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+
+        if (!data.breakEnd) {
+          updates.push(updateDoc(doc(db, "breaks", docSnap.id), {
+            breakEnd: Timestamp.now()
+          }));
+        }
+      });
+
+      await Promise.all(updates);
+
+      const attendance = await getTodayAttendance(user);
+      if (attendance) {
+        await updateDoc(attendance.ref, {
+          status: "working"
+        });
+      }
+
+      await refreshStatus(user);
+      alert("Break Ended");
+    };
+
+    window.punchIn = async function () {
+      await window.startPunchIn();
+    };
+
+    window.punchOut = async function () {
+      await window.startPunchOut();
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+
+      try {
+        await linkUserToEmployee(user);
+      } catch (error) {
+        console.warn("Employee link skipped:", error.message);
+      }
+
+      try {
+        await loadEmployeeProfile(user);
+      } catch (error) {
+        console.error(error);
+        greetingTitle.innerText = `${getGreetingText()}, Employee`;
+      }
+
+      refreshStatus(user).catch((error) => console.error(error));
+      startScheduleWatcher(user);
+      loadUpcomingHolidays().catch((error) => console.error(error));
+      loadEmployeeNotifications(user).catch((error) => console.error(error));
+      loadEmployeeLeaves(user).catch((error) => console.error(error));
+    });
+  </script>
+</body>
+</html>
