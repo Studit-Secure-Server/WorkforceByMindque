@@ -349,6 +349,170 @@
       text-align: left;
     }
 
+    .history-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .history-controls {
+      display: flex;
+      padding: 4px;
+      border-radius: 16px;
+      background: #f3f4f6;
+    }
+
+    .history-range-btn {
+      min-width: 72px;
+      border: 0;
+      border-radius: 12px;
+      padding: 9px 12px;
+      background: transparent;
+      color: #6b7280;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .history-range-btn.active {
+      background: #ffffff;
+      color: #2563eb;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+    }
+
+    .history-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+      max-height: 460px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .history-item {
+      width: 100%;
+      border: 0;
+      border-radius: 18px;
+      padding: 15px;
+      background: #f5f6fa;
+      color: #111827;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .history-item:hover {
+      background: #eef4ff;
+    }
+
+    .history-day {
+      font-weight: 900;
+    }
+
+    .history-meta {
+      margin-top: 4px;
+      color: #6b7280;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .history-status {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      padding: 8px 11px;
+      border-radius: 999px;
+      background: #fee2e2;
+      color: #dc2626;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    #historyDetailStatus {
+      margin-bottom: 14px;
+    }
+
+    .history-status.green {
+      background: #d1fae5;
+      color: #059669;
+    }
+
+    .history-status.blue {
+      background: #dbeafe;
+      color: #2563eb;
+    }
+
+    .history-status.yellow {
+      background: #fef3c7;
+      color: #ca8a04;
+    }
+
+    .history-status.red {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .history-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .history-detail-field {
+      padding: 14px;
+      border-radius: 18px;
+      background: #f5f6fa;
+    }
+
+    .history-detail-label {
+      margin-bottom: 6px;
+      color: #6b7280;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .history-detail-value {
+      color: #111827;
+      font-size: 15px;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+
+    .history-photo-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .history-photo {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      border-radius: 18px;
+      object-fit: cover;
+      background: #111827;
+    }
+
+    .history-empty-photo {
+      display: grid;
+      place-items: center;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      border-radius: 18px;
+      background: #f3f4f6;
+      color: #6b7280;
+      font-weight: 900;
+    }
+
     .profile-head {
       display: flex;
       align-items: center;
@@ -662,8 +826,14 @@
       }
 
       .leave-summary,
-      .leave-form-row {
+      .leave-form-row,
+      .history-detail-grid,
+      .history-photo-row {
         grid-template-columns: 1fr;
+      }
+
+      .history-head {
+        flex-direction: column;
       }
 
       .profile-form-grid {
@@ -802,6 +972,27 @@
           </div>
         </div>
       </aside>
+
+      <aside class="panel">
+        <div class="history-head">
+          <div>
+            <h2>Attendance History</h2>
+            <p class="subtitle">Track your recent attendance status and open any day for details.</p>
+          </div>
+          <div class="history-controls" aria-label="Attendance history range">
+            <button id="historyRange7" class="history-range-btn active" type="button" onclick="setAttendanceHistoryRange(7)">7 Days</button>
+            <button id="historyRange30" class="history-range-btn" type="button" onclick="setAttendanceHistoryRange(30)">30 Days</button>
+          </div>
+        </div>
+
+        <div id="attendanceHistoryList" class="history-list">
+          <div class="holiday-item">
+            <div>
+              <div class="holiday-name">Loading attendance history...</div>
+            </div>
+          </div>
+        </div>
+      </aside>
     </main>
   </div>
 
@@ -912,6 +1103,22 @@
     </div>
   </div>
 
+  <div id="attendanceHistoryModal" class="modal" aria-hidden="true">
+    <div class="modal-card profile-modal-card">
+      <div class="modal-header">
+        <div>
+          <h2 id="historyDetailTitle" class="modal-title">Attendance Details</h2>
+          <p id="historyDetailSubtitle" class="modal-subtitle">Daily punch, break, location, and photo details.</p>
+        </div>
+        <button class="modal-close" type="button" onclick="closeAttendanceHistoryDetails()">×</button>
+      </div>
+
+      <div id="historyDetailStatus" class="status-pill">Status</div>
+      <div id="historyDetailGrid" class="history-detail-grid"></div>
+      <div id="historyDetailPhotos" class="history-photo-row"></div>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
@@ -980,6 +1187,15 @@
     const leaveUsed = document.getElementById("leaveUsed");
     const leavePending = document.getElementById("leavePending");
     const leaveList = document.getElementById("leaveList");
+    const attendanceHistoryList = document.getElementById("attendanceHistoryList");
+    const historyRange7 = document.getElementById("historyRange7");
+    const historyRange30 = document.getElementById("historyRange30");
+    const attendanceHistoryModal = document.getElementById("attendanceHistoryModal");
+    const historyDetailTitle = document.getElementById("historyDetailTitle");
+    const historyDetailSubtitle = document.getElementById("historyDetailSubtitle");
+    const historyDetailStatus = document.getElementById("historyDetailStatus");
+    const historyDetailGrid = document.getElementById("historyDetailGrid");
+    const historyDetailPhotos = document.getElementById("historyDetailPhotos");
     const topProfilePhoto = document.getElementById("topProfilePhoto");
     const profileModal = document.getElementById("profileModal");
     const profilePreviewPhoto = document.getElementById("profilePreviewPhoto");
@@ -998,6 +1214,8 @@
     const saveProfileBtn = document.getElementById("saveProfileBtn");
 
     let timerInterval = null;
+    let timerBaseMs = 0;
+    let timerBaseStartedAt = 0;
     let stream = null;
     let currentAction = "in";
     let currentLocation = null;
@@ -1008,6 +1226,8 @@
     let employeeNotifications = [];
     let showAllNotifications = false;
     let currentEmployeeProfile = null;
+    let attendanceHistoryRange = 7;
+    let attendanceHistoryItems = {};
     let selfiePreviewUrl = null;
     let scheduleInterval = null;
     let autoLogoutInProgress = false;
@@ -1032,6 +1252,13 @@
       const mins = String(Math.floor((safeMs % 3600000) / 60000)).padStart(2, "0");
       const secs = String(Math.floor((safeMs % 60000) / 1000)).padStart(2, "0");
       return `${hours}:${mins}:${secs}`;
+    }
+
+    function getDateInputValue(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
     }
 
     function formatDisplayDate(dateText) {
@@ -1209,18 +1436,24 @@
       breakEndBtn.disabled = true;
     }
 
-    function startTimer(startTime) {
+    function renderWorkTimer(ms) {
+      timerEl.innerText = formatTimer(ms);
+    }
+
+    function startTimerFromMs(baseMs) {
       clearInterval(timerInterval);
+      timerBaseMs = Math.max(baseMs, 0);
+      timerBaseStartedAt = Date.now();
+      renderWorkTimer(timerBaseMs);
 
       timerInterval = setInterval(() => {
-        const now = new Date();
-        const diff = now - startTime;
-        timerEl.innerText = formatTimer(diff);
+        renderWorkTimer(timerBaseMs + (Date.now() - timerBaseStartedAt));
       }, 1000);
     }
 
     function stopTimer(displayText = null) {
       clearInterval(timerInterval);
+      timerInterval = null;
       if (displayText) {
         timerEl.innerText = displayText;
       }
@@ -1247,7 +1480,7 @@
       };
     }
 
-    async function getTotalBreakMs(user, fallbackEndTime = null) {
+    async function getBreakTiming(user, fallbackEndTime = null) {
       const breakQuery = query(
         collection(db, "breaks"),
         where("userId", "==", user.uid),
@@ -1256,19 +1489,68 @@
 
       const breakSnap = await getDocs(breakQuery);
       let totalBreakMs = 0;
+      let completedBreakMs = 0;
+      let openBreakStart = null;
 
       breakSnap.forEach((breakDoc) => {
         const breakData = breakDoc.data();
         if (breakData.breakStart) {
-          const endTime = breakData.breakEnd ? breakData.breakEnd.toDate() : fallbackEndTime;
+          const startTime = breakData.breakStart.toDate();
 
-          if (endTime) {
-            totalBreakMs += endTime - breakData.breakStart.toDate();
+          if (breakData.breakEnd) {
+            const duration = breakData.breakEnd.toDate() - startTime;
+            totalBreakMs += duration;
+            completedBreakMs += duration;
+            return;
+          }
+
+          if (!openBreakStart || startTime < openBreakStart) {
+            openBreakStart = startTime;
+          }
+
+          if (fallbackEndTime) {
+            totalBreakMs += fallbackEndTime - startTime;
           }
         }
       });
 
-      return totalBreakMs;
+      return {
+        totalBreakMs,
+        completedBreakMs,
+        openBreakStart
+      };
+    }
+
+    async function getTotalBreakMs(user, fallbackEndTime = null) {
+      const timing = await getBreakTiming(user, fallbackEndTime);
+      return timing.totalBreakMs;
+    }
+
+    function getActiveWorkMs(punchInTime, breakTiming, endTime = new Date()) {
+      return Math.max(endTime - punchInTime - breakTiming.completedBreakMs, 0);
+    }
+
+    async function startTimer(startTime, user = auth.currentUser) {
+      if (!user) {
+        startTimerFromMs(new Date() - startTime);
+        return;
+      }
+
+      const breakTiming = await getBreakTiming(user);
+      const activeWorkMs = getActiveWorkMs(startTime, breakTiming);
+      startTimerFromMs(activeWorkMs);
+    }
+
+    async function pauseTimerForBreak(startTime, user = auth.currentUser) {
+      if (!user) {
+        stopTimer(formatTimer(new Date() - startTime));
+        return;
+      }
+
+      const breakTiming = await getBreakTiming(user);
+      const pauseTime = breakTiming.openBreakStart || new Date();
+      const activeWorkMs = getActiveWorkMs(startTime, breakTiming, pauseTime);
+      stopTimer(formatTimer(activeWorkMs));
     }
 
     async function closeOpenBreaks(user) {
@@ -1318,14 +1600,14 @@
         totalHoursEl.innerText = "Total Hours: --";
         totalHoursEl.style.color = "#374151";
         setButtonsForStatus("working");
-        startTimer(data.punchIn.toDate());
+        await startTimer(data.punchIn.toDate(), user);
         return;
       }
 
       if (data.status === "break") {
         statusEl.innerText = "On Break";
         setButtonsForStatus("break");
-        startTimer(data.punchIn.toDate());
+        await pauseTimerForBreak(data.punchIn.toDate(), user);
         return;
       }
 
@@ -1919,6 +2201,361 @@
       loadEmployeeLeaves(user);
     };
 
+    function getHistoryDates(days) {
+      const baseDate = new Date();
+      baseDate.setHours(0, 0, 0, 0);
+
+      return Array.from({ length: days }, (_, index) => {
+        const date = new Date(baseDate);
+        date.setDate(baseDate.getDate() - index);
+        return {
+          date,
+          dateText: getDateInputValue(date)
+        };
+      });
+    }
+
+    function timestampToDate(timestamp) {
+      return timestamp && typeof timestamp.toDate === "function"
+        ? timestamp.toDate()
+        : null;
+    }
+
+    function formatHistoryTime(timestamp) {
+      const date = timestampToDate(timestamp);
+
+      if (!date) {
+        return "-";
+      }
+
+      return date.toLocaleTimeString(undefined, {
+        hour: "numeric",
+        minute: "2-digit"
+      });
+    }
+
+    function durationTextToMs(durationText) {
+      if (!durationText) return 0;
+
+      const hoursMatch = String(durationText).match(/(\d+(?:\.\d+)?)\s*h/);
+      const minutesMatch = String(durationText).match(/(\d+)\s*m/);
+
+      if (hoursMatch || minutesMatch) {
+        return Math.round((Number(hoursMatch?.[1] || 0) * 3600000) + (Number(minutesMatch?.[1] || 0) * 60000));
+      }
+
+      const decimalHours = Number(durationText);
+      return Number.isFinite(decimalHours) ? Math.round(decimalHours * 3600000) : 0;
+    }
+
+    function getHistoryStatusClass(status) {
+      if (status === "completed") return "green";
+      if (status === "working") return "blue";
+      if (status === "break") return "yellow";
+      return "red";
+    }
+
+    function getHistoryStatusLabel(status) {
+      if (status === "completed") return "Completed";
+      if (status === "working") return "Working";
+      if (status === "break") return "On Break";
+      if (status === "missed-punch-out") return "Missed Punch Out";
+      if (status === "absent") return "Absent";
+      return "No Punch In";
+    }
+
+    function getBreakSummaryFromRecords(breaks, fallbackEndTime = null) {
+      let completedBreakMs = 0;
+      let totalBreakMs = 0;
+      let openBreakStart = null;
+      let completedBreaks = 0;
+
+      breaks.forEach((breakRecord) => {
+        const startTime = timestampToDate(breakRecord.breakStart);
+
+        if (!startTime) {
+          return;
+        }
+
+        const endTime = timestampToDate(breakRecord.breakEnd);
+
+        if (endTime) {
+          const duration = Math.max(endTime - startTime, 0);
+          completedBreakMs += duration;
+          totalBreakMs += duration;
+          completedBreaks++;
+          return;
+        }
+
+        if (!openBreakStart || startTime < openBreakStart) {
+          openBreakStart = startTime;
+        }
+
+        if (fallbackEndTime) {
+          totalBreakMs += Math.max(fallbackEndTime - startTime, 0);
+        }
+      });
+
+      return {
+        completedBreakMs,
+        totalBreakMs,
+        openBreakStart,
+        breakCount: completedBreaks + (openBreakStart ? 1 : 0)
+      };
+    }
+
+    function getRecordWorkMs(record, breaks) {
+      const savedDuration = durationTextToMs(record.totalHours);
+
+      if (savedDuration) {
+        return savedDuration;
+      }
+
+      const punchInTime = timestampToDate(record.punchIn);
+
+      if (!punchInTime) {
+        return 0;
+      }
+
+      const punchOutTime = timestampToDate(record.punchOut);
+      const breakSummary = getBreakSummaryFromRecords(breaks);
+      const endTime = punchOutTime || breakSummary.openBreakStart || new Date();
+      return Math.max(endTime - punchInTime - breakSummary.completedBreakMs, 0);
+    }
+
+    function createMapLink(location) {
+      if (!location) {
+        return "-";
+      }
+
+      return `<a target="_blank" href="https://www.google.com/maps?q=${location.lat},${location.lng}">View Map</a>`;
+    }
+
+    function createHistoryPhoto(photoUrl, label) {
+      if (!photoUrl) {
+        return `
+          <div>
+            <div class="history-detail-label">${label}</div>
+            <div class="history-empty-photo">No photo</div>
+          </div>
+        `;
+      }
+
+      return `
+        <div>
+          <div class="history-detail-label">${label}</div>
+          <img class="history-photo" src="${photoUrl}" alt="${label}">
+        </div>
+      `;
+    }
+
+    function buildHistorySummary(dateText, records, breaks) {
+      if (!records.length) {
+        return {
+          dateText,
+          status: "none",
+          statusLabel: "No Punch In",
+          statusClass: "red",
+          punchIn: "-",
+          punchOut: "-",
+          totalHours: "-",
+          breakTime: "-",
+          breakCount: 0,
+          meta: "No attendance recorded",
+          location: null,
+          punchOutLocation: null,
+          selfie: "",
+          punchOutSelfie: ""
+        };
+      }
+
+      const sortedRecords = [...records].sort((a, b) => {
+        const aTime = timestampToDate(a.punchIn)?.getTime() || 0;
+        const bTime = timestampToDate(b.punchIn)?.getTime() || 0;
+        return aTime - bTime;
+      });
+      const firstRecord = sortedRecords[0];
+      const lastRecord = sortedRecords[sortedRecords.length - 1];
+      const status = lastRecord.status || firstRecord.status || "none";
+      const breakSummary = getBreakSummaryFromRecords(breaks, new Date());
+      const totalWorkMs = sortedRecords.reduce((sum, record) => sum + getRecordWorkMs(record, breaks), 0);
+      const totalHours = totalWorkMs ? formatDuration(totalWorkMs) : (lastRecord.totalHours || "-");
+      const firstIn = formatHistoryTime(firstRecord.punchIn);
+      const lastOut = formatHistoryTime(lastRecord.punchOut);
+
+      return {
+        dateText,
+        status,
+        statusLabel: getHistoryStatusLabel(status),
+        statusClass: getHistoryStatusClass(status),
+        punchIn: firstIn,
+        punchOut: lastOut,
+        totalHours,
+        breakTime: breakSummary.totalBreakMs ? formatDuration(breakSummary.totalBreakMs) : "0h 0m",
+        breakCount: breakSummary.breakCount,
+        meta: `${firstIn} - ${lastOut} · ${totalHours}`,
+        location: firstRecord.location || null,
+        punchOutLocation: lastRecord.punchOutLocation || null,
+        selfie: firstRecord.selfie || "",
+        punchOutSelfie: lastRecord.punchOutSelfie || ""
+      };
+    }
+
+    function renderAttendanceHistory(items) {
+      attendanceHistoryItems = {};
+      attendanceHistoryList.innerHTML = "";
+
+      if (!items.length) {
+        attendanceHistoryList.innerHTML = `
+          <div class="holiday-item">
+            <div>
+              <div class="holiday-name">No attendance history</div>
+              <div class="holiday-date">Your recent days will appear here.</div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      items.forEach((item) => {
+        attendanceHistoryItems[item.dateText] = item;
+        attendanceHistoryList.innerHTML += `
+          <button class="history-item" type="button" onclick="openAttendanceHistoryDetails('${item.dateText}')">
+            <div>
+              <div class="history-day">${formatDisplayDate(item.dateText)}</div>
+              <div class="history-meta">${item.meta}</div>
+            </div>
+            <span class="history-status ${item.statusClass}">${item.statusLabel}</span>
+          </button>
+        `;
+      });
+    }
+
+    async function loadAttendanceHistory(user) {
+      try {
+        const historyDates = getHistoryDates(attendanceHistoryRange);
+        const historyDateSet = new Set(historyDates.map((item) => item.dateText));
+        const attendanceQuery = query(
+          collection(db, "attendance"),
+          where("userId", "==", user.uid)
+        );
+        const breakQuery = query(
+          collection(db, "breaks"),
+          where("userId", "==", user.uid)
+        );
+        const [attendanceSnap, breakSnap] = await Promise.all([
+          getDocs(attendanceQuery),
+          getDocs(breakQuery)
+        ]);
+        const recordsByDate = {};
+        const breaksByDate = {};
+
+        attendanceSnap.forEach((docSnap) => {
+          const data = docSnap.data();
+
+          if (!historyDateSet.has(data.date)) {
+            return;
+          }
+
+          recordsByDate[data.date] ||= [];
+          recordsByDate[data.date].push({ id: docSnap.id, ...data });
+        });
+
+        breakSnap.forEach((docSnap) => {
+          const data = docSnap.data();
+
+          if (!historyDateSet.has(data.date)) {
+            return;
+          }
+
+          breaksByDate[data.date] ||= [];
+          breaksByDate[data.date].push({ id: docSnap.id, ...data });
+        });
+
+        const items = historyDates.map(({ dateText }) => {
+          return buildHistorySummary(dateText, recordsByDate[dateText] || [], breaksByDate[dateText] || []);
+        });
+
+        renderAttendanceHistory(items);
+      } catch (error) {
+        console.error(error);
+        attendanceHistoryList.innerHTML = `
+          <div class="holiday-item">
+            <div>
+              <div class="holiday-name">Attendance history could not load</div>
+              <div class="holiday-date">${error.message}</div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    window.setAttendanceHistoryRange = function (days) {
+      attendanceHistoryRange = days === 30 ? 30 : 7;
+      historyRange7.classList.toggle("active", attendanceHistoryRange === 7);
+      historyRange30.classList.toggle("active", attendanceHistoryRange === 30);
+
+      const user = auth.currentUser;
+      if (user) {
+        loadAttendanceHistory(user);
+      }
+    };
+
+    window.openAttendanceHistoryDetails = function (dateText) {
+      const item = attendanceHistoryItems[dateText];
+
+      if (!item) {
+        alert("Attendance details not found");
+        return;
+      }
+
+      historyDetailTitle.innerText = formatDisplayDate(dateText);
+      historyDetailSubtitle.innerText = "Daily punch, break, location, and photo details.";
+      historyDetailStatus.className = `history-status ${item.statusClass}`;
+      historyDetailStatus.innerText = item.statusLabel;
+      historyDetailGrid.innerHTML = `
+        <div class="history-detail-field">
+          <div class="history-detail-label">Punch In</div>
+          <div class="history-detail-value">${item.punchIn}</div>
+        </div>
+        <div class="history-detail-field">
+          <div class="history-detail-label">Punch Out</div>
+          <div class="history-detail-value">${item.punchOut}</div>
+        </div>
+        <div class="history-detail-field">
+          <div class="history-detail-label">Total Hours</div>
+          <div class="history-detail-value">${item.totalHours}</div>
+        </div>
+        <div class="history-detail-field">
+          <div class="history-detail-label">Break Time</div>
+          <div class="history-detail-value">${item.breakTime}</div>
+        </div>
+        <div class="history-detail-field">
+          <div class="history-detail-label">Breaks</div>
+          <div class="history-detail-value">${item.breakCount}</div>
+        </div>
+        <div class="history-detail-field">
+          <div class="history-detail-label">Punch In Location</div>
+          <div class="history-detail-value">${createMapLink(item.location)}</div>
+        </div>
+        <div class="history-detail-field">
+          <div class="history-detail-label">Punch Out Location</div>
+          <div class="history-detail-value">${createMapLink(item.punchOutLocation)}</div>
+        </div>
+      `;
+      historyDetailPhotos.innerHTML = `
+        ${createHistoryPhoto(item.selfie, "Punch In Photo")}
+        ${createHistoryPhoto(item.punchOutSelfie, "Punch Out Photo")}
+      `;
+      attendanceHistoryModal.classList.add("open");
+      attendanceHistoryModal.setAttribute("aria-hidden", "false");
+    };
+
+    window.closeAttendanceHistoryDetails = function () {
+      attendanceHistoryModal.classList.remove("open");
+      attendanceHistoryModal.setAttribute("aria-hidden", "true");
+    };
+
     async function openCamera() {
       stream = await navigator.mediaDevices.getUserMedia({ video: true });
       video.srcObject = stream;
@@ -2211,7 +2848,7 @@
 
           statusEl.innerText = "Working";
           setButtonsForStatus("working");
-          startTimer(punchInTime);
+          await startTimer(punchInTime, user);
           alert("Punch In Successful");
         } else {
           const attendance = await getTodayAttendance(user);
@@ -2252,6 +2889,7 @@
 
         closePunchModal();
         await refreshStatus(user);
+        loadAttendanceHistory(user).catch((error) => console.error(error));
       } catch (error) {
         console.error(error);
         alert(error.message);
@@ -2288,6 +2926,7 @@
       });
 
       await refreshStatus(user);
+      loadAttendanceHistory(user).catch((error) => console.error(error));
       alert("Break Started");
     };
 
@@ -2328,6 +2967,7 @@
       }
 
       await refreshStatus(user);
+      loadAttendanceHistory(user).catch((error) => console.error(error));
       alert("Break Ended");
     };
 
@@ -2363,6 +3003,7 @@
       loadUpcomingHolidays().catch((error) => console.error(error));
       loadEmployeeNotifications(user).catch((error) => console.error(error));
       loadEmployeeLeaves(user).catch((error) => console.error(error));
+      loadAttendanceHistory(user).catch((error) => console.error(error));
     });
   </script>
 </body>

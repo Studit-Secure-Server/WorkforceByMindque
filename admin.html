@@ -133,7 +133,7 @@
 
     .cards {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 18px;
     }
 
@@ -151,7 +151,7 @@
     }
 
     .card-value {
-      font-size: 32px;
+      font-size: clamp(24px, 2.4vw, 32px);
       font-weight: 900;
     }
 
@@ -894,6 +894,7 @@
 
     .small-btn.approve { background: #10b981; }
     .small-btn.reject { background: #dc2626; }
+    .small-btn.edit { background: #2563eb; }
 
     @media (max-width: 900px) {
       .sidebar { display: none; }
@@ -1006,7 +1007,7 @@
       </section>
 
       <section class="panel view-section employees-view">
-        <div class="section-title">Add / Update Employee</div>
+        <div class="section-title" id="employeeFormTitle">Add / Update Employee</div>
 
         <div class="form-grid">
           <input type="text" id="empName" placeholder="Employee Name *" required>
@@ -1025,6 +1026,11 @@
             <input type="time" id="empWorkEnd" title="Working End Time" aria-label="Working End Time">
           </label>
           <input type="number" id="empLeaveAllowance" placeholder="Leave Allowance (default 12)" min="0">
+          <input type="number" id="empMonthlySalary" placeholder="Monthly Salary (INR)" min="0" step="0.01">
+          <select id="empSalaryBasis">
+            <option value="hours">Calculate by Hours</option>
+            <option value="days">Calculate by Days</option>
+          </select>
           <input type="file" id="empPhoto" accept="image/*">
           <input type="tel" id="empPhone" placeholder="Phone Number (optional)">
           <input type="text" id="empEmergency" placeholder="Emergency Contact (optional)">
@@ -1034,7 +1040,10 @@
           <input type="text" id="empAddress" placeholder="Current Address (optional)">
         </div>
 
-        <button class="btn green-btn" onclick="addEmployee()">Save Employee</button>
+        <div class="inline-actions">
+          <button id="employeeSaveBtn" class="btn green-btn" onclick="addEmployee()">Save Employee</button>
+          <button id="cancelEmployeeEditBtn" class="btn red-btn" type="button" onclick="cancelEmployeeEdit()" style="display:none;">Cancel Edit</button>
+        </div>
       </section>
 
       <section class="panel view-section employees-view">
@@ -1050,12 +1059,15 @@
                 <th>Role</th>
                 <th>Working Hours</th>
                 <th>Leave Balance</th>
+                <th>Monthly Salary</th>
+                <th>Payroll Basis</th>
                 <th>Phone</th>
                 <th>Emergency</th>
                 <th>Blood</th>
                 <th>Bank</th>
                 <th>IFSC</th>
                 <th>Address</th>
+                <th>Actions</th>
                 <th>UID</th>
               </tr>
             </thead>
@@ -1209,7 +1221,7 @@
         <div class="calendar-toolbar">
           <div>
             <div class="section-title" style="margin:0;">Reports</div>
-            <div class="subtitle">Monthly summary for employees, attendance, missed punch outs, and hours.</div>
+            <div class="subtitle">Monthly summary for employees, attendance, missed punch outs, hours, and salary payout.</div>
           </div>
           <div class="inline-actions">
             <input type="month" id="reportMonth" onchange="loadData()">
@@ -1238,6 +1250,11 @@
             <div class="card-value" id="reportHours">0h</div>
             <span class="badge yellow">Worked</span>
           </div>
+          <div class="card">
+            <div class="card-label">Monthly Payout</div>
+            <div class="card-value" id="reportPayout">₹0</div>
+            <span class="badge blue">Payroll</span>
+          </div>
         </div>
 
         <div style="overflow-x:auto;margin-top:22px;">
@@ -1251,6 +1268,10 @@
                 <th>Completed</th>
                 <th>Missed Punch Out</th>
                 <th>Total Hours</th>
+                <th>Monthly Salary</th>
+                <th>Basis</th>
+                <th>Payable Days</th>
+                <th>Monthly Payout</th>
                 <th>Last Status</th>
               </tr>
             </thead>
@@ -1307,6 +1328,8 @@
     let currentTimesheetMonth = getCurrentMonthValue();
     let absenceAutomationRunning = false;
     let absenceAutomationTimer = null;
+    let employeeDirectoryStore = {};
+    let editingEmployeeUid = "";
 
     const viewMeta = {
       dashboard: {
@@ -1569,6 +1592,67 @@
       });
     }
 
+    function setEmployeeFormMode(isEditing) {
+      document.getElementById("employeeFormTitle").innerText = isEditing ? "Edit Employee Details" : "Add / Update Employee";
+      document.getElementById("employeeSaveBtn").innerText = isEditing ? "Update Employee" : "Save Employee";
+      document.getElementById("cancelEmployeeEditBtn").style.display = isEditing ? "inline-flex" : "none";
+      document.getElementById("empUID").readOnly = isEditing;
+    }
+
+    function resetEmployeeForm() {
+      editingEmployeeUid = "";
+      document.getElementById("empName").value = "";
+      document.getElementById("empEmail").value = "";
+      document.getElementById("empUID").value = "";
+      document.getElementById("empRole").value = "employee";
+      document.getElementById("empWorkStart").value = "";
+      document.getElementById("empWorkEnd").value = "";
+      document.getElementById("empLeaveAllowance").value = "";
+      document.getElementById("empMonthlySalary").value = "";
+      document.getElementById("empSalaryBasis").value = "hours";
+      document.getElementById("empPhoto").value = "";
+      document.getElementById("empPhone").value = "";
+      document.getElementById("empEmergency").value = "";
+      document.getElementById("empBlood").value = "";
+      document.getElementById("empBank").value = "";
+      document.getElementById("empIfsc").value = "";
+      document.getElementById("empAddress").value = "";
+      setEmployeeFormMode(false);
+    }
+
+    window.cancelEmployeeEdit = function () {
+      resetEmployeeForm();
+    };
+
+    window.editEmployee = function (uid) {
+      const employee = employeeDirectoryStore[uid];
+
+      if (!employee) {
+        alert("Employee details not found. Please refresh and try again.");
+        return;
+      }
+
+      editingEmployeeUid = uid;
+      document.getElementById("empName").value = employee.name || "";
+      document.getElementById("empEmail").value = employee.email || "";
+      document.getElementById("empUID").value = employee.uid || uid;
+      document.getElementById("empRole").value = employee.role || "employee";
+      document.getElementById("empWorkStart").value = employee.workStart || "";
+      document.getElementById("empWorkEnd").value = employee.workEnd || "";
+      document.getElementById("empLeaveAllowance").value = getLeaveAllowance(employee);
+      document.getElementById("empMonthlySalary").value = getMonthlySalary(employee);
+      document.getElementById("empSalaryBasis").value = getSalaryBasis(employee);
+      document.getElementById("empPhoto").value = "";
+      document.getElementById("empPhone").value = employee.phone || "";
+      document.getElementById("empEmergency").value = employee.emergencyContact || "";
+      document.getElementById("empBlood").value = employee.bloodGroup || "";
+      document.getElementById("empBank").value = employee.bankAccount || "";
+      document.getElementById("empIfsc").value = employee.ifscCode || "";
+      document.getElementById("empAddress").value = employee.currentAddress || "";
+      setEmployeeFormMode(true);
+      document.getElementById("employeeFormTitle").scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+
     window.addEmployee = async function () {
       const name = document.getElementById("empName").value.trim();
       const email = document.getElementById("empEmail").value.trim();
@@ -1577,6 +1661,8 @@
       const workStart = document.getElementById("empWorkStart").value;
       const workEnd = document.getElementById("empWorkEnd").value;
       const leaveAllowanceInput = document.getElementById("empLeaveAllowance").value.trim();
+      const monthlySalaryInput = document.getElementById("empMonthlySalary").value.trim();
+      const salaryBasis = document.getElementById("empSalaryBasis").value;
       const photoFile = document.getElementById("empPhoto").files[0];
       const phone = document.getElementById("empPhone").value.trim();
       const emergencyContact = document.getElementById("empEmergency").value.trim();
@@ -1593,24 +1679,30 @@
       const employeeRef = doc(db, "employees", uid);
       const existingEmployeeSnap = await getDoc(employeeRef);
       const existingEmployee = existingEmployeeSnap.exists() ? existingEmployeeSnap.data() : {};
+      const isEditing = editingEmployeeUid === uid && existingEmployeeSnap.exists();
       const leaveAllowance = leaveAllowanceInput
         ? Number(leaveAllowanceInput)
-        : Number(existingEmployee.leaveAllowance ?? existingEmployee.leaveBalance ?? 12);
+        : Number(isEditing ? 12 : existingEmployee.leaveAllowance ?? existingEmployee.leaveBalance ?? 12);
+      const monthlySalary = monthlySalaryInput
+        ? Number(monthlySalaryInput)
+        : Number(isEditing ? 0 : existingEmployee.monthlySalary ?? existingEmployee.salary ?? 0);
       const employeeData = {
         name,
         email,
         role,
         userId: uid,
-        workStart,
-        workEnd,
+        workStart: isEditing ? workStart : workStart || existingEmployee.workStart || "",
+        workEnd: isEditing ? workEnd : workEnd || existingEmployee.workEnd || "",
         leaveAllowance: Number.isFinite(leaveAllowance) ? leaveAllowance : 12,
-        graceMinutes: 30,
-        phone,
-        emergencyContact,
-        bloodGroup,
-        bankAccount,
-        ifscCode,
-        currentAddress,
+        monthlySalary: Number.isFinite(monthlySalary) ? monthlySalary : 0,
+        salaryBasis: salaryBasis === "days" ? "days" : "hours",
+        graceMinutes: existingEmployee.graceMinutes || 30,
+        phone: isEditing ? phone : phone || existingEmployee.phone || "",
+        emergencyContact: isEditing ? emergencyContact : emergencyContact || existingEmployee.emergencyContact || "",
+        bloodGroup: isEditing ? bloodGroup : bloodGroup || existingEmployee.bloodGroup || "",
+        bankAccount: isEditing ? bankAccount : bankAccount || existingEmployee.bankAccount || "",
+        ifscCode: isEditing ? ifscCode : ifscCode || existingEmployee.ifscCode || "",
+        currentAddress: isEditing ? currentAddress : currentAddress || existingEmployee.currentAddress || "",
         updatedAt: new Date().toISOString()
       };
 
@@ -1624,22 +1716,9 @@
 
       await setDoc(employeeRef, employeeData, { merge: true });
 
-      alert("Employee added successfully");
+      alert(isEditing ? "Employee updated successfully" : "Employee added successfully");
 
-      document.getElementById("empName").value = "";
-      document.getElementById("empEmail").value = "";
-      document.getElementById("empUID").value = "";
-      document.getElementById("empRole").value = "employee";
-      document.getElementById("empWorkStart").value = "";
-      document.getElementById("empWorkEnd").value = "";
-      document.getElementById("empLeaveAllowance").value = "";
-      document.getElementById("empPhoto").value = "";
-      document.getElementById("empPhone").value = "";
-      document.getElementById("empEmergency").value = "";
-      document.getElementById("empBlood").value = "";
-      document.getElementById("empBank").value = "";
-      document.getElementById("empIfsc").value = "";
-      document.getElementById("empAddress").value = "";
+      resetEmployeeForm();
 
       loadData();
     };
@@ -2026,6 +2105,99 @@
       return `${hours}h ${minutes}m`;
     }
 
+    function formatCurrency(amount) {
+      return new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: "INR",
+        maximumFractionDigits: 0
+      }).format(Math.max(Number(amount) || 0, 0));
+    }
+
+    function getMonthlySalary(employee) {
+      const salary = Number(employee?.monthlySalary ?? employee?.salary ?? 0);
+      return Number.isFinite(salary) && salary > 0 ? salary : 0;
+    }
+
+    function getSalaryBasis(employee) {
+      return employee?.salaryBasis === "days" ? "days" : "hours";
+    }
+
+    function formatSalaryBasis(employee) {
+      return getSalaryBasis(employee) === "days" ? "By Days" : "By Hours";
+    }
+
+    function getTimeMinutes(timeText) {
+      if (!timeText) return null;
+
+      const [hours, minutes] = timeText.split(":").map(Number);
+
+      if (!Number.isFinite(hours) || !Number.isFinite(minutes)) {
+        return null;
+      }
+
+      return (hours * 60) + minutes;
+    }
+
+    function getExpectedDailyMinutes(employee) {
+      const start = getTimeMinutes(employee?.workStart);
+      const end = getTimeMinutes(employee?.workEnd);
+
+      if (start === null || end === null) {
+        return 480;
+      }
+
+      const minutes = end > start ? end - start : (24 * 60) - start + end;
+      return minutes > 0 ? minutes : 480;
+    }
+
+    function countWorkingDaysInMonth(monthValue) {
+      const [year, month] = monthValue.split("-").map(Number);
+
+      if (!year || !month) {
+        return 0;
+      }
+
+      const daysInMonth = new Date(year, month, 0).getDate();
+      let workingDays = 0;
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month - 1, day);
+
+        if (date.getDay() !== 0) {
+          workingDays++;
+        }
+      }
+
+      return workingDays;
+    }
+
+    function calculateMonthlyPayroll(employee, records, reportMonth, presentDays, workedMinutes) {
+      const monthlySalary = getMonthlySalary(employee);
+      const salaryBasis = getSalaryBasis(employee);
+      const workingDays = countWorkingDaysInMonth(reportMonth);
+      const expectedDailyMinutes = getExpectedDailyMinutes(employee);
+      const expectedMonthlyHours = (workingDays * expectedDailyMinutes) / 60;
+      const workedHours = workedMinutes / 60;
+      const hourlyRate = expectedMonthlyHours ? monthlySalary / expectedMonthlyHours : 0;
+      const dailyRate = workingDays ? monthlySalary / workingDays : 0;
+      const payoutByHours = hourlyRate * workedHours;
+      const payoutByDays = dailyRate * presentDays;
+      const payout = salaryBasis === "days" ? payoutByDays : payoutByHours;
+
+      return {
+        monthlySalary,
+        salaryBasis,
+        workingDays,
+        presentDays,
+        workedHours,
+        hourlyRate,
+        dailyRate,
+        payoutByHours,
+        payoutByDays,
+        payout
+      };
+    }
+
     function getSearchText() {
       return document.getElementById("searchInput").value.trim().toLowerCase();
     }
@@ -2070,6 +2242,10 @@
     function renderEmployeeDirectory(employees, leaves = []) {
       const tableBody = document.getElementById("employeeTableBody");
       const searchText = getSearchText();
+      employeeDirectoryStore = {};
+      employees.forEach((employee) => {
+        employeeDirectoryStore[employee.uid] = employee;
+      });
       const visibleEmployees = employees
         .filter((employee) => matchesEmployeeSearch(employee, searchText))
         .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
@@ -2077,7 +2253,7 @@
       tableBody.innerHTML = "";
 
       if (!visibleEmployees.length) {
-        tableBody.innerHTML = `<tr><td colspan="13">No employees found</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="16">No employees found</td></tr>`;
         return;
       }
 
@@ -2093,12 +2269,15 @@
             <td><span class="status ${employee.role === "admin" ? "blue" : "green"}">${employee.role || "employee"}</span></td>
             <td>${formatWorkHours(employee)}</td>
             <td><strong>${balance}</strong> / ${allowance}</td>
+            <td>${formatCurrency(getMonthlySalary(employee))}</td>
+            <td><span class="status blue">${formatSalaryBasis(employee)}</span></td>
             <td>${employee.phone || "-"}</td>
             <td>${employee.emergencyContact || "-"}</td>
             <td>${employee.bloodGroup || "-"}</td>
             <td>${employee.bankAccount || "-"}</td>
             <td>${employee.ifscCode || "-"}</td>
             <td>${employee.currentAddress || "-"}</td>
+            <td><button class="small-btn edit" type="button" onclick="editEmployee('${employee.uid}')">Edit</button></td>
             <td>${employee.uid}</td>
           </tr>
         `;
@@ -2495,6 +2674,7 @@
       let totalAbsentDays = 0;
       let totalMissed = 0;
       let totalMinutes = 0;
+      let totalPayout = 0;
 
       reportEmployees.forEach((employee) => {
         const records = attendanceRecords
@@ -2507,11 +2687,14 @@
         const minutes = records.reduce((sum, record) => sum + durationToMinutes(record.totalHours), 0);
         const lastStatus = records.length ? records[records.length - 1].status : "-";
         const totalHours = formatMinutes(minutes);
+        const payroll = calculateMonthlyPayroll(employee, records, reportMonth, presentDays, minutes);
+        const payout = payroll.payout;
 
         totalPresentDays += presentDays;
         totalAbsentDays += absentDays;
         totalMissed += missed;
         totalMinutes += minutes;
+        totalPayout += payout;
 
         const reportRow = {
           Employee: employee.name || "-",
@@ -2521,6 +2704,15 @@
           Completed: completed,
           MissedPunchOut: missed,
           TotalHours: totalHours,
+          MonthlySalary: formatCurrency(payroll.monthlySalary),
+          SalaryBasis: formatSalaryBasis(employee),
+          WorkingDays: payroll.workingDays,
+          PayableDays: presentDays,
+          HourlyRate: formatCurrency(payroll.hourlyRate),
+          DailyRate: formatCurrency(payroll.dailyRate),
+          PayoutByHours: formatCurrency(payroll.payoutByHours),
+          PayoutByDays: formatCurrency(payroll.payoutByDays),
+          MonthlyPayout: formatCurrency(payout),
           LastStatus: lastStatus || "-"
         };
 
@@ -2535,19 +2727,24 @@
             <td>${completed}</td>
             <td>${missed}</td>
             <td>${totalHours}</td>
+            <td>${formatCurrency(payroll.monthlySalary)}</td>
+            <td>${formatSalaryBasis(employee)}</td>
+            <td>${presentDays} / ${payroll.workingDays}</td>
+            <td><strong>${formatCurrency(payout)}</strong></td>
             <td><span class="status ${getStatusClass(lastStatus)}">${lastStatus}</span></td>
           </tr>
         `;
       });
 
       if (!reportEmployees.length) {
-        tableBody.innerHTML = `<tr><td colspan="8">No report data found</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="12">No report data found</td></tr>`;
       }
 
       document.getElementById("reportEmployees").innerText = reportEmployees.length;
       document.getElementById("reportPresentDays").innerText = totalPresentDays;
       document.getElementById("reportMissed").innerText = totalMissed;
       document.getElementById("reportHours").innerText = formatMinutes(totalMinutes);
+      document.getElementById("reportPayout").innerText = formatCurrency(totalPayout);
     }
 
     window.loadData = async function () {
