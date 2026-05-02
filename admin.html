@@ -29,6 +29,26 @@
       border-right: 1px solid #eef0f4;
       position: fixed;
       height: 100vh;
+      z-index: 25;
+    }
+
+    .mobile-menu-btn {
+      display: none;
+      border: 0;
+      border-radius: 16px;
+      padding: 13px 16px;
+      background: #2563eb;
+      color: #ffffff;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .sidebar-overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      background: rgba(17, 24, 39, 0.48);
+      z-index: 20;
     }
 
     .brand {
@@ -190,6 +210,7 @@
       text-align: center;
       color: #6b7280;
       font-weight: 700;
+      min-width: 54px;
     }
 
     .bar {
@@ -197,10 +218,22 @@
       height: 120px;
       background: #2563eb;
       border-radius: 999px;
-      margin: 0 auto 12px;
+      margin: 8px auto 12px;
+      transition: height 0.25s ease;
     }
 
-    .bar:nth-child(1) { background: #10b981; }
+    .bar-value {
+      color: #111827;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .bar-sub {
+      margin-top: 3px;
+      color: #6b7280;
+      font-size: 12px;
+      font-weight: 800;
+    }
 
     .donut {
       background: #f5f6fa;
@@ -216,7 +249,7 @@
       width: 190px;
       height: 190px;
       border-radius: 50%;
-      background: conic-gradient(#2563eb 0 55%, #10b981 55% 78%, #facc15 78% 92%, #e5e7eb 92%);
+      background: conic-gradient(#2563eb 0%, #e5e7eb 0%);
       display: grid;
       place-items: center;
     }
@@ -340,6 +373,55 @@
       border-radius: 999px;
       font-weight: 800;
       font-size: 12px;
+    }
+
+    .table-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      max-width: 100%;
+      min-height: 32px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      line-height: 1.15;
+      white-space: normal;
+      text-align: center;
+      overflow-wrap: anywhere;
+    }
+
+    .table-badge.blue {
+      background: #dbeafe;
+      color: #2563eb;
+    }
+
+    .employee-table th,
+    .employee-table td {
+      vertical-align: middle;
+    }
+
+    .employee-table th:nth-child(6),
+    .employee-table td:nth-child(6) {
+      min-width: 150px;
+      max-width: 190px;
+    }
+
+    .employee-table th:nth-child(9),
+    .employee-table td:nth-child(9) {
+      min-width: 120px;
+    }
+
+    .work-location-cell {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .work-location-name {
+      font-weight: 900;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
     }
 
     .selfie {
@@ -895,9 +977,35 @@
     .small-btn.approve { background: #10b981; }
     .small-btn.reject { background: #dc2626; }
     .small-btn.edit { background: #2563eb; }
+    .small-btn.toggle { background: #4f46e5; }
 
     @media (max-width: 900px) {
-      .sidebar { display: none; }
+      body.menu-open {
+        overflow: hidden;
+      }
+
+      .sidebar {
+        display: block;
+        width: min(82vw, 290px);
+        transform: translateX(-110%);
+        transition: transform 0.25s ease;
+        box-shadow: 24px 0 60px rgba(15, 23, 42, 0.18);
+      }
+
+      body.menu-open .sidebar {
+        transform: translateX(0);
+      }
+
+      body.menu-open .sidebar-overlay {
+        display: block;
+      }
+
+      .mobile-menu-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
       .main { margin-left: 0; width: 100%; padding: 18px; }
       .topbar { flex-direction: column; align-items: flex-start; gap: 16px; }
       .search { width: 100%; }
@@ -910,6 +1018,7 @@
 
 <body>
   <div class="app">
+    <div class="sidebar-overlay" onclick="closeMobileMenu()" aria-hidden="true"></div>
     <aside class="sidebar">
       <div class="brand">
         <img class="brand-logo" src="assets/studit-logo-cropped.png" alt="Studit logo">
@@ -923,11 +1032,12 @@
 
     <main class="main">
       <div class="topbar">
+        <button class="mobile-menu-btn" type="button" onclick="toggleMobileMenu()" aria-label="Open admin menu">Menu</button>
         <div>
-          <h1 id="pageTitle">Good Morning, Admin</h1>
+          <h1 id="pageTitle">Admin Dashboard</h1>
           <div id="pageSubtitle" class="subtitle">Attendance overview for your in-house team.</div>
         </div>
-        <input class="search" id="searchInput" placeholder="Search employee..." onkeyup="handleSearch()">
+        <input class="search" id="searchInput" placeholder="Search employee..." onkeyup="handleSearch()" style="display:none;">
       </div>
 
       <section class="panel view-section dashboard-view active">
@@ -964,18 +1074,17 @@
         <div class="section-title">Attendance Overview</div>
 
         <div class="grid-2">
-          <div class="chart-box">
-            <div class="bar-wrap"><div class="bar" style="height:90px;background:#10b981"></div>Mon</div>
-            <div class="bar-wrap"><div class="bar" style="height:150px;background:#2563eb"></div>Tue</div>
-            <div class="bar-wrap"><div class="bar" style="height:110px;background:#facc15"></div>Wed</div>
-            <div class="bar-wrap"><div class="bar" style="height:170px;background:#2563eb"></div>Thu</div>
-            <div class="bar-wrap"><div class="bar" style="height:130px;background:#8b5cf6"></div>Fri</div>
-            <div class="bar-wrap"><div class="bar" style="height:70px;background:#10b981"></div>Sat</div>
+          <div id="weeklyAttendanceChart" class="chart-box">
+            <div class="bar-wrap">
+              <div class="bar-value">Loading</div>
+              <div class="bar" style="height:20px;background:#d1d5db"></div>
+              <div>--</div>
+            </div>
           </div>
 
           <div class="donut">
             <div>
-              <div class="circle">
+              <div id="attendanceDonut" class="circle">
                 <div class="circle-inner" id="attendancePercent">0%</div>
               </div>
               <p style="color:#6b7280;font-weight:700;">Today Attendance</p>
@@ -1025,6 +1134,10 @@
             Work End
             <input type="time" id="empWorkEnd" title="Working End Time" aria-label="Working End Time">
           </label>
+          <input type="text" id="empWorkLocationName" placeholder="Work Location Name (optional)">
+          <input type="number" id="empWorkLat" placeholder="Employee Work Latitude (optional)" step="any">
+          <input type="number" id="empWorkLng" placeholder="Employee Work Longitude (optional)" step="any">
+          <input type="number" id="empWorkRadius" placeholder="Employee Work Radius (meters)" min="1">
           <input type="number" id="empLeaveAllowance" placeholder="Leave Allowance (default 12)" min="0">
           <input type="number" id="empMonthlySalary" placeholder="Monthly Salary (INR)" min="0" step="0.01">
           <select id="empSalaryBasis">
@@ -1050,7 +1163,7 @@
         <div class="section-title">All Employees</div>
 
         <div style="overflow-x:auto;">
-          <table>
+          <table class="employee-table">
             <thead>
               <tr>
                 <th>Photo</th>
@@ -1058,6 +1171,7 @@
                 <th>Email</th>
                 <th>Role</th>
                 <th>Working Hours</th>
+                <th>Work Location</th>
                 <th>Leave Balance</th>
                 <th>Monthly Salary</th>
                 <th>Payroll Basis</th>
@@ -1091,6 +1205,31 @@
         </div>
 
         <div id="holidayList" class="holiday-list"></div>
+      </section>
+
+      <section class="panel view-section dashboard-view active">
+        <div class="section-title">Office Locations</div>
+        <div class="subtitle">Add multiple offices for employee punch in and punch out radius checks.</div>
+
+        <div class="form-grid">
+          <input type="text" id="officeName" placeholder="Office Name">
+          <input type="number" id="officeLat" placeholder="Latitude" step="any">
+          <input type="number" id="officeLng" placeholder="Longitude" step="any">
+          <input type="number" id="officeRadius" placeholder="Radius in meters" min="1" value="100">
+          <select id="officeActive">
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+          <button class="btn green-btn" onclick="addOfficeLocation()">Add Office</button>
+        </div>
+
+        <div id="officeLocationList" class="holiday-list">
+          <div class="holiday-item">
+            <div>
+              <div class="holiday-name">Loading office locations...</div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section class="panel view-section dashboard-view active">
@@ -1299,6 +1438,7 @@
       getFirestore,
       collection,
       getDocs,
+      onSnapshot,
       doc,
       getDoc,
       setDoc
@@ -1318,7 +1458,7 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const today = new Date().toISOString().split("T")[0];
+    let today = getDateInputValue(new Date());
     const attendancePhotoStore = {};
     let latestReportRows = [];
     let latestWeeklyRows = [];
@@ -1330,10 +1470,13 @@
     let absenceAutomationTimer = null;
     let employeeDirectoryStore = {};
     let editingEmployeeUid = "";
+    let currentView = "dashboard";
+    let realtimeUnsubscribers = [];
+    let realtimeRefreshTimer = null;
 
     const viewMeta = {
       dashboard: {
-        title: "Good Morning, Admin",
+        title: () => `${getGreetingText()}, Admin`,
         subtitle: "Attendance overview for your in-house team.",
         search: "Search employee..."
       },
@@ -1354,6 +1497,16 @@
       }
     };
 
+    function getGreetingText() {
+      const hour = new Date().getHours();
+
+      if (hour < 5) return "Good Night";
+      if (hour < 12) return "Good Morning";
+      if (hour < 17) return "Good Afternoon";
+      if (hour < 21) return "Good Evening";
+      return "Good Night";
+    }
+
     function getCurrentMonthValue() {
       const now = new Date();
       return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -1364,6 +1517,11 @@
       const month = String(date.getMonth() + 1).padStart(2, "0");
       const day = String(date.getDate()).padStart(2, "0");
       return `${year}-${month}-${day}`;
+    }
+
+    function refreshToday() {
+      today = getDateInputValue(new Date());
+      return today;
     }
 
     function getWeekStart(date) {
@@ -1379,6 +1537,15 @@
       return Array.from({ length: 7 }, (_, index) => {
         const date = new Date(currentWeekStart);
         date.setDate(currentWeekStart.getDate() + index);
+        return date;
+      });
+    }
+
+    function getCurrentWeekDates() {
+      const weekStart = getWeekStart(new Date());
+      return Array.from({ length: 7 }, (_, index) => {
+        const date = new Date(weekStart);
+        date.setDate(weekStart.getDate() + index);
         return date;
       });
     }
@@ -1461,8 +1628,22 @@
       loadData();
     };
 
+    window.openMobileMenu = function () {
+      document.body.classList.add("menu-open");
+    };
+
+    window.closeMobileMenu = function () {
+      document.body.classList.remove("menu-open");
+    };
+
+    window.toggleMobileMenu = function () {
+      document.body.classList.toggle("menu-open");
+    };
+
     window.switchView = function (viewName) {
       const meta = viewMeta[viewName] || viewMeta.dashboard;
+      currentView = viewMeta[viewName] ? viewName : "dashboard";
+      window.closeMobileMenu();
 
       document.querySelectorAll(".view-section").forEach((section) => {
         section.classList.toggle("active", section.classList.contains(`${viewName}-view`));
@@ -1474,13 +1655,21 @@
 
       const navId = `nav${viewName.charAt(0).toUpperCase()}${viewName.slice(1)}`;
       document.getElementById(navId)?.classList.add("active");
-      document.getElementById("pageTitle").innerText = meta.title;
+      document.getElementById("pageTitle").innerText = typeof meta.title === "function" ? meta.title() : meta.title;
       document.getElementById("pageSubtitle").innerText = meta.subtitle;
-      document.getElementById("searchInput").placeholder = meta.search;
+      const searchInput = document.getElementById("searchInput");
+      const showSearch = currentView !== "dashboard";
+      searchInput.style.display = showSearch ? "block" : "none";
+      searchInput.placeholder = meta.search;
+
+      if (!showSearch) {
+        searchInput.value = "";
+      }
+
       const timesheetSearch = document.getElementById("timesheetSearch");
 
       if (timesheetSearch) {
-        timesheetSearch.value = document.getElementById("searchInput").value;
+        timesheetSearch.value = searchInput.value;
       }
 
       loadData();
@@ -1535,8 +1724,82 @@
       document.getElementById("photoModalImage").src = "";
     };
 
+    function scheduleRealtimeRefresh() {
+      if (realtimeRefreshTimer) {
+        clearTimeout(realtimeRefreshTimer);
+      }
+
+      realtimeRefreshTimer = setTimeout(() => {
+        realtimeRefreshTimer = null;
+        window.loadData().catch((error) => {
+          console.error("Realtime dashboard refresh failed:", error);
+        });
+      }, 250);
+    }
+
+    function stopRealtimeDashboard() {
+      realtimeUnsubscribers.forEach((unsubscribe) => unsubscribe());
+      realtimeUnsubscribers = [];
+
+      if (realtimeRefreshTimer) {
+        clearTimeout(realtimeRefreshTimer);
+        realtimeRefreshTimer = null;
+      }
+    }
+
+    function startRealtimeDashboard() {
+      stopRealtimeDashboard();
+
+      ["employees", "attendance", "leaves"].forEach((collectionName) => {
+        realtimeUnsubscribers.push(
+          onSnapshot(
+            collection(db, collectionName),
+            scheduleRealtimeRefresh,
+            (error) => console.error(`Realtime ${collectionName} listener failed:`, error)
+          )
+        );
+      });
+
+      realtimeUnsubscribers.push(
+        onSnapshot(
+          collection(db, "holidays"),
+          () => {
+            window.loadHolidays().catch((error) => {
+              console.error("Realtime holidays refresh failed:", error);
+            });
+          },
+          (error) => console.error("Realtime holidays listener failed:", error)
+        )
+      );
+
+      realtimeUnsubscribers.push(
+        onSnapshot(
+          collection(db, "notifications"),
+          () => {
+            window.loadNotifications().catch((error) => {
+              console.error("Realtime notifications refresh failed:", error);
+            });
+          },
+          (error) => console.error("Realtime notifications listener failed:", error)
+        )
+      );
+
+      realtimeUnsubscribers.push(
+        onSnapshot(
+          collection(db, "officeLocations"),
+          () => {
+            window.loadOfficeLocations().catch((error) => {
+              console.error("Realtime office locations refresh failed:", error);
+            });
+          },
+          (error) => console.error("Realtime office locations listener failed:", error)
+        )
+      );
+    }
+
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
+        stopRealtimeDashboard();
         window.location.href = "index.html";
         return;
       }
@@ -1550,14 +1813,19 @@
       }
 
       setDefaultMonthInputs();
+      document.getElementById("pageTitle").innerText = viewMeta.dashboard.title();
       await autoMarkAbsences();
       startAbsenceAutomation();
       loadData();
       loadHolidays();
+      loadOfficeLocations();
       loadNotifications();
+      startRealtimeDashboard();
     });
 
     window.logout = async function () {
+      stopRealtimeDashboard();
+
       if (absenceAutomationTimer) {
         clearInterval(absenceAutomationTimer);
       }
@@ -1607,6 +1875,10 @@
       document.getElementById("empRole").value = "employee";
       document.getElementById("empWorkStart").value = "";
       document.getElementById("empWorkEnd").value = "";
+      document.getElementById("empWorkLocationName").value = "";
+      document.getElementById("empWorkLat").value = "";
+      document.getElementById("empWorkLng").value = "";
+      document.getElementById("empWorkRadius").value = "";
       document.getElementById("empLeaveAllowance").value = "";
       document.getElementById("empMonthlySalary").value = "";
       document.getElementById("empSalaryBasis").value = "hours";
@@ -1639,6 +1911,10 @@
       document.getElementById("empRole").value = employee.role || "employee";
       document.getElementById("empWorkStart").value = employee.workStart || "";
       document.getElementById("empWorkEnd").value = employee.workEnd || "";
+      document.getElementById("empWorkLocationName").value = employee.workLocationName || "";
+      document.getElementById("empWorkLat").value = employee.workLocationLat ?? "";
+      document.getElementById("empWorkLng").value = employee.workLocationLng ?? "";
+      document.getElementById("empWorkRadius").value = employee.workLocationRadius ?? "";
       document.getElementById("empLeaveAllowance").value = getLeaveAllowance(employee);
       document.getElementById("empMonthlySalary").value = getMonthlySalary(employee);
       document.getElementById("empSalaryBasis").value = getSalaryBasis(employee);
@@ -1660,6 +1936,10 @@
       const role = document.getElementById("empRole").value;
       const workStart = document.getElementById("empWorkStart").value;
       const workEnd = document.getElementById("empWorkEnd").value;
+      const workLocationName = document.getElementById("empWorkLocationName").value.trim();
+      const workLatInput = document.getElementById("empWorkLat").value.trim();
+      const workLngInput = document.getElementById("empWorkLng").value.trim();
+      const workRadiusInput = document.getElementById("empWorkRadius").value.trim();
       const leaveAllowanceInput = document.getElementById("empLeaveAllowance").value.trim();
       const monthlySalaryInput = document.getElementById("empMonthlySalary").value.trim();
       const salaryBasis = document.getElementById("empSalaryBasis").value;
@@ -1676,6 +1956,16 @@
         return;
       }
 
+      const hasWorkLocationInput = Boolean(workLocationName || workLatInput || workLngInput || workRadiusInput);
+      const workLocationLat = Number(workLatInput);
+      const workLocationLng = Number(workLngInput);
+      const workLocationRadius = Number(workRadiusInput || 100);
+
+      if (hasWorkLocationInput && (!Number.isFinite(workLocationLat) || !Number.isFinite(workLocationLng) || !Number.isFinite(workLocationRadius) || workLocationRadius <= 0)) {
+        alert("Please enter valid employee work latitude, longitude and radius");
+        return;
+      }
+
       const employeeRef = doc(db, "employees", uid);
       const existingEmployeeSnap = await getDoc(employeeRef);
       const existingEmployee = existingEmployeeSnap.exists() ? existingEmployeeSnap.data() : {};
@@ -1686,6 +1976,15 @@
       const monthlySalary = monthlySalaryInput
         ? Number(monthlySalaryInput)
         : Number(isEditing ? 0 : existingEmployee.monthlySalary ?? existingEmployee.salary ?? 0);
+      const savedWorkLocationLat = hasWorkLocationInput
+        ? workLocationLat
+        : (isEditing ? "" : existingEmployee.workLocationLat ?? "");
+      const savedWorkLocationLng = hasWorkLocationInput
+        ? workLocationLng
+        : (isEditing ? "" : existingEmployee.workLocationLng ?? "");
+      const savedWorkLocationRadius = hasWorkLocationInput
+        ? workLocationRadius
+        : (isEditing ? "" : existingEmployee.workLocationRadius ?? "");
       const employeeData = {
         name,
         email,
@@ -1693,6 +1992,12 @@
         userId: uid,
         workStart: isEditing ? workStart : workStart || existingEmployee.workStart || "",
         workEnd: isEditing ? workEnd : workEnd || existingEmployee.workEnd || "",
+        workLocationName: hasWorkLocationInput
+          ? workLocationName || "Assigned Work Location"
+          : (isEditing ? "" : existingEmployee.workLocationName || ""),
+        workLocationLat: savedWorkLocationLat,
+        workLocationLng: savedWorkLocationLng,
+        workLocationRadius: savedWorkLocationRadius,
         leaveAllowance: Number.isFinite(leaveAllowance) ? leaveAllowance : 12,
         monthlySalary: Number.isFinite(monthlySalary) ? monthlySalary : 0,
         salaryBasis: salaryBasis === "days" ? "days" : "hours",
@@ -1791,6 +2096,105 @@
               <div class="holiday-date">${formatDisplayDate(holiday.date)}</div>
             </div>
             <span class="badge blue">${holiday.type || "company"}</span>
+          </div>
+        `;
+      });
+    };
+
+    function createOfficeId(name) {
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      return `${slug || "office"}-${Date.now()}`;
+    }
+
+    window.addOfficeLocation = async function () {
+      const name = document.getElementById("officeName").value.trim();
+      const lat = Number(document.getElementById("officeLat").value);
+      const lng = Number(document.getElementById("officeLng").value);
+      const radius = Number(document.getElementById("officeRadius").value || 100);
+      const active = document.getElementById("officeActive").value === "true";
+
+      if (!name || !Number.isFinite(lat) || !Number.isFinite(lng) || !Number.isFinite(radius) || radius <= 0) {
+        alert("Please enter office name, latitude, longitude and valid radius");
+        return;
+      }
+
+      await setDoc(doc(db, "officeLocations", createOfficeId(name)), {
+        name,
+        lat,
+        lng,
+        radius,
+        active,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+
+      alert("Office location added successfully");
+
+      document.getElementById("officeName").value = "";
+      document.getElementById("officeLat").value = "";
+      document.getElementById("officeLng").value = "";
+      document.getElementById("officeRadius").value = "100";
+      document.getElementById("officeActive").value = "true";
+
+      loadOfficeLocations();
+    };
+
+    window.toggleOfficeLocation = async function (officeId, active) {
+      await setDoc(doc(db, "officeLocations", officeId), {
+        active,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
+      loadOfficeLocations();
+    };
+
+    window.loadOfficeLocations = async function () {
+      const officeSnap = await getDocs(collection(db, "officeLocations"));
+      const officeList = document.getElementById("officeLocationList");
+      const offices = [];
+
+      officeSnap.forEach((docSnap) => {
+        offices.push({ id: docSnap.id, ...docSnap.data() });
+      });
+
+      offices.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+      officeList.innerHTML = "";
+
+      if (!offices.length) {
+        officeList.innerHTML = `
+          <div class="holiday-item">
+            <div>
+              <div class="holiday-name">No office locations added yet</div>
+              <div class="holiday-date">Employees will use the default office location until you add one here.</div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      offices.forEach((office) => {
+        const active = office.active !== false;
+        const lat = Number(office.lat);
+        const lng = Number(office.lng);
+        const radius = Number(office.radius || 100);
+
+        officeList.innerHTML += `
+          <div class="holiday-item">
+            <div>
+              <div class="holiday-name">${office.name || "Office"}</div>
+              <div class="holiday-date">
+                ${Number.isFinite(lat) ? lat.toFixed(6) : "-"},
+                ${Number.isFinite(lng) ? lng.toFixed(6) : "-"}
+                · Radius: ${Number.isFinite(radius) ? radius : 100}m
+              </div>
+            </div>
+            <div class="request-actions">
+              <span class="badge ${active ? "green" : "red"}">${active ? "active" : "inactive"}</span>
+              <button class="small-btn toggle" type="button" onclick="toggleOfficeLocation('${office.id}', ${!active})">
+                ${active ? "Deactivate" : "Activate"}
+              </button>
+              <a class="small-btn edit" style="text-decoration:none;" target="_blank" href="https://www.google.com/maps?q=${office.lat},${office.lng}">Map</a>
+            </div>
           </div>
         `;
       });
@@ -2084,6 +2488,23 @@
       return `${formatTimeValue(employee.workStart)} - ${formatTimeValue(employee.workEnd)}`;
     }
 
+    function formatEmployeeWorkLocation(employee) {
+      const lat = Number(employee.workLocationLat);
+      const lng = Number(employee.workLocationLng);
+      const radius = Number(employee.workLocationRadius || 100);
+
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        return `<span class="table-badge blue">Default Office</span>`;
+      }
+
+      return `
+        <div class="work-location-cell">
+        <div class="work-location-name">${employee.workLocationName || "Assigned Work Location"}</div>
+        <div class="holiday-date">${lat.toFixed(6)}, ${lng.toFixed(6)} · ${Number.isFinite(radius) ? radius : 100}m</div>
+        </div>
+      `;
+    }
+
     function durationToMinutes(durationText) {
       if (!durationText) return 0;
 
@@ -2253,7 +2674,7 @@
       tableBody.innerHTML = "";
 
       if (!visibleEmployees.length) {
-        tableBody.innerHTML = `<tr><td colspan="16">No employees found</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="17">No employees found</td></tr>`;
         return;
       }
 
@@ -2268,9 +2689,10 @@
             <td>${employee.email || "-"}</td>
             <td><span class="status ${employee.role === "admin" ? "blue" : "green"}">${employee.role || "employee"}</span></td>
             <td>${formatWorkHours(employee)}</td>
+            <td>${formatEmployeeWorkLocation(employee)}</td>
             <td><strong>${balance}</strong> / ${allowance}</td>
             <td>${formatCurrency(getMonthlySalary(employee))}</td>
-            <td><span class="status blue">${formatSalaryBasis(employee)}</span></td>
+            <td><span class="table-badge blue">${formatSalaryBasis(employee)}</span></td>
             <td>${employee.phone || "-"}</td>
             <td>${employee.emergencyContact || "-"}</td>
             <td>${employee.bloodGroup || "-"}</td>
@@ -2747,20 +3169,89 @@
       document.getElementById("reportPayout").innerText = formatCurrency(totalPayout);
     }
 
+    function getApprovedLeaveUsersForDate(leaves, dateText) {
+      const leaveUsers = new Set();
+
+      leaves.forEach((leave) => {
+        if (
+          leave.status === "approved" &&
+          leave.startDate &&
+          leave.endDate &&
+          leave.startDate <= dateText &&
+          leave.endDate >= dateText
+        ) {
+          leaveUsers.add(leave.userId);
+        }
+      });
+
+      return leaveUsers;
+    }
+
+    function renderDashboardOverview(employees, attendanceRecords, leaves) {
+      const employeeList = employees.filter((employee) => (employee.role || "employee") === "employee");
+      const weekDates = getCurrentWeekDates();
+      const todayText = refreshToday();
+      const chart = document.getElementById("weeklyAttendanceChart");
+      const colors = ["#10b981", "#2563eb", "#facc15", "#2563eb", "#8b5cf6", "#10b981", "#94a3b8"];
+
+      if (!chart) {
+        return;
+      }
+
+      chart.innerHTML = "";
+
+      weekDates.forEach((date, index) => {
+        const dateText = getDateInputValue(date);
+        const isFuture = dateText > todayText;
+        const leaveUsers = getApprovedLeaveUsersForDate(leaves, dateText);
+        const dayEmployeeIds = new Set(
+          employeeList
+            .filter((employee) => !isBeforeEmployeeCreated(employee, dateText) && !leaveUsers.has(employee.uid))
+            .map((employee) => employee.uid)
+        );
+        const presentUsers = new Set();
+
+        attendanceRecords.forEach((record) => {
+          if (record.date === dateText && dayEmployeeIds.has(record.userId) && record.status !== "absent") {
+            presentUsers.add(record.userId);
+          }
+        });
+
+        const presentCount = presentUsers.size;
+        const expectedCount = dayEmployeeIds.size;
+        const percent = expectedCount ? Math.round((presentCount / expectedCount) * 100) : 0;
+        const height = isFuture ? 8 : Math.max(Math.round((percent / 100) * 170), presentCount ? 24 : 8);
+        const dayName = date.toLocaleDateString(undefined, { weekday: "short" });
+
+        chart.innerHTML += `
+          <div class="bar-wrap" title="${presentCount}/${expectedCount} present on ${dateText}">
+            <div class="bar-value">${isFuture ? "--" : `${percent}%`}</div>
+            <div class="bar" style="height:${height}px;background:${isFuture ? "#d1d5db" : colors[index]};"></div>
+            <div>${dayName}</div>
+            <div class="bar-sub">${isFuture ? "Future" : `${presentCount}/${expectedCount}`}</div>
+          </div>
+        `;
+      });
+    }
+
     window.loadData = async function () {
+      refreshToday();
       const employeeSnap = await getDocs(collection(db, "employees"));
       const attendanceSnap = await getDocs(collection(db, "attendance"));
       const leaveSnap = await getDocs(collection(db, "leaves"));
 
       const employeeMap = {};
+      const employeeById = {};
       const employees = [];
       const attendanceRecords = [];
       const leaves = [];
 
       employeeSnap.forEach((docSnap) => {
         const data = docSnap.data();
+        const employee = { uid: docSnap.id, ...data };
         employeeMap[docSnap.id] = data.name;
-        employees.push({ uid: docSnap.id, ...data });
+        employeeById[docSnap.id] = employee;
+        employees.push(employee);
       });
 
       attendanceSnap.forEach((docSnap) => {
@@ -2771,6 +3262,9 @@
         leaves.push({ id: docSnap.id, ...docSnap.data() });
       });
 
+      const searchText = getSearchText();
+      const dashboardEmployees = employees;
+
       renderNotificationEmployeeOptions(employees);
       renderEmployeeDirectory(employees, leaves);
       renderLeaveRequests(leaves, employees);
@@ -2778,9 +3272,9 @@
       renderWeeklyTimesheet(employees, attendanceRecords, leaves);
       renderMonthlyTimesheet(employees, attendanceRecords, leaves);
       renderReports(employees, attendanceRecords);
+      renderDashboardOverview(dashboardEmployees, attendanceRecords, leaves);
 
       const tableBody = document.getElementById("tableBody");
-      const searchText = getSearchText();
       const selectedDate = document.getElementById("filterDate").value;
 
       tableBody.innerHTML = "";
@@ -2789,21 +3283,26 @@
       });
 
       let presentToday = 0;
-      let workingToday = 0;
-      let onBreak = 0;
       let visibleAttendanceRows = 0;
       const presentTodayUsers = new Set();
+      const workingTodayUsers = new Set();
+      const breakTodayUsers = new Set();
+      const leaveTodayUsers = getApprovedLeaveUsersForDate(leaves, today);
       const employeeIds = new Set(
-        employees
-          .filter((employee) => employee.role === "employee")
+        dashboardEmployees
+          .filter((employee) => (
+            (employee.role || "employee") === "employee" &&
+            !isBeforeEmployeeCreated(employee, today) &&
+            !leaveTodayUsers.has(employee.uid)
+          ))
           .map((employee) => employee.uid)
       );
 
       attendanceRecords.forEach((data) => {
         if (data.date === today && employeeIds.has(data.userId) && data.status !== "absent") {
           presentTodayUsers.add(data.userId);
-          if (data.status === "working") workingToday++;
-          if (data.status === "break") onBreak++;
+          if (data.status === "working") workingTodayUsers.add(data.userId);
+          if (data.status === "break") breakTodayUsers.add(data.userId);
         }
       });
 
@@ -2811,8 +3310,9 @@
         const punchInPhotoKey = `${data.id}_punch_in`;
         const punchOutPhotoKey = `${data.id}_punch_out`;
 
+        const employee = employeeById[data.userId] || { uid: data.userId, name: employeeMap[data.userId] || "Unknown" };
         const name = employeeMap[data.userId] || "Unknown";
-        const matchSearch = name.toLowerCase().includes(searchText);
+        const matchSearch = !searchText || matchesEmployeeSearch(employee, searchText);
         const matchDate = selectedDate ? data.date === selectedDate : true;
 
         if (!matchSearch || !matchDate) return;
@@ -2844,16 +3344,21 @@
         tableBody.innerHTML = `<tr><td colspan="9">No attendance records found</td></tr>`;
       }
 
-      const totalEmployees = employeeIds.size;
+      const totalEmployees = dashboardEmployees.filter((employee) => (employee.role || "employee") === "employee").length;
+      const expectedTodayEmployees = employeeIds.size;
       presentToday = presentTodayUsers.size;
-      const absent = Math.max(totalEmployees - presentToday, 0);
-      const percent = totalEmployees ? Math.round((presentToday / totalEmployees) * 100) : 0;
+      const workingToday = workingTodayUsers.size;
+      const onBreak = breakTodayUsers.size;
+      const absent = Math.max(expectedTodayEmployees - presentToday, 0);
+      const percent = expectedTodayEmployees ? Math.round((presentToday / expectedTodayEmployees) * 100) : 0;
 
       document.getElementById("totalEmployees").innerText = totalEmployees;
       document.getElementById("presentToday").innerText = presentToday;
       document.getElementById("absentToday").innerText = absent;
       document.getElementById("onBreak").innerText = onBreak;
       document.getElementById("attendancePercent").innerText = percent + "%";
+      document.getElementById("attendanceDonut").style.background =
+        `conic-gradient(#2563eb 0 ${percent}%, #e5e7eb ${percent}% 100%)`;
       document.getElementById("actionAbsent").innerText = absent;
       document.getElementById("pendingPunchOut").innerText = workingToday;
     };

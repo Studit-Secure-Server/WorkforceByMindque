@@ -1150,9 +1150,14 @@
     const db = getFirestore(app);
 
     const today = new Date().toISOString().split("T")[0];
-    const officeLat = 20.3255339;
-    const officeLng = 85.8158527;
-    const allowedRadius = 100;
+    const defaultOfficeLocations = [{
+      id: "main-office",
+      name: "Main Office",
+      lat: 20.3255339,
+      lng: 85.8158527,
+      radius: 100,
+      active: true
+    }];
     const attendanceSelfieWidth = 320;
     const attendanceSelfieHeight = 240;
     const attendanceSelfieQuality = 0.45;
@@ -1220,6 +1225,7 @@
     let currentAction = "in";
     let currentLocation = null;
     let currentDistance = null;
+    let currentOfficeMatch = null;
     let capturedSelfieBlob = null;
     let latestAttendanceDoc = null;
     let latestAttendanceData = null;
@@ -1228,6 +1234,7 @@
     let currentEmployeeProfile = null;
     let attendanceHistoryRange = 7;
     let attendanceHistoryItems = {};
+    let officeLocations = [...defaultOfficeLocations];
     let selfiePreviewUrl = null;
     let scheduleInterval = null;
     let autoLogoutInProgress = false;
@@ -1403,6 +1410,103 @@
 
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       return R * c;
+    }
+
+    function normalizeOfficeLocation(data, id) {
+      const lat = Number(data.lat);
+      const lng = Number(data.lng);
+      const radius = Number(data.radius || data.allowedRadius || 100);
+
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        return null;
+      }
+
+      return {
+        id,
+        name: data.name || "Office",
+        lat,
+        lng,
+        radius: Number.isFinite(radius) && radius > 0 ? radius : 100,
+        active: data.active !== false
+      };
+    }
+
+    function getEmployeeAssignedOfficeLocation(profile) {
+      const lat = Number(profile?.workLocationLat);
+      const lng = Number(profile?.workLocationLng);
+      const radius = Number(profile?.workLocationRadius || 100);
+
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        return null;
+      }
+
+      return {
+        id: `employee-${profile.uid || "work-location"}`,
+        name: profile.workLocationName || "Assigned Work Location",
+        lat,
+        lng,
+        radius: Number.isFinite(radius) && radius > 0 ? radius : 100,
+        active: true
+      };
+    }
+
+    async function loadOfficeLocations() {
+      try {
+        const officeSnap = await getDocs(collection(db, "officeLocations"));
+        const offices = [];
+
+        officeSnap.forEach((docSnap) => {
+          const office = normalizeOfficeLocation(docSnap.data(), docSnap.id);
+
+          if (office?.active) {
+            offices.push(office);
+          }
+        });
+
+        officeLocations = offices.length ? offices : [...defaultOfficeLocations];
+      } catch (error) {
+        console.warn("Office locations fallback used:", error.message);
+        officeLocations = [...defaultOfficeLocations];
+      }
+    }
+
+    async function loadAllowedWorkLocations() {
+      const employeeOffice = getEmployeeAssignedOfficeLocation(currentEmployeeProfile);
+
+      if (employeeOffice) {
+        officeLocations = [employeeOffice];
+        return;
+      }
+
+      await loadOfficeLocations();
+    }
+
+    function getNearestOffice(location) {
+      if (!officeLocations.length) {
+        officeLocations = [...defaultOfficeLocations];
+      }
+
+      return officeLocations
+        .map((office) => ({
+          ...office,
+          distance: getDistance(location.lat, location.lng, office.lat, office.lng)
+        }))
+        .sort((a, b) => a.distance - b.distance)[0];
+    }
+
+    function getOfficeLocationPayload(match) {
+      if (!match) {
+        return null;
+      }
+
+      return {
+        id: match.id,
+        name: match.name,
+        lat: match.lat,
+        lng: match.lng,
+        radius: match.radius,
+        distance: Math.round(match.distance)
+      };
     }
 
     function setButtonsForStatus(status) {
@@ -1746,9 +1850,11 @@
     function getGreetingText() {
       const hour = new Date().getHours();
 
+      if (hour < 5) return "Good Night";
       if (hour < 12) return "Good Morning";
       if (hour < 17) return "Good Afternoon";
-      return "Good Evening";
+      if (hour < 21) return "Good Evening";
+      return "Good Night";
     }
 
     async function getEmployeeProfile(user) {
@@ -2570,7 +2676,7 @@
     }
 
     function updateConfirmState() {
-      const locationOk = currentDistance !== null && currentDistance <= allowedRadius;
+      const locationOk = currentOfficeMatch && currentDistance !== null && currentDistance <= currentOfficeMatch.radius;
       const ready = Boolean(capturedSelfieBlob) && locationOk;
 
       confirmPunchBtn.disabled = !ready;
@@ -2598,13 +2704,10 @@
       radiusStatus.innerText = "Checking radius";
       radiusStatus.classList.remove("ok");
 
+      await loadAllowedWorkLocations();
       currentLocation = await getLocation();
-      currentDistance = getDistance(
-        currentLocation.lat,
-        currentLocation.lng,
-        officeLat,
-        officeLng
-      );
+      currentOfficeMatch = getNearestOffice(currentLocation);
+      currentDistance = currentOfficeMatch.distance;
 
       const roundedDistance = Math.round(currentDistance);
       const mapDelta = 0.003;
@@ -2615,9 +2718,9 @@
 
       mapFrame.src = `https://www.openstreetmap.org/export/embed.html?bbox=${left},${bottom},${right},${top}&layer=mapnik&marker=${currentLocation.lat},${currentLocation.lng}`;
       locationText.innerText = `Lat: ${currentLocation.lat.toFixed(6)}, Lng: ${currentLocation.lng.toFixed(6)}`;
-      distanceText.innerText = `Distance from office: ${roundedDistance}m / ${allowedRadius}m`;
+      distanceText.innerText = `Nearest office: ${currentOfficeMatch.name} · ${roundedDistance}m / ${currentOfficeMatch.radius}m`;
 
-      if (currentDistance <= allowedRadius) {
+      if (currentDistance <= currentOfficeMatch.radius) {
         radiusStatus.innerText = "Inside office radius";
         radiusStatus.classList.add("ok");
       } else {
@@ -2633,6 +2736,7 @@
       capturedSelfieBlob = null;
       currentLocation = null;
       currentDistance = null;
+      currentOfficeMatch = null;
 
       const isPunchOut = action === "out";
       modalTitle.innerText = isPunchOut ? "Confirm Punch Out" : "Confirm Punch In";
@@ -2675,6 +2779,7 @@
       }
       currentLocation = null;
       currentDistance = null;
+      currentOfficeMatch = null;
       confirmPunchBtn.disabled = true;
     };
 
@@ -2818,7 +2923,7 @@
         return;
       }
 
-      if (!currentLocation || currentDistance > allowedRadius) {
+      if (!currentLocation || !currentOfficeMatch || currentDistance > currentOfficeMatch.radius) {
         alert("You must be inside the office radius");
         return;
       }
@@ -2839,6 +2944,7 @@
             date: today,
             punchIn: Timestamp.fromDate(punchInTime),
             location: currentLocation,
+            officeLocation: getOfficeLocationPayload(currentOfficeMatch),
             selfie: imageUrl,
             assignedWorkStart: currentEmployeeProfile?.workStart || "",
             assignedWorkEnd: currentEmployeeProfile?.workEnd || "",
@@ -2872,6 +2978,7 @@
           await withTimeout(updateDoc(attendance.ref, {
             punchOut: Timestamp.fromDate(punchOutTime),
             punchOutLocation: currentLocation,
+            punchOutOfficeLocation: getOfficeLocationPayload(currentOfficeMatch),
             punchOutSelfie: imageUrl,
             punchOutType: "manual",
             missedPunchOut: false,
