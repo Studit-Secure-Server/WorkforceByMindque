@@ -1,6 +1,6 @@
-# WorkforceByMindque
+# Workforce By Mindque
 
-Studit WorkforceByMindque is a browser-based employee attendance and HR management app built with HTML, CSS, JavaScript, and Firebase.
+Workforce By Mindque is a browser-based employee attendance and HR management app built with HTML, CSS, JavaScript, and Firebase.
 
 ## Features
 
@@ -25,7 +25,7 @@ Studit WorkforceByMindque is a browser-based employee attendance and HR manageme
 - `index.html` - Login screen
 - `dashboard.html` - Employee dashboard
 - `admin.html` - Admin dashboard
-- `assets/` - Studit logo assets
+- `assets/` - Workforce By Mindque logo assets
 
 ## Firebase Collections
 

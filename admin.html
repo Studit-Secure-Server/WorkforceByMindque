@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Studit Attendance Admin</title>
+  <title>Workforce By Mindque Admin</title>
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
@@ -61,6 +61,14 @@
       max-width: 100%;
       height: auto;
       object-fit: contain;
+    }
+
+    .brand-name {
+      margin-top: 12px;
+      color: #2563eb;
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1.2;
     }
 
     .nav-item {
@@ -1021,7 +1029,8 @@
     <div class="sidebar-overlay" onclick="closeMobileMenu()" aria-hidden="true"></div>
     <aside class="sidebar">
       <div class="brand">
-        <img class="brand-logo" src="assets/studit-logo-cropped.png" alt="Studit logo">
+        <img class="brand-logo" src="assets/studit-logo-cropped.png" alt="Workforce By Mindque logo">
+        <div class="brand-name">Workforce By Mindque</div>
       </div>
       <div id="navDashboard" class="nav-item active" onclick="switchView('dashboard')">Dashboard</div>
       <div id="navEmployees" class="nav-item" onclick="switchView('employees')">Employees</div>
@@ -3396,7 +3405,7 @@
       const worksheet = XLSX.utils.json_to_sheet(exportData);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
-      XLSX.writeFile(workbook, "Studit_Attendance_Report.xlsx");
+      XLSX.writeFile(workbook, "Workforce_By_Mindque_Attendance_Report.xlsx");
     };
 
     window.exportWeeklyTimesheet = function () {
@@ -3408,7 +3417,7 @@
       const worksheet = XLSX.utils.json_to_sheet(latestWeeklyRows);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Weekly Timesheet");
-      XLSX.writeFile(workbook, "Studit_Weekly_Timesheet.xlsx");
+      XLSX.writeFile(workbook, "Workforce_By_Mindque_Weekly_Timesheet.xlsx");
     };
 
     window.exportMonthlyTimesheet = function () {
@@ -3420,7 +3429,7 @@
       const worksheet = XLSX.utils.json_to_sheet(latestMonthlyRows);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Monthly Timesheet");
-      XLSX.writeFile(workbook, "Studit_Monthly_Timesheet.xlsx");
+      XLSX.writeFile(workbook, "Workforce_By_Mindque_Monthly_Timesheet.xlsx");
     };
 
     window.exportTimesheet = function () {
@@ -3441,7 +3450,7 @@
       const worksheet = XLSX.utils.json_to_sheet(latestReportRows);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Monthly Report");
-      XLSX.writeFile(workbook, "Studit_Monthly_Report.xlsx");
+      XLSX.writeFile(workbook, "Workforce_By_Mindque_Monthly_Report.xlsx");
     };
   </script>
 </body>
