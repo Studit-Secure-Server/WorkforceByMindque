@@ -6,20 +6,30 @@
   <title>Workforce By Mindque Admin</title>
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
   <style>
     * { box-sizing: border-box; }
+
+    :root {
+      --motion-fast: 0.18s ease;
+      --motion-smooth: 0.42s cubic-bezier(0.16, 1, 0.3, 1);
+      --shadow-lift: 0 24px 70px rgba(15, 23, 42, 0.12);
+    }
 
     body {
       margin: 0;
       font-family: Inter, Arial, sans-serif;
       background: linear-gradient(135deg, #eef7f3, #f8f7ef);
+      background-size: 180% 180%;
       color: #111827;
+      animation: dashboardAura 18s ease-in-out infinite;
     }
 
     .app {
       display: flex;
       min-height: 100vh;
+      animation: appFadeIn 0.45s ease both;
     }
 
     .sidebar {
@@ -30,6 +40,7 @@
       position: fixed;
       height: 100vh;
       z-index: 25;
+      animation: sidebarSlideIn 0.55s var(--motion-smooth) both;
     }
 
     .mobile-menu-btn {
@@ -41,6 +52,12 @@
       color: #ffffff;
       font-weight: 900;
       cursor: pointer;
+      transition: transform var(--motion-fast), box-shadow var(--motion-fast), background var(--motion-fast);
+    }
+
+    .mobile-menu-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 28px rgba(37, 99, 235, 0.22);
     }
 
     .sidebar-overlay {
@@ -61,6 +78,8 @@
       max-width: 100%;
       height: auto;
       object-fit: contain;
+      transform-origin: center;
+      animation: brandFloat 5.5s ease-in-out infinite;
     }
 
     .brand-name {
@@ -78,12 +97,31 @@
       font-weight: 700;
       color: #6b7280;
       cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform var(--motion-fast), background var(--motion-fast), color var(--motion-fast), box-shadow var(--motion-fast);
     }
 
     .nav-item.active,
     .nav-item:hover {
       background: #eef4ff;
       color: #2563eb;
+      transform: translateX(4px);
+      box-shadow: 0 10px 22px rgba(37, 99, 235, 0.1);
+    }
+
+    .nav-item::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(110deg, transparent 20%, rgba(255, 255, 255, 0.7) 48%, transparent 72%);
+      transform: translateX(-120%);
+      pointer-events: none;
+    }
+
+    .nav-item:hover::after,
+    .nav-item.active::after {
+      animation: sheenSweep 0.8s ease;
     }
 
     .logout {
@@ -98,12 +136,19 @@
       border-radius: 16px;
       font-weight: 800;
       cursor: pointer;
+      transition: transform var(--motion-fast), box-shadow var(--motion-fast), background var(--motion-fast);
+    }
+
+    .logout:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 30px rgba(220, 38, 38, 0.16);
     }
 
     .main {
       margin-left: 250px;
       width: calc(100% - 250px);
       padding: 34px;
+      animation: contentRise 0.55s var(--motion-smooth) both;
     }
 
     .topbar {
@@ -111,6 +156,7 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 28px;
+      animation: contentRise 0.55s var(--motion-smooth) 0.06s both;
     }
 
     h1 {
@@ -143,6 +189,31 @@
       padding: 28px;
       margin-bottom: 28px;
       box-shadow: 0 20px 50px rgba(15, 23, 42, 0.06);
+      position: relative;
+      overflow: hidden;
+      transition: transform var(--motion-smooth), box-shadow var(--motion-smooth);
+      will-change: transform;
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -70%;
+      width: 55%;
+      height: 100%;
+      background: linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, 0.62) 50%, transparent 100%);
+      transform: skewX(-14deg);
+      pointer-events: none;
+    }
+
+    .panel:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-lift);
+    }
+
+    .panel:hover::before {
+      animation: panelSheen 0.95s ease;
     }
 
     .view-section {
@@ -151,6 +222,16 @@
 
     .view-section.active {
       display: block;
+      animation: panelRise 0.5s var(--motion-smooth) both;
+    }
+
+    .main > .view-section.active:nth-of-type(1) { animation-delay: 0.04s; }
+    .main > .view-section.active:nth-of-type(2) { animation-delay: 0.08s; }
+    .main > .view-section.active:nth-of-type(3) { animation-delay: 0.12s; }
+    .main > .view-section.active:nth-of-type(4) { animation-delay: 0.16s; }
+    .main > .view-section.active:nth-of-type(5) { animation-delay: 0.2s; }
+    .main > .view-section.active:nth-of-type(6) { animation-delay: 0.24s; }
+    .main > .view-section.active:nth-of-type(7) { animation-delay: 0.28s; }
     }
 
     .section-title {
@@ -170,6 +251,18 @@
       border-radius: 24px;
       padding: 22px;
       min-height: 120px;
+      transition: transform var(--motion-smooth), box-shadow var(--motion-smooth), background var(--motion-fast);
+      animation: cardPop 0.48s var(--motion-smooth) both;
+    }
+
+    .card:nth-child(2) { animation-delay: 0.08s; }
+    .card:nth-child(3) { animation-delay: 0.14s; }
+    .card:nth-child(4) { animation-delay: 0.2s; }
+
+    .card:hover {
+      transform: translateY(-6px) scale(1.015);
+      background: #ffffff;
+      box-shadow: 0 18px 42px rgba(15, 23, 42, 0.1);
     }
 
     .card-label {
@@ -181,6 +274,7 @@
     .card-value {
       font-size: clamp(24px, 2.4vw, 32px);
       font-weight: 900;
+      animation: valuePulse 0.5s ease both;
     }
 
     .badge {
@@ -190,6 +284,12 @@
       border-radius: 999px;
       font-size: 13px;
       font-weight: 800;
+      transition: transform var(--motion-fast), filter var(--motion-fast);
+    }
+
+    .badge:hover {
+      transform: translateY(-1px);
+      filter: saturate(1.08);
     }
 
     .green { background: #d1fae5; color: #059669; }
@@ -212,6 +312,7 @@
       align-items: end;
       gap: 24px;
       justify-content: center;
+      animation: panelRise 0.55s var(--motion-smooth) both;
     }
 
     .bar-wrap {
@@ -227,7 +328,21 @@
       background: #2563eb;
       border-radius: 999px;
       margin: 8px auto 12px;
-      transition: height 0.25s ease;
+      transform-origin: bottom;
+      animation: barGrow 0.8s var(--motion-smooth) both;
+      transition: height 0.25s ease, transform var(--motion-fast), filter var(--motion-fast);
+    }
+
+    .bar-wrap:nth-child(2) .bar { animation-delay: 0.08s; }
+    .bar-wrap:nth-child(3) .bar { animation-delay: 0.14s; }
+    .bar-wrap:nth-child(4) .bar { animation-delay: 0.2s; }
+    .bar-wrap:nth-child(5) .bar { animation-delay: 0.26s; }
+    .bar-wrap:nth-child(6) .bar { animation-delay: 0.32s; }
+    .bar-wrap:nth-child(7) .bar { animation-delay: 0.38s; }
+
+    .bar-wrap:hover .bar {
+      transform: scaleY(1.04);
+      filter: brightness(1.05) saturate(1.08);
     }
 
     .bar-value {
@@ -251,6 +366,7 @@
       display: grid;
       place-items: center;
       text-align: center;
+      animation: panelRise 0.55s var(--motion-smooth) 0.08s both;
     }
 
     .circle {
@@ -260,6 +376,13 @@
       background: conic-gradient(#2563eb 0%, #e5e7eb 0%);
       display: grid;
       place-items: center;
+      animation: donutBloom 0.75s var(--motion-smooth) both;
+      transition: transform var(--motion-smooth), filter var(--motion-fast);
+    }
+
+    .circle:hover {
+      transform: scale(1.035) rotate(2deg);
+      filter: saturate(1.06);
     }
 
     .circle-inner {
@@ -287,6 +410,13 @@
       align-items: center;
       justify-content: space-between;
       gap: 20px;
+      transition: transform var(--motion-smooth), background var(--motion-fast), box-shadow var(--motion-smooth);
+    }
+
+    .action:hover {
+      transform: translateY(-4px);
+      background: #ffffff;
+      box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
     }
 
     .action-title {
@@ -309,6 +439,17 @@
       color: #ffffff;
       background: #2563eb;
       white-space: nowrap;
+      transition: transform var(--motion-fast), box-shadow var(--motion-fast), filter var(--motion-fast);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 28px rgba(37, 99, 235, 0.18);
+      filter: saturate(1.06);
+    }
+
+    .btn:active {
+      transform: translateY(0) scale(0.98);
     }
 
     .btn.green-btn { background: #10b981; }
@@ -329,6 +470,13 @@
       padding: 0 16px;
       outline: none;
       font-size: 14px;
+      transition: border-color var(--motion-fast), box-shadow var(--motion-fast), transform var(--motion-fast);
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+      transform: translateY(-1px);
     }
 
     textarea {
@@ -374,6 +522,16 @@
       padding: 16px;
       border-bottom: 1px solid #eef0f4;
       font-size: 14px;
+    }
+
+    tbody tr {
+      transition: transform var(--motion-fast), background var(--motion-fast), box-shadow var(--motion-fast);
+    }
+
+    tbody tr:hover {
+      background: #f8fbff;
+      transform: translateX(3px);
+      box-shadow: inset 4px 0 0 #2563eb;
     }
 
     .status {
@@ -987,6 +1145,146 @@
     .small-btn.edit { background: #2563eb; }
     .small-btn.toggle { background: #4f46e5; }
 
+    .payroll-action-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .salary-slip-content {
+      display: grid;
+      gap: 12px;
+      color: #111827;
+    }
+
+    .salary-slip-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .salary-slip-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 12px 0;
+      border-bottom: 1px solid #eef0f4;
+      color: #4b5563;
+      font-weight: 800;
+    }
+
+    .salary-slip-line strong {
+      color: #111827;
+    }
+
+    @keyframes dashboardAura {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    @keyframes appFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes sidebarSlideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-18px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes contentRise {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes panelRise {
+      from {
+        opacity: 0;
+        transform: translateY(18px) scale(0.985);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes cardPop {
+      from {
+        opacity: 0;
+        transform: translateY(14px) scale(0.96);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes valuePulse {
+      0% { transform: translateY(5px) scale(0.96); opacity: 0; }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    @keyframes barGrow {
+      from {
+        opacity: 0;
+        transform: scaleY(0.08);
+      }
+      to {
+        opacity: 1;
+        transform: scaleY(1);
+      }
+    }
+
+    @keyframes donutBloom {
+      from {
+        opacity: 0;
+        transform: rotate(-18deg) scale(0.88);
+      }
+      to {
+        opacity: 1;
+        transform: rotate(0) scale(1);
+      }
+    }
+
+    @keyframes brandFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    @keyframes panelSheen {
+      from { left: -70%; }
+      to { left: 120%; }
+    }
+
+    @keyframes sheenSweep {
+      from { transform: translateX(-120%); }
+      to { transform: translateX(120%); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
     @media (max-width: 900px) {
       body.menu-open {
         overflow: hidden;
@@ -998,6 +1296,7 @@
         transform: translateX(-110%);
         transition: transform 0.25s ease;
         box-shadow: 24px 0 60px rgba(15, 23, 42, 0.18);
+        animation: none;
       }
 
       body.menu-open .sidebar {
@@ -1035,6 +1334,7 @@
       <div id="navDashboard" class="nav-item active" onclick="switchView('dashboard')">Dashboard</div>
       <div id="navEmployees" class="nav-item" onclick="switchView('employees')">Employees</div>
       <div id="navAttendance" class="nav-item" onclick="switchView('attendance')">Attendance</div>
+      <div id="navPayroll" class="nav-item" onclick="switchView('payroll')">Payroll</div>
       <div id="navReports" class="nav-item" onclick="switchView('reports')">Reports</div>
       <button class="logout" onclick="logout()">Logout</button>
     </aside>
@@ -1130,6 +1430,7 @@
         <div class="form-grid">
           <input type="text" id="empName" placeholder="Employee Name *" required>
           <input type="email" id="empEmail" placeholder="Employee Email *" required>
+          <input type="text" id="empEmployeeId" placeholder="Company Employee ID">
           <input type="text" id="empUID" placeholder="Firebase UID *" required>
           <select id="empRole">
             <option value="employee">Employee</option>
@@ -1176,6 +1477,7 @@
             <thead>
               <tr>
                 <th>Photo</th>
+                <th>Employee ID</th>
                 <th>Name</th>
                 <th>Email</th>
                 <th>Role</th>
@@ -1191,7 +1493,7 @@
                 <th>IFSC</th>
                 <th>Address</th>
                 <th>Actions</th>
-                <th>UID</th>
+                <th>Firebase UID</th>
               </tr>
             </thead>
             <tbody id="employeeTableBody"></tbody>
@@ -1365,6 +1667,90 @@
         </div>
       </section>
 
+      <section class="panel view-section payroll-view">
+        <div class="calendar-toolbar">
+          <div>
+            <div class="section-title" style="margin:0;">Payroll Dashboard</div>
+            <div class="subtitle">Monthly salary calculation from attendance, breaks, deductions, and bonuses.</div>
+          </div>
+          <div class="inline-actions">
+            <input type="month" id="payrollMonth" onchange="loadData()">
+            <select id="payrollEmployeeFilter" onchange="loadData()">
+              <option value="">All Employees</option>
+            </select>
+            <button class="btn" onclick="exportPayrollToExcel()">Export Payroll</button>
+          </div>
+        </div>
+
+        <div class="cards">
+          <div class="card">
+            <div class="card-label">Total Employees</div>
+            <div class="card-value" id="payrollTotalEmployees">0</div>
+            <span class="badge blue">Payroll Scope</span>
+          </div>
+          <div class="card">
+            <div class="card-label">Total Working Hours</div>
+            <div class="card-value" id="payrollTotalHours">0h</div>
+            <span class="badge green">Net Hours</span>
+          </div>
+          <div class="card">
+            <div class="card-label">Total Payroll Amount</div>
+            <div class="card-value" id="payrollTotalAmount">₹0</div>
+            <span class="badge blue">Payable</span>
+          </div>
+          <div class="card">
+            <div class="card-label">Pending Salary Slips</div>
+            <div class="card-value" id="payrollPendingSlips">0</div>
+            <span class="badge yellow">Action Needed</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel view-section payroll-view">
+        <div class="section-title">Employee Salary Setup</div>
+        <div class="form-grid">
+          <select id="payrollSetupEmployee" onchange="loadPayrollEmployeeSettings()">
+            <option value="">Select Employee</option>
+          </select>
+          <select id="payrollSalaryType">
+            <option value="hourly">Hourly</option>
+            <option value="fixed">Fixed Monthly</option>
+          </select>
+          <input type="number" id="payrollHourlyRate" placeholder="Per Hour Salary" min="0" step="0.01">
+          <input type="number" id="payrollMonthlySalary" placeholder="Monthly Salary" min="0" step="0.01">
+          <input type="number" id="payrollDeduction" placeholder="Deduction Amount" min="0" step="0.01">
+          <input type="number" id="payrollLateDeduction" placeholder="Late Deduction / Day" min="0" step="0.01">
+          <input type="number" id="payrollBonus" placeholder="Bonus / Incentive" min="0" step="0.01">
+          <input type="text" id="payrollDeductionRules" placeholder="Deduction Rules">
+        </div>
+        <button class="btn green-btn" onclick="savePayrollSettings()">Save Salary Setup</button>
+      </section>
+
+      <section class="panel view-section payroll-view">
+        <div class="section-title">Monthly Payroll</div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Month</th>
+                <th>Total Days</th>
+                <th>Present Days</th>
+                <th>Absent Days</th>
+                <th>Total Hours</th>
+                <th>Per Hour Rate</th>
+                <th>Gross Salary</th>
+                <th>Deduction</th>
+                <th>Net Salary</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="payrollTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
       <section class="panel view-section reports-view">
         <div class="calendar-toolbar">
           <div>
@@ -1440,6 +1826,20 @@
     </div>
   </div>
 
+  <div id="salarySlipModal" class="photo-modal" aria-hidden="true">
+    <div class="photo-modal-card">
+      <div class="photo-modal-header">
+        <h2 class="photo-modal-title">Salary Slip</h2>
+        <button class="photo-modal-close" type="button" onclick="closeSalarySlip()">×</button>
+      </div>
+      <div id="salarySlipContent" class="salary-slip-content"></div>
+      <div class="inline-actions" style="margin-top:18px;">
+        <button class="btn" type="button" onclick="downloadCurrentSalarySlip()">Download PDF</button>
+        <button class="btn red-btn" type="button" onclick="closeSalarySlip()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
@@ -1466,12 +1866,17 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    const payrollCompanyName = "Mindque India Pvt. Ltd.";
+    const payrollCompanyAddress = "Plot No-211, Ground Floor, District Center Chandrasekharpur, Bhubaneswar-751016, Odisha India";
 
     let today = getDateInputValue(new Date());
     const attendancePhotoStore = {};
     let latestReportRows = [];
     let latestWeeklyRows = [];
     let latestMonthlyRows = [];
+    let latestPayrollRows = [];
+    let currentSalarySlipKey = "";
+    const payrollSlipStore = {};
     let currentWeekStart = getWeekStart(new Date());
     let currentTimesheetMode = "weekly";
     let currentTimesheetMonth = getCurrentMonthValue();
@@ -1498,6 +1903,11 @@
         title: "Attendance",
         subtitle: "Weekly timesheets for the team.",
         search: "Search attendance..."
+      },
+      payroll: {
+        title: "Payroll",
+        subtitle: "Calculate monthly salary, approve payroll, and export salary slips.",
+        search: "Search payroll..."
       },
       reports: {
         title: "Reports",
@@ -1581,6 +1991,7 @@
     function setDefaultMonthInputs() {
       const monthValue = getCurrentMonthValue();
       document.getElementById("reportMonth").value ||= monthValue;
+      document.getElementById("payrollMonth").value ||= monthValue;
       document.getElementById("monthlyTimesheetMonth").value ||= currentTimesheetMonth;
       document.getElementById("weekDatePicker").value ||= getDateInputValue(currentWeekStart);
     }
@@ -1759,7 +2170,7 @@
     function startRealtimeDashboard() {
       stopRealtimeDashboard();
 
-      ["employees", "attendance", "leaves"].forEach((collectionName) => {
+      ["employees", "attendance", "leaves", "breaks", "payrollStatus"].forEach((collectionName) => {
         realtimeUnsubscribers.push(
           onSnapshot(
             collection(db, collectionName),
@@ -1880,6 +2291,7 @@
       editingEmployeeUid = "";
       document.getElementById("empName").value = "";
       document.getElementById("empEmail").value = "";
+      document.getElementById("empEmployeeId").value = "";
       document.getElementById("empUID").value = "";
       document.getElementById("empRole").value = "employee";
       document.getElementById("empWorkStart").value = "";
@@ -1916,6 +2328,7 @@
       editingEmployeeUid = uid;
       document.getElementById("empName").value = employee.name || "";
       document.getElementById("empEmail").value = employee.email || "";
+      document.getElementById("empEmployeeId").value = employee.employeeId || employee.employeeCode || "";
       document.getElementById("empUID").value = employee.uid || uid;
       document.getElementById("empRole").value = employee.role || "employee";
       document.getElementById("empWorkStart").value = employee.workStart || "";
@@ -1941,6 +2354,7 @@
     window.addEmployee = async function () {
       const name = document.getElementById("empName").value.trim();
       const email = document.getElementById("empEmail").value.trim();
+      const employeeId = document.getElementById("empEmployeeId").value.trim();
       const uid = document.getElementById("empUID").value.trim();
       const role = document.getElementById("empRole").value;
       const workStart = document.getElementById("empWorkStart").value;
@@ -1997,6 +2411,8 @@
       const employeeData = {
         name,
         email,
+        employeeId,
+        employeeCode: employeeId,
         role,
         userId: uid,
         workStart: isEditing ? workStart : workStart || existingEmployee.workStart || "",
@@ -2224,6 +2640,93 @@
 
       employeeSelect.value = currentValue;
     }
+
+    function renderPayrollEmployeeOptions(employees) {
+      const payrollFilter = document.getElementById("payrollEmployeeFilter");
+      const payrollSetup = document.getElementById("payrollSetupEmployee");
+
+      if (!payrollFilter || !payrollSetup) return;
+
+      const currentFilter = payrollFilter.value;
+      const currentSetup = payrollSetup.value;
+      const employeeOptions = employees
+        .filter((employee) => (employee.role || "employee") === "employee")
+        .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
+        .map((employee) => `<option value="${employee.uid}">${employee.name || employee.email || employee.uid}</option>`)
+        .join("");
+
+      payrollFilter.innerHTML = `<option value="">All Employees</option>${employeeOptions}`;
+      payrollSetup.innerHTML = `<option value="">Select Employee</option>${employeeOptions}`;
+      payrollFilter.value = currentFilter;
+      payrollSetup.value = currentSetup;
+    }
+
+    window.loadPayrollEmployeeSettings = function () {
+      const uid = document.getElementById("payrollSetupEmployee").value;
+      const employee = employeeDirectoryStore[uid];
+
+      if (!uid || !employee) {
+        document.getElementById("payrollSalaryType").value = "hourly";
+        document.getElementById("payrollHourlyRate").value = "";
+        document.getElementById("payrollMonthlySalary").value = "";
+        document.getElementById("payrollDeduction").value = "";
+        document.getElementById("payrollLateDeduction").value = "";
+        document.getElementById("payrollBonus").value = "";
+        document.getElementById("payrollDeductionRules").value = "";
+        return;
+      }
+
+      const settings = getPayrollSettings(employee);
+      document.getElementById("payrollSalaryType").value = settings.salaryType;
+      document.getElementById("payrollHourlyRate").value = settings.hourlyRate || "";
+      document.getElementById("payrollMonthlySalary").value = settings.monthlySalary || "";
+      document.getElementById("payrollDeduction").value = settings.defaultDeduction || "";
+      document.getElementById("payrollLateDeduction").value = settings.lateDeductionPerDay || "";
+      document.getElementById("payrollBonus").value = settings.bonus || "";
+      document.getElementById("payrollDeductionRules").value = settings.deductionRules || "";
+    };
+
+    window.savePayrollSettings = async function () {
+      const uid = document.getElementById("payrollSetupEmployee").value;
+      const salaryType = document.getElementById("payrollSalaryType").value;
+      const hourlyRate = Number(document.getElementById("payrollHourlyRate").value || 0);
+      const monthlySalary = Number(document.getElementById("payrollMonthlySalary").value || 0);
+      const payrollDeduction = Number(document.getElementById("payrollDeduction").value || 0);
+      const lateDeductionPerDay = Number(document.getElementById("payrollLateDeduction").value || 0);
+      const payrollBonus = Number(document.getElementById("payrollBonus").value || 0);
+      const deductionRules = document.getElementById("payrollDeductionRules").value.trim();
+
+      if (!uid) {
+        alert("Please select an employee");
+        return;
+      }
+
+      if (salaryType === "hourly" && (!Number.isFinite(hourlyRate) || hourlyRate <= 0)) {
+        alert("Please enter a valid per hour salary");
+        return;
+      }
+
+      if (salaryType === "fixed" && (!Number.isFinite(monthlySalary) || monthlySalary <= 0)) {
+        alert("Please enter a valid monthly salary");
+        return;
+      }
+
+      await setDoc(doc(db, "employees", uid), {
+        salaryType,
+        hourlyRate: Number.isFinite(hourlyRate) ? hourlyRate : 0,
+        perHourSalary: Number.isFinite(hourlyRate) ? hourlyRate : 0,
+        monthlySalary: Number.isFinite(monthlySalary) ? monthlySalary : 0,
+        payrollDeduction: Number.isFinite(payrollDeduction) ? payrollDeduction : 0,
+        lateDeductionPerDay: Number.isFinite(lateDeductionPerDay) ? lateDeductionPerDay : 0,
+        payrollBonus: Number.isFinite(payrollBonus) ? payrollBonus : 0,
+        deductionRules,
+        salaryBasis: salaryType === "fixed" ? "days" : "hours",
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
+      alert("Salary setup saved");
+      loadData();
+    };
 
     window.addNotification = async function () {
       const title = document.getElementById("notificationTitle").value.trim();
@@ -2628,6 +3131,155 @@
       };
     }
 
+    function getPayrollSettings(employee) {
+      const monthlySalary = getMonthlySalary(employee);
+      const salaryType = employee?.salaryType === "fixed" ? "fixed" : "hourly";
+      const hourlyRate = Number(employee?.hourlyRate ?? employee?.perHourSalary ?? 0);
+      const defaultDeduction = Number(employee?.payrollDeduction ?? employee?.deduction ?? 0);
+      const lateDeductionPerDay = Number(employee?.lateDeductionPerDay ?? 0);
+      const bonus = Number(employee?.payrollBonus ?? employee?.bonus ?? 0);
+
+      return {
+        salaryType,
+        hourlyRate: Number.isFinite(hourlyRate) && hourlyRate > 0 ? hourlyRate : 0,
+        monthlySalary,
+        defaultDeduction: Number.isFinite(defaultDeduction) && defaultDeduction > 0 ? defaultDeduction : 0,
+        lateDeductionPerDay: Number.isFinite(lateDeductionPerDay) && lateDeductionPerDay > 0 ? lateDeductionPerDay : 0,
+        bonus: Number.isFinite(bonus) && bonus > 0 ? bonus : 0,
+        deductionRules: employee?.deductionRules || ""
+      };
+    }
+
+    function getTimestampDate(timestamp) {
+      if (!timestamp) return null;
+      if (typeof timestamp.toDate === "function") return timestamp.toDate();
+
+      const date = new Date(timestamp);
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    function getRawRecordMinutes(record) {
+      const punchIn = getTimestampDate(record.punchIn);
+      const punchOut = getTimestampDate(record.punchOut);
+
+      if (!punchIn || !punchOut) {
+        return 0;
+      }
+
+      return Math.max(Math.round((punchOut - punchIn) / 60000), 0);
+    }
+
+    function getMonthlyBreakMinutes(uid, monthValue, breaks) {
+      return breaks
+        .filter((item) => item.userId === uid && String(item.date || "").startsWith(monthValue))
+        .reduce((sum, item) => {
+          const start = getTimestampDate(item.breakStart);
+          const end = getTimestampDate(item.breakEnd);
+
+          if (!start || !end) return sum;
+          return sum + Math.max(Math.round((end - start) / 60000), 0);
+        }, 0);
+    }
+
+    function countLateDays(employee, records) {
+      const workStart = getTimeMinutes(employee.workStart);
+
+      if (workStart === null) return 0;
+
+      const lateDates = new Set();
+
+      records.forEach((record) => {
+        if (record.status === "absent") return;
+
+        const punchIn = getTimestampDate(record.punchIn);
+        if (!punchIn) return;
+
+        const punchMinutes = (punchIn.getHours() * 60) + punchIn.getMinutes();
+        if (punchMinutes > workStart) {
+          lateDates.add(record.date);
+        }
+      });
+
+      return lateDates.size;
+    }
+
+    function getPayrollDocId(uid, monthValue) {
+      return `${uid}_${monthValue}`.replace(/[^a-zA-Z0-9_-]/g, "_");
+    }
+
+    function getPayrollStatusClass(status) {
+      if (status === "Paid") return "green";
+      if (status === "Approved") return "blue";
+      if (status === "Calculated") return "yellow";
+      return "red";
+    }
+
+    function calculatePayrollRow(employee, attendanceRecords, breaks, statusMap, monthValue) {
+      const records = attendanceRecords.filter((record) => record.userId === employee.uid && String(record.date || "").startsWith(monthValue));
+      const settings = getPayrollSettings(employee);
+      const totalDays = countWorkingDaysInMonth(monthValue);
+      const presentDays = new Set(records.filter((record) => record.status !== "absent").map((record) => record.date)).size;
+      const absentRecords = records.filter((record) => record.status === "absent").length;
+      const absentDays = Math.max(totalDays - presentDays, absentRecords, 0);
+      const breakMinutes = getMonthlyBreakMinutes(employee.uid, monthValue, breaks);
+      let rawMinutes = 0;
+      let fallbackMinutes = 0;
+
+      records.forEach((record) => {
+        if (record.status === "absent") return;
+
+        const minutes = getRawRecordMinutes(record);
+
+        if (minutes) {
+          rawMinutes += minutes;
+        } else {
+          fallbackMinutes += getRecordMinutes(record);
+        }
+      });
+
+      const workedMinutes = Math.max(rawMinutes - breakMinutes, 0) + fallbackMinutes;
+      const workedHours = workedMinutes / 60;
+      const expectedMonthlyHours = (totalDays * getExpectedDailyMinutes(employee)) / 60;
+      const computedHourlyRate = expectedMonthlyHours ? settings.monthlySalary / expectedMonthlyHours : 0;
+      const hourlyRate = settings.hourlyRate || computedHourlyRate;
+      const dailyRate = totalDays ? settings.monthlySalary / totalDays : 0;
+      const lateDays = countLateDays(employee, records);
+      const lateDeduction = lateDays * settings.lateDeductionPerDay;
+      const absentDeduction = settings.salaryType === "fixed" ? absentDays * dailyRate : 0;
+      const grossSalary = settings.salaryType === "fixed" ? settings.monthlySalary : workedHours * hourlyRate;
+      const totalDeduction = settings.defaultDeduction + lateDeduction + absentDeduction;
+      const netSalary = Math.max(grossSalary + settings.bonus - totalDeduction, 0);
+      const statusRecord = statusMap[getPayrollDocId(employee.uid, monthValue)] || {};
+      const hasSalarySetup = Boolean(settings.hourlyRate || settings.monthlySalary);
+      const status = statusRecord.status || (hasSalarySetup ? "Calculated" : "Draft");
+
+      return {
+        key: getPayrollDocId(employee.uid, monthValue),
+        uid: employee.uid,
+        employeeId: employee.employeeId || employee.employeeCode || employee.uid,
+        employeeName: employee.name || employee.email || employee.uid,
+        employeeEmail: employee.email || "-",
+        month: monthValue,
+        salaryType: settings.salaryType,
+        totalDays,
+        presentDays,
+        absentDays,
+        workedMinutes,
+        breakMinutes,
+        lateDays,
+        hourlyRate,
+        grossSalary,
+        bonus: settings.bonus,
+        defaultDeduction: settings.defaultDeduction,
+        lateDeduction,
+        absentDeduction,
+        totalDeduction,
+        netSalary,
+        status,
+        deductionRules: settings.deductionRules
+      };
+    }
+
     function getSearchText() {
       return document.getElementById("searchInput").value.trim().toLowerCase();
     }
@@ -2636,6 +3288,8 @@
       if (!searchText) return true;
 
       return [
+        employee.employeeId,
+        employee.employeeCode,
         employee.name,
         employee.email,
         employee.role,
@@ -2683,7 +3337,7 @@
       tableBody.innerHTML = "";
 
       if (!visibleEmployees.length) {
-        tableBody.innerHTML = `<tr><td colspan="17">No employees found</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="18">No employees found</td></tr>`;
         return;
       }
 
@@ -2694,6 +3348,7 @@
         tableBody.innerHTML += `
           <tr>
             <td><img class="employee-photo" src="${employee.photo || "assets/studit-logo-cropped.png"}" alt="${employee.name || "Employee"}"></td>
+            <td><strong>${employee.employeeId || employee.employeeCode || "-"}</strong></td>
             <td><strong>${employee.name || "-"}</strong></td>
             <td>${employee.email || "-"}</td>
             <td><span class="status ${employee.role === "admin" ? "blue" : "green"}">${employee.role || "employee"}</span></td>
@@ -3178,6 +3833,81 @@
       document.getElementById("reportPayout").innerText = formatCurrency(totalPayout);
     }
 
+    function renderPayroll(employees, attendanceRecords, breaks, payrollStatuses) {
+      const payrollMonth = document.getElementById("payrollMonth").value || getCurrentMonthValue();
+      const selectedEmployee = document.getElementById("payrollEmployeeFilter").value;
+      const searchText = getSearchText();
+      const statusMap = {};
+      const tableBody = document.getElementById("payrollTableBody");
+
+      payrollStatuses.forEach((item) => {
+        statusMap[item.id] = item;
+      });
+
+      latestPayrollRows = [];
+      Object.keys(payrollSlipStore).forEach((key) => {
+        delete payrollSlipStore[key];
+      });
+
+      const payrollEmployees = employees
+        .filter((employee) => (employee.role || "employee") === "employee")
+        .filter((employee) => !selectedEmployee || employee.uid === selectedEmployee)
+        .filter((employee) => matchesEmployeeSearch(employee, searchText))
+        .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+
+      tableBody.innerHTML = "";
+
+      let totalMinutes = 0;
+      let totalAmount = 0;
+      let pendingSlips = 0;
+
+      payrollEmployees.forEach((employee) => {
+        const row = calculatePayrollRow(employee, attendanceRecords, breaks, statusMap, payrollMonth);
+        latestPayrollRows.push(row);
+        payrollSlipStore[row.key] = row;
+
+        totalMinutes += row.workedMinutes;
+        totalAmount += row.netSalary;
+
+        if (row.status !== "Paid") {
+          pendingSlips++;
+        }
+
+        tableBody.innerHTML += `
+          <tr>
+            <td><strong>${row.employeeName}</strong></td>
+            <td>${row.month}</td>
+            <td>${row.totalDays}</td>
+            <td>${row.presentDays}</td>
+            <td>${row.absentDays}</td>
+            <td>${formatMinutes(row.workedMinutes)}</td>
+            <td>${formatCurrency(row.hourlyRate)}</td>
+            <td>${formatCurrency(row.grossSalary + row.bonus)}</td>
+            <td>${formatCurrency(row.totalDeduction)}</td>
+            <td><strong>${formatCurrency(row.netSalary)}</strong></td>
+            <td><span class="status ${getPayrollStatusClass(row.status)}">${row.status}</span></td>
+            <td>
+              <div class="payroll-action-row">
+                <button class="small-btn edit" type="button" onclick="viewSalarySlip('${row.key}')">View Slip</button>
+                <button class="small-btn toggle" type="button" onclick="downloadSalarySlip('${row.key}')">PDF</button>
+                <button class="small-btn approve" type="button" onclick="setPayrollStatus('${row.uid}', '${row.month}', 'Approved')">Approve</button>
+                <button class="small-btn reject" type="button" onclick="setPayrollStatus('${row.uid}', '${row.month}', 'Paid')">Paid</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+
+      if (!payrollEmployees.length) {
+        tableBody.innerHTML = `<tr><td colspan="12">No payroll data found</td></tr>`;
+      }
+
+      document.getElementById("payrollTotalEmployees").innerText = payrollEmployees.length;
+      document.getElementById("payrollTotalHours").innerText = formatMinutes(totalMinutes);
+      document.getElementById("payrollTotalAmount").innerText = formatCurrency(totalAmount);
+      document.getElementById("payrollPendingSlips").innerText = pendingSlips;
+    }
+
     function getApprovedLeaveUsersForDate(leaves, dateText) {
       const leaveUsers = new Set();
 
@@ -3248,12 +3978,16 @@
       const employeeSnap = await getDocs(collection(db, "employees"));
       const attendanceSnap = await getDocs(collection(db, "attendance"));
       const leaveSnap = await getDocs(collection(db, "leaves"));
+      const breakSnap = await getDocs(collection(db, "breaks"));
+      const payrollStatusSnap = await getDocs(collection(db, "payrollStatus"));
 
       const employeeMap = {};
       const employeeById = {};
       const employees = [];
       const attendanceRecords = [];
       const leaves = [];
+      const breaks = [];
+      const payrollStatuses = [];
 
       employeeSnap.forEach((docSnap) => {
         const data = docSnap.data();
@@ -3271,16 +4005,26 @@
         leaves.push({ id: docSnap.id, ...docSnap.data() });
       });
 
+      breakSnap.forEach((docSnap) => {
+        breaks.push({ id: docSnap.id, ...docSnap.data() });
+      });
+
+      payrollStatusSnap.forEach((docSnap) => {
+        payrollStatuses.push({ id: docSnap.id, ...docSnap.data() });
+      });
+
       const searchText = getSearchText();
       const dashboardEmployees = employees;
 
       renderNotificationEmployeeOptions(employees);
+      renderPayrollEmployeeOptions(employees);
       renderEmployeeDirectory(employees, leaves);
       renderLeaveRequests(leaves, employees);
       updateTimesheetModeUI();
       renderWeeklyTimesheet(employees, attendanceRecords, leaves);
       renderMonthlyTimesheet(employees, attendanceRecords, leaves);
       renderReports(employees, attendanceRecords);
+      renderPayroll(employees, attendanceRecords, breaks, payrollStatuses);
       renderDashboardOverview(dashboardEmployees, attendanceRecords, leaves);
 
       const tableBody = document.getElementById("tableBody");
@@ -3376,6 +4120,319 @@
       await loadData();
     };
 
+    function formatPdfCurrency(amount) {
+      return `INR ${Math.round(Math.max(Number(amount) || 0, 0)).toLocaleString("en-IN")}`;
+    }
+
+    function formatPayslipAmount(amount) {
+      return `Rs. ${Math.max(Number(amount) || 0, 0).toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })}`;
+    }
+
+    function formatPayslipMonth(monthValue) {
+      return new Date(`${monthValue}-01T00:00:00`).toLocaleDateString(undefined, {
+        month: "long",
+        year: "numeric"
+      });
+    }
+
+    function formatPayslipDate(date = new Date()) {
+      return date.toLocaleDateString("en-GB");
+    }
+
+    function numberToWordsIndian(amount) {
+      const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+      const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+
+      function belowHundred(value) {
+        if (value < 20) return ones[value];
+        return `${tens[Math.floor(value / 10)]} ${ones[value % 10]}`.trim();
+      }
+
+      function belowThousand(value) {
+        const hundred = Math.floor(value / 100);
+        const rest = value % 100;
+        return `${hundred ? `${ones[hundred]} Hundred` : ""} ${rest ? belowHundred(rest) : ""}`.trim();
+      }
+
+      const rounded = Math.round(Math.max(Number(amount) || 0, 0));
+      if (!rounded) return "Indian Rupee Zero Only";
+
+      const crore = Math.floor(rounded / 10000000);
+      const lakh = Math.floor((rounded % 10000000) / 100000);
+      const thousand = Math.floor((rounded % 100000) / 1000);
+      const rest = rounded % 1000;
+      const parts = [];
+
+      if (crore) parts.push(`${belowThousand(crore)} Crore`);
+      if (lakh) parts.push(`${belowThousand(lakh)} Lakh`);
+      if (thousand) parts.push(`${belowThousand(thousand)} Thousand`);
+      if (rest) parts.push(belowThousand(rest));
+
+      return `Indian Rupee ${parts.join(" ")} Only`;
+    }
+
+    function getPayslipData(row) {
+      const grossEarnings = row.grossSalary + row.bonus;
+      const totalDeductions = row.totalDeduction;
+
+      return {
+        companyName: payrollCompanyName,
+        companyAddress: payrollCompanyAddress,
+        monthLabel: formatPayslipMonth(row.month),
+        payPeriod: formatPayslipMonth(row.month),
+        payDate: formatPayslipDate(),
+        employeeName: row.employeeName,
+        employeeId: row.employeeId || row.uid,
+        paidDays: row.presentDays,
+        lopDays: row.absentDays,
+        totalNetPay: row.netSalary,
+        grossEarnings,
+        totalDeductions,
+        amountWords: numberToWordsIndian(row.netSalary),
+        earnings: [
+          ["Basic", row.grossSalary],
+          ["House Rent Allowance", 0],
+          ["Bonus / Incentive", row.bonus]
+        ],
+        deductions: [
+          ["Income Tax", 0],
+          ["Provident Fund", 0],
+          ["Attendance Deduction", totalDeductions]
+        ]
+      };
+    }
+
+    function drawPayslipPdf(pdf, row) {
+      const slip = getPayslipData(row);
+      const pageWidth = 210;
+      const margin = 14;
+      const rightX = 132;
+
+      pdf.setDrawColor(229, 231, 235);
+      pdf.setFillColor(255, 255, 255);
+      pdf.roundedRect(10, 10, 190, 277, 3, 3, "FD");
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(8);
+      pdf.setTextColor(107, 114, 128);
+      pdf.text("Powered by Workforce By Mindque", pageWidth - margin, 17, { align: "right" });
+
+      pdf.setTextColor(17, 24, 39);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(13);
+      pdf.text(slip.companyName, margin, 28);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(8.5);
+      pdf.setTextColor(75, 85, 99);
+      pdf.text(pdf.splitTextToSize(slip.companyAddress, 95), margin, 34);
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(9);
+      pdf.setTextColor(107, 114, 128);
+      pdf.text("Payslip For the Month", pageWidth - margin, 30, { align: "right" });
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(15);
+      pdf.setTextColor(17, 24, 39);
+      pdf.text(slip.monthLabel, pageWidth - margin, 39, { align: "right" });
+
+      pdf.setDrawColor(229, 231, 235);
+      pdf.line(margin, 52, pageWidth - margin, 52);
+
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(10);
+      pdf.setTextColor(17, 24, 39);
+      pdf.text("EMPLOYEE SUMMARY", margin, 64);
+
+      const summaryRows = [
+        ["Employee Name", slip.employeeName],
+        ["Employee ID", slip.employeeId],
+        ["Pay Period", slip.payPeriod],
+        ["Pay Date", slip.payDate]
+      ];
+
+      let y = 75;
+      summaryRows.forEach(([label, value]) => {
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(9);
+        pdf.setTextColor(107, 114, 128);
+        pdf.text(label, margin, y);
+        pdf.setFont("helvetica", "bold");
+        pdf.setTextColor(17, 24, 39);
+        pdf.text(String(value || "-"), 55, y);
+        y += 8;
+      });
+
+      pdf.setFillColor(240, 253, 244);
+      pdf.setDrawColor(187, 247, 208);
+      pdf.roundedRect(rightX, 62, 58, 42, 3, 3, "FD");
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(17);
+      pdf.setTextColor(5, 150, 105);
+      pdf.text(formatPayslipAmount(slip.totalNetPay), rightX + 29, 78, { align: "center" });
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(8.5);
+      pdf.setTextColor(75, 85, 99);
+      pdf.text("Total Net Pay", rightX + 29, 88, { align: "center" });
+
+      pdf.setDrawColor(229, 231, 235);
+      pdf.roundedRect(rightX, 110, 27, 18, 2, 2);
+      pdf.roundedRect(rightX + 31, 110, 27, 18, 2, 2);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(8);
+      pdf.setTextColor(107, 114, 128);
+      pdf.text("Paid Days", rightX + 13.5, 116, { align: "center" });
+      pdf.text("LOP Days", rightX + 44.5, 116, { align: "center" });
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(11);
+      pdf.setTextColor(17, 24, 39);
+      pdf.text(String(slip.paidDays), rightX + 13.5, 124, { align: "center" });
+      pdf.text(String(slip.lopDays), rightX + 44.5, 124, { align: "center" });
+
+      const tableY = 140;
+      const tableW = 86;
+      const leftTableX = margin;
+      const rightTableX = 110;
+
+      function drawTable(x, title, rows, totalLabel, totalAmount) {
+        pdf.setFillColor(248, 250, 252);
+        pdf.setDrawColor(229, 231, 235);
+        pdf.rect(x, tableY, tableW, 11, "FD");
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(8.5);
+        pdf.setTextColor(75, 85, 99);
+        pdf.text(title, x + 3, tableY + 7);
+        pdf.text("AMOUNT", x + tableW - 3, tableY + 7, { align: "right" });
+
+        let rowY = tableY + 20;
+        rows.forEach(([label, amount]) => {
+          pdf.setFont("helvetica", "normal");
+          pdf.setFontSize(8.5);
+          pdf.setTextColor(17, 24, 39);
+          pdf.text(label, x + 3, rowY);
+          pdf.text(formatPayslipAmount(amount), x + tableW - 3, rowY, { align: "right" });
+          rowY += 9;
+        });
+
+        pdf.line(x, tableY + 50, x + tableW, tableY + 50);
+        pdf.setFont("helvetica", "bold");
+        pdf.setTextColor(17, 24, 39);
+        pdf.text(totalLabel, x + 3, tableY + 58);
+        pdf.text(formatPayslipAmount(totalAmount), x + tableW - 3, tableY + 58, { align: "right" });
+      }
+
+      drawTable(leftTableX, "EARNINGS", slip.earnings, "Gross Earnings", slip.grossEarnings);
+      drawTable(rightTableX, "DEDUCTIONS", slip.deductions, "Total Deductions", slip.totalDeductions);
+
+      pdf.setFillColor(240, 253, 244);
+      pdf.setDrawColor(187, 247, 208);
+      pdf.roundedRect(margin, 214, 182, 28, 3, 3, "FD");
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(10);
+      pdf.setTextColor(17, 24, 39);
+      pdf.text("TOTAL NET PAYABLE", margin + 4, 224);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(8.5);
+      pdf.setTextColor(75, 85, 99);
+      pdf.text("Gross Earnings - Total Deductions", margin + 4, 233);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(14);
+      pdf.setTextColor(5, 150, 105);
+      pdf.text(formatPayslipAmount(slip.totalNetPay), pageWidth - margin - 4, 230, { align: "right" });
+
+      pdf.setTextColor(75, 85, 99);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(8.5);
+      pdf.text(`Amount In Words: ${slip.amountWords}`, margin, 254);
+      pdf.setTextColor(107, 114, 128);
+      pdf.text("-- This is a system-generated document. --", pageWidth / 2, 274, { align: "center" });
+    }
+
+    function renderSalarySlipHtml(row) {
+      const slip = getPayslipData(row);
+
+      return `
+        <div>
+          <h3 style="margin:0 0 6px;">${slip.companyName}</h3>
+          <div class="holiday-date">${slip.companyAddress}</div>
+          <div class="holiday-date">Payslip For the Month: <strong>${slip.monthLabel}</strong></div>
+        </div>
+        <div class="salary-slip-grid">
+          <div class="salary-slip-line"><span>Employee Name</span><strong>${slip.employeeName}</strong></div>
+          <div class="salary-slip-line"><span>Employee ID</span><strong>${slip.employeeId}</strong></div>
+          <div class="salary-slip-line"><span>Pay Period</span><strong>${slip.payPeriod}</strong></div>
+          <div class="salary-slip-line"><span>Pay Date</span><strong>${slip.payDate}</strong></div>
+          <div class="salary-slip-line"><span>Paid Days</span><strong>${slip.paidDays}</strong></div>
+          <div class="salary-slip-line"><span>LOP Days</span><strong>${slip.lopDays}</strong></div>
+          <div class="salary-slip-line"><span>Gross Earnings</span><strong>${formatCurrency(slip.grossEarnings)}</strong></div>
+          <div class="salary-slip-line"><span>Total Deductions</span><strong>${formatCurrency(slip.totalDeductions)}</strong></div>
+          <div class="salary-slip-line"><span>Total Net Pay</span><strong>${formatCurrency(slip.totalNetPay)}</strong></div>
+          <div class="salary-slip-line"><span>Status</span><strong>${row.status}</strong></div>
+        </div>
+        <div class="holiday-date">Amount In Words: ${slip.amountWords}</div>
+        <div class="holiday-date">-- This is a system-generated document. --</div>
+      `;
+    }
+
+    window.viewSalarySlip = function (key) {
+      const row = payrollSlipStore[key];
+
+      if (!row) {
+        alert("Salary slip not found. Please refresh payroll.");
+        return;
+      }
+
+      currentSalarySlipKey = key;
+      document.getElementById("salarySlipContent").innerHTML = renderSalarySlipHtml(row);
+      document.getElementById("salarySlipModal").classList.add("open");
+      document.getElementById("salarySlipModal").setAttribute("aria-hidden", "false");
+    };
+
+    window.closeSalarySlip = function () {
+      document.getElementById("salarySlipModal").classList.remove("open");
+      document.getElementById("salarySlipModal").setAttribute("aria-hidden", "true");
+      document.getElementById("salarySlipContent").innerHTML = "";
+    };
+
+    window.downloadCurrentSalarySlip = function () {
+      if (!currentSalarySlipKey) return;
+      downloadSalarySlip(currentSalarySlipKey);
+    };
+
+    window.downloadSalarySlip = function (key) {
+      const row = payrollSlipStore[key];
+
+      if (!row) {
+        alert("Salary slip not found. Please refresh payroll.");
+        return;
+      }
+
+      const jsPDF = window.jspdf?.jsPDF;
+
+      if (!jsPDF) {
+        alert("PDF library could not load. Please check your internet connection.");
+        return;
+      }
+
+      const pdf = new jsPDF();
+      drawPayslipPdf(pdf, row);
+      pdf.save(`Salary_Slip_${row.employeeName.replace(/[^a-z0-9]+/gi, "_")}_${row.month}.pdf`);
+    };
+
+    window.setPayrollStatus = async function (uid, monthValue, status) {
+      await setDoc(doc(db, "payrollStatus", getPayrollDocId(uid, monthValue)), {
+        userId: uid,
+        month: monthValue,
+        status,
+        updatedAt: new Date().toISOString(),
+        updatedBy: auth.currentUser?.email || "admin"
+      }, { merge: true });
+
+      loadData();
+    };
+
     window.exportToExcel = async function () {
       const employeeSnap = await getDocs(collection(db, "employees"));
       const attendanceSnap = await getDocs(collection(db, "attendance"));
@@ -3418,6 +4475,34 @@
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Weekly Timesheet");
       XLSX.writeFile(workbook, "Workforce_By_Mindque_Weekly_Timesheet.xlsx");
+    };
+
+    window.exportPayrollToExcel = function () {
+      if (!latestPayrollRows.length) {
+        alert("No payroll data to export");
+        return;
+      }
+
+      const exportRows = latestPayrollRows.map((row) => ({
+        Employee: row.employeeName,
+        Month: row.month,
+        SalaryType: row.salaryType,
+        TotalDays: row.totalDays,
+        PresentDays: row.presentDays,
+        AbsentDays: row.absentDays,
+        TotalHours: formatMinutes(row.workedMinutes),
+        BreakDeduction: formatMinutes(row.breakMinutes),
+        PerHourRate: row.hourlyRate,
+        GrossSalary: row.grossSalary + row.bonus,
+        Deduction: row.totalDeduction,
+        NetSalary: row.netSalary,
+        Status: row.status
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(exportRows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Payroll");
+      XLSX.writeFile(workbook, "Workforce_By_Mindque_Payroll.xlsx");
     };
 
     window.exportMonthlyTimesheet = function () {

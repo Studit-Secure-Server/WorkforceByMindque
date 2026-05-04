@@ -4,9 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Workforce By Mindque Employee Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <style>
     * {
       box-sizing: border-box;
+    }
+
+    :root {
+      --motion-fast: 0.18s ease;
+      --motion-smooth: 0.48s cubic-bezier(0.16, 1, 0.3, 1);
+      --shadow-lift: 0 26px 76px rgba(15, 23, 42, 0.12);
     }
 
     body {
@@ -14,13 +21,16 @@
       min-height: 100vh;
       font-family: Inter, Arial, sans-serif;
       background: linear-gradient(135deg, #eef7f3, #f8f7ef);
+      background-size: 180% 180%;
       color: #111827;
+      animation: dashboardAura 18s ease-in-out infinite;
     }
 
     .shell {
       width: min(100% - 36px, 1120px);
       margin: 0 auto;
       padding: 34px 0;
+      animation: pageFadeIn 0.5s ease both;
     }
 
     .topbar {
@@ -29,6 +39,7 @@
       justify-content: space-between;
       gap: 18px;
       margin-bottom: 28px;
+      animation: contentRise 0.55s var(--motion-smooth) both;
     }
 
     .brand {
@@ -44,6 +55,7 @@
       width: 150px;
       height: auto;
       object-fit: contain;
+      animation: brandFloat 5.5s ease-in-out infinite;
     }
 
     .brand-name {
@@ -68,11 +80,11 @@
       background: #ffffff;
       box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
       cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: transform var(--motion-fast), box-shadow var(--motion-fast);
     }
 
     .profile-trigger:hover {
-      transform: translateY(-1px);
+      transform: translateY(-2px) scale(1.03);
       box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
     }
 
@@ -95,7 +107,19 @@
       font-weight: 900;
       cursor: pointer;
       background: #2563eb;
-      transition: transform 0.2s, background 0.2s, opacity 0.2s;
+      position: relative;
+      overflow: hidden;
+      transition: transform var(--motion-fast), background var(--motion-fast), opacity var(--motion-fast), box-shadow var(--motion-fast), filter var(--motion-fast);
+    }
+
+    .logout-btn::after,
+    .btn::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(110deg, transparent 20%, rgba(255, 255, 255, 0.42) 48%, transparent 72%);
+      transform: translateX(-120%);
+      pointer-events: none;
     }
 
     .logout-btn {
@@ -104,7 +128,19 @@
 
     .logout-btn:hover,
     .btn:hover:not(:disabled) {
-      transform: translateY(-1px);
+      transform: translateY(-2px);
+      box-shadow: 0 14px 28px rgba(37, 99, 235, 0.18);
+      filter: saturate(1.06);
+    }
+
+    .logout-btn:hover::after,
+    .btn:hover:not(:disabled)::after {
+      animation: sheenSweep 0.8s ease;
+    }
+
+    .logout-btn:active,
+    .btn:active:not(:disabled) {
+      transform: translateY(0) scale(0.98);
     }
 
     button:disabled {
@@ -117,6 +153,7 @@
       grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
       gap: 24px;
       align-items: stretch;
+      animation: contentRise 0.55s var(--motion-smooth) 0.08s both;
     }
 
     .panel {
@@ -124,6 +161,38 @@
       border-radius: 34px;
       padding: 30px;
       box-shadow: 0 20px 50px rgba(15, 23, 42, 0.06);
+      position: relative;
+      overflow: hidden;
+      animation: panelRise 0.52s var(--motion-smooth) both;
+      transition: transform var(--motion-smooth), box-shadow var(--motion-smooth);
+      will-change: transform;
+    }
+
+    .panel:nth-child(2) { animation-delay: 0.08s; }
+    .panel:nth-child(3) { animation-delay: 0.14s; }
+    .panel:nth-child(4) { animation-delay: 0.2s; }
+    .panel:nth-child(5) { animation-delay: 0.26s; }
+    .panel:nth-child(6) { animation-delay: 0.32s; }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -70%;
+      width: 54%;
+      height: 100%;
+      background: linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, 0.62) 50%, transparent 100%);
+      transform: skewX(-14deg);
+      pointer-events: none;
+    }
+
+    .panel:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-lift);
+    }
+
+    .panel:hover::before {
+      animation: panelSheen 0.95s ease;
     }
 
     h1,
@@ -159,6 +228,7 @@
       color: #2563eb;
       font-size: 14px;
       font-weight: 900;
+      animation: softPulse 2.6s ease-in-out infinite;
     }
 
     .timer {
@@ -168,6 +238,7 @@
       font-weight: 900;
       font-variant-numeric: tabular-nums;
       letter-spacing: 0;
+      animation: timerGlow 3.2s ease-in-out infinite;
     }
 
     .total-hours {
@@ -186,6 +257,12 @@
       font-size: 14px;
       font-weight: 900;
       line-height: 1.45;
+      transition: transform var(--motion-fast), background var(--motion-fast), box-shadow var(--motion-fast);
+    }
+
+    .schedule-notice:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.07);
     }
 
     .schedule-notice.warning {
@@ -248,6 +325,14 @@
       padding: 16px;
       border-radius: 18px;
       background: #f5f6fa;
+      transition: transform var(--motion-fast), background var(--motion-fast), box-shadow var(--motion-fast);
+      animation: listItemRise 0.42s var(--motion-smooth) both;
+    }
+
+    .holiday-item:hover {
+      transform: translateX(4px);
+      background: #ffffff;
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
     }
 
     .holiday-name {
@@ -270,6 +355,12 @@
       font-size: 12px;
       font-weight: 900;
       white-space: nowrap;
+      transition: transform var(--motion-fast), filter var(--motion-fast);
+    }
+
+    .holiday-badge:hover {
+      transform: translateY(-1px);
+      filter: saturate(1.08);
     }
 
     .holiday-badge.green {
@@ -305,6 +396,13 @@
       padding: 14px;
       border-radius: 18px;
       background: #f5f6fa;
+      transition: transform var(--motion-fast), background var(--motion-fast), box-shadow var(--motion-fast);
+    }
+
+    .leave-stat:hover {
+      transform: translateY(-4px);
+      background: #ffffff;
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
     }
 
     .leave-stat strong {
@@ -336,6 +434,13 @@
       font: inherit;
       outline: none;
       background: #ffffff;
+      transition: border-color var(--motion-fast), box-shadow var(--motion-fast), transform var(--motion-fast);
+    }
+
+    .leave-control:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+      transform: translateY(-1px);
     }
 
     textarea.leave-control {
@@ -382,6 +487,12 @@
       font-size: 13px;
       font-weight: 900;
       cursor: pointer;
+      transition: transform var(--motion-fast), background var(--motion-fast), color var(--motion-fast), box-shadow var(--motion-fast);
+    }
+
+    .history-range-btn:hover {
+      transform: translateY(-1px);
+      background: #ffffff;
     }
 
     .history-range-btn.active {
@@ -399,6 +510,114 @@
       padding-right: 4px;
     }
 
+    .insight-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .insight-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 20px;
+      background: #f5f6fa;
+      transition: transform var(--motion-fast), background var(--motion-fast), box-shadow var(--motion-fast);
+      animation: listItemRise 0.42s var(--motion-smooth) both;
+    }
+
+    .insight-item:hover {
+      transform: translateX(4px);
+      background: #ffffff;
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    .insight-icon {
+      display: grid;
+      place-items: center;
+      flex: 0 0 38px;
+      width: 38px;
+      height: 38px;
+      border-radius: 14px;
+      background: #dbeafe;
+      color: #2563eb;
+      font-weight: 900;
+      animation: softPulse 2.8s ease-in-out infinite;
+    }
+
+    .insight-title {
+      margin-bottom: 4px;
+      color: #111827;
+      font-weight: 900;
+    }
+
+    .insight-copy {
+      margin: 0;
+      color: #6b7280;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .salary-slip-form {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) auto;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .salary-slip-form input {
+      height: 48px;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 0 16px;
+      color: #111827;
+      font: inherit;
+      outline: none;
+      transition: border-color var(--motion-fast), box-shadow var(--motion-fast), transform var(--motion-fast);
+    }
+
+    .salary-slip-form input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+      transform: translateY(-1px);
+    }
+
+    .salary-slip-summary {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .salary-slip-stat {
+      min-height: 92px;
+      padding: 16px;
+      border-radius: 20px;
+      background: #f5f6fa;
+      transition: transform var(--motion-fast), background var(--motion-fast), box-shadow var(--motion-fast);
+    }
+
+    .salary-slip-stat:hover {
+      transform: translateY(-4px);
+      background: #ffffff;
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    .salary-slip-stat span {
+      display: block;
+      margin-bottom: 6px;
+      color: #6b7280;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .salary-slip-stat strong {
+      color: #111827;
+      font-size: 22px;
+      font-weight: 900;
+    }
+
     .history-item {
       width: 100%;
       border: 0;
@@ -413,10 +632,14 @@
       grid-template-columns: minmax(0, 1fr) auto;
       gap: 12px;
       align-items: center;
+      transition: transform var(--motion-fast), background var(--motion-fast), box-shadow var(--motion-fast);
+      animation: listItemRise 0.42s var(--motion-smooth) both;
     }
 
     .history-item:hover {
       background: #eef4ff;
+      transform: translateX(4px);
+      box-shadow: 0 14px 30px rgba(37, 99, 235, 0.1);
     }
 
     .history-day {
@@ -477,6 +700,13 @@
       padding: 14px;
       border-radius: 18px;
       background: #f5f6fa;
+      transition: transform var(--motion-fast), background var(--motion-fast), box-shadow var(--motion-fast);
+    }
+
+    .history-detail-field:hover {
+      transform: translateY(-3px);
+      background: #ffffff;
+      box-shadow: 0 12px 26px rgba(15, 23, 42, 0.07);
     }
 
     .history-detail-label {
@@ -560,6 +790,13 @@
       padding: 14px;
       border-radius: 18px;
       background: #f5f6fa;
+      transition: transform var(--motion-fast), background var(--motion-fast), box-shadow var(--motion-fast);
+    }
+
+    .profile-field:hover {
+      transform: translateY(-3px);
+      background: #ffffff;
+      box-shadow: 0 12px 26px rgba(15, 23, 42, 0.07);
     }
 
     .profile-label {
@@ -629,6 +866,14 @@
       font-size: 14px;
       outline: none;
       background: #ffffff;
+      transition: border-color var(--motion-fast), box-shadow var(--motion-fast), transform var(--motion-fast);
+    }
+
+    .profile-input-field input:focus,
+    .profile-input-field textarea:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+      transform: translateY(-1px);
     }
 
     .profile-input-field textarea {
@@ -652,6 +897,14 @@
       padding: 18px;
       border-radius: 24px;
       background: #f5f6fa;
+      transition: transform var(--motion-fast), background var(--motion-fast), box-shadow var(--motion-fast);
+      animation: listItemRise 0.42s var(--motion-smooth) both;
+    }
+
+    .step:hover {
+      transform: translateX(4px);
+      background: #ffffff;
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
     }
 
     .step-number {
@@ -687,10 +940,12 @@
       padding: 18px;
       background: rgba(17, 24, 39, 0.58);
       z-index: 20;
+      backdrop-filter: blur(3px);
     }
 
     .modal.open {
       display: flex;
+      animation: modalFade 0.24s ease both;
     }
 
     .modal-card {
@@ -701,6 +956,7 @@
       border-radius: 30px;
       padding: 26px;
       box-shadow: 0 30px 90px rgba(15, 23, 42, 0.28);
+      animation: modalRise 0.38s var(--motion-smooth) both;
     }
 
     .modal-header {
@@ -733,6 +989,13 @@
       font-size: 22px;
       font-weight: 900;
       cursor: pointer;
+      transition: transform var(--motion-fast), background var(--motion-fast), box-shadow var(--motion-fast);
+    }
+
+    .modal-close:hover {
+      transform: rotate(6deg) scale(1.06);
+      background: #e5e7eb;
+      box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
     }
 
     .modal-grid {
@@ -745,6 +1008,14 @@
       padding: 18px;
       border-radius: 24px;
       background: #f5f6fa;
+      animation: listItemRise 0.42s var(--motion-smooth) both;
+      transition: transform var(--motion-fast), background var(--motion-fast), box-shadow var(--motion-fast);
+    }
+
+    .modal-section:hover {
+      transform: translateY(-3px);
+      background: #ffffff;
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
     }
 
     .modal-section-title {
@@ -761,6 +1032,7 @@
       border-radius: 20px;
       background: #111827;
       object-fit: cover;
+      animation: mediaReveal 0.45s ease both;
     }
 
     .selfie-preview {
@@ -774,6 +1046,7 @@
       border: 0;
       border-radius: 20px;
       background: #e5e7eb;
+      animation: mediaReveal 0.45s ease both;
     }
 
     .location-row {
@@ -793,6 +1066,7 @@
       background: #fee2e2;
       color: #dc2626;
       font-weight: 900;
+      animation: softPulse 2.6s ease-in-out infinite;
     }
 
     .radius-status.ok {
@@ -817,6 +1091,122 @@
       text-align: right;
     }
 
+    @keyframes dashboardAura {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    @keyframes pageFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes contentRise {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes panelRise {
+      from {
+        opacity: 0;
+        transform: translateY(18px) scale(0.985);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes listItemRise {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes softPulse {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+      }
+      50% {
+        transform: scale(1.015);
+        box-shadow: 0 0 0 8px rgba(37, 99, 235, 0.05);
+      }
+    }
+
+    @keyframes timerGlow {
+      0%, 100% {
+        text-shadow: 0 0 0 rgba(37, 99, 235, 0);
+      }
+      50% {
+        text-shadow: 0 16px 34px rgba(37, 99, 235, 0.14);
+      }
+    }
+
+    @keyframes brandFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    @keyframes panelSheen {
+      from { left: -70%; }
+      to { left: 120%; }
+    }
+
+    @keyframes sheenSweep {
+      from { transform: translateX(-120%); }
+      to { transform: translateX(120%); }
+    }
+
+    @keyframes modalFade {
+      from { background: rgba(17, 24, 39, 0); }
+      to { background: rgba(17, 24, 39, 0.58); }
+    }
+
+    @keyframes modalRise {
+      from {
+        opacity: 0;
+        transform: translateY(18px) scale(0.975);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes mediaReveal {
+      from {
+        opacity: 0;
+        transform: scale(0.985);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
     @media (max-width: 880px) {
       .topbar,
       .hero,
@@ -834,6 +1224,8 @@
 
       .leave-summary,
       .leave-form-row,
+      .salary-slip-form,
+      .salary-slip-summary,
       .history-detail-grid,
       .history-photo-row {
         grid-template-columns: 1fr;
@@ -908,6 +1300,20 @@
             <div>
               <div class="step-title">Confirm attendance</div>
               <p class="step-copy">Selfie and location are saved with punch in and punch out records.</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <aside class="panel">
+        <h2>AI Work Assistant</h2>
+        <p class="subtitle">Smart insights from your recent attendance patterns.</p>
+        <div id="smartInsightsList" class="insight-list">
+          <div class="insight-item">
+            <div class="insight-icon">AI</div>
+            <div>
+              <div class="insight-title">Analyzing work patterns</div>
+              <p class="insight-copy">Your insights will appear after attendance data loads.</p>
             </div>
           </div>
         </div>
@@ -998,6 +1404,27 @@
             <div>
               <div class="holiday-name">Loading attendance history...</div>
             </div>
+          </div>
+        </div>
+      </aside>
+
+      <aside class="panel">
+        <h2>Salary Slip</h2>
+        <p class="subtitle">Choose a month and download your monthly salary slip.</p>
+
+        <div class="salary-slip-form">
+          <input id="salarySlipMonth" type="month" onchange="loadSalarySlipSummary()">
+          <button class="btn" type="button" onclick="downloadMonthlySalarySlip()">Download Slip</button>
+        </div>
+
+        <div id="salarySlipSummary" class="salary-slip-summary">
+          <div class="salary-slip-stat">
+            <span>Month</span>
+            <strong>--</strong>
+          </div>
+          <div class="salary-slip-stat">
+            <span>Net Salary</span>
+            <strong>--</strong>
           </div>
         </div>
       </aside>
@@ -1193,6 +1620,7 @@
     const radiusStatus = document.getElementById("radiusStatus");
     const mapFrame = document.getElementById("mapFrame");
     const confirmHelp = document.getElementById("confirmHelp");
+    const smartInsightsList = document.getElementById("smartInsightsList");
     const holidayList = document.getElementById("holidayList");
     const notificationList = document.getElementById("notificationList");
     const notificationToggle = document.getElementById("notificationToggle");
@@ -1209,6 +1637,8 @@
     const historyDetailStatus = document.getElementById("historyDetailStatus");
     const historyDetailGrid = document.getElementById("historyDetailGrid");
     const historyDetailPhotos = document.getElementById("historyDetailPhotos");
+    const salarySlipMonth = document.getElementById("salarySlipMonth");
+    const salarySlipSummary = document.getElementById("salarySlipSummary");
     const topProfilePhoto = document.getElementById("topProfilePhoto");
     const profileModal = document.getElementById("profileModal");
     const profilePreviewPhoto = document.getElementById("profilePreviewPhoto");
@@ -1242,6 +1672,7 @@
     let currentEmployeeProfile = null;
     let attendanceHistoryRange = 7;
     let attendanceHistoryItems = {};
+    let currentSalarySlip = null;
     let officeLocations = [...defaultOfficeLocations];
     let selfiePreviewUrl = null;
     let scheduleInterval = null;
@@ -1276,6 +1707,11 @@
       return `${year}-${month}-${day}`;
     }
 
+    function getCurrentMonthValue() {
+      const now = new Date();
+      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    }
+
     function formatDisplayDate(dateText) {
       return new Date(dateText + "T00:00:00").toLocaleDateString(undefined, {
         weekday: "short",
@@ -1303,6 +1739,68 @@
       }
 
       return days;
+    }
+
+    function formatCurrency(amount) {
+      return new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: "INR",
+        maximumFractionDigits: 0
+      }).format(Math.max(Number(amount) || 0, 0));
+    }
+
+    function formatPdfCurrency(amount) {
+      return `INR ${Math.round(Math.max(Number(amount) || 0, 0)).toLocaleString("en-IN")}`;
+    }
+
+    function formatPayslipAmount(amount) {
+      return `Rs. ${Math.max(Number(amount) || 0, 0).toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })}`;
+    }
+
+    function formatPayslipMonth(monthValue) {
+      return new Date(`${monthValue}-01T00:00:00`).toLocaleDateString(undefined, {
+        month: "long",
+        year: "numeric"
+      });
+    }
+
+    function formatPayslipDate(date = new Date()) {
+      return date.toLocaleDateString("en-GB");
+    }
+
+    function numberToWordsIndian(amount) {
+      const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+      const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+
+      function belowHundred(value) {
+        if (value < 20) return ones[value];
+        return `${tens[Math.floor(value / 10)]} ${ones[value % 10]}`.trim();
+      }
+
+      function belowThousand(value) {
+        const hundred = Math.floor(value / 100);
+        const rest = value % 100;
+        return `${hundred ? `${ones[hundred]} Hundred` : ""} ${rest ? belowHundred(rest) : ""}`.trim();
+      }
+
+      const rounded = Math.round(Math.max(Number(amount) || 0, 0));
+      if (!rounded) return "Indian Rupee Zero Only";
+
+      const crore = Math.floor(rounded / 10000000);
+      const lakh = Math.floor((rounded % 10000000) / 100000);
+      const thousand = Math.floor((rounded % 100000) / 1000);
+      const rest = rounded % 1000;
+      const parts = [];
+
+      if (crore) parts.push(`${belowThousand(crore)} Crore`);
+      if (lakh) parts.push(`${belowThousand(lakh)} Lakh`);
+      if (thousand) parts.push(`${belowThousand(thousand)} Thousand`);
+      if (rest) parts.push(belowThousand(rest));
+
+      return `Indian Rupee ${parts.join(" ")} Only`;
     }
 
     function getLeaveAllowance(profile) {
@@ -2437,6 +2935,600 @@
       return Math.max(endTime - punchInTime - breakSummary.completedBreakMs, 0);
     }
 
+    function getWeekStartDate(date = new Date()) {
+      const weekStart = new Date(date);
+      weekStart.setHours(0, 0, 0, 0);
+      const day = weekStart.getDay();
+      const diff = day === 0 ? -6 : 1 - day;
+      weekStart.setDate(weekStart.getDate() + diff);
+      return weekStart;
+    }
+
+    function getRecentCutoffDate(days) {
+      const cutoff = new Date();
+      cutoff.setHours(0, 0, 0, 0);
+      cutoff.setDate(cutoff.getDate() - (days - 1));
+      return cutoff;
+    }
+
+    function getFirstPunchInByDate(records) {
+      const firstPunchInByDate = {};
+
+      records.forEach((record) => {
+        if (!record.date || record.status === "absent") {
+          return;
+        }
+
+        const punchIn = timestampToDate(record.punchIn);
+
+        if (!punchIn) {
+          return;
+        }
+
+        if (!firstPunchInByDate[record.date] || punchIn < firstPunchInByDate[record.date]) {
+          firstPunchInByDate[record.date] = punchIn;
+        }
+      });
+
+      return firstPunchInByDate;
+    }
+
+    function countLateDaysThisWeek(profile, records) {
+      const workStart = getTimeMinutes(profile?.workStart);
+
+      if (workStart === null) {
+        return null;
+      }
+
+      const weekStartText = getDateInputValue(getWeekStartDate());
+      const currentDateText = getDateInputValue(new Date());
+      const weekRecords = records.filter((record) => record.date >= weekStartText && record.date <= currentDateText);
+      const firstPunchInByDate = getFirstPunchInByDate(weekRecords);
+
+      return Object.values(firstPunchInByDate).filter((punchIn) => {
+        const punchMinutes = (punchIn.getHours() * 60) + punchIn.getMinutes();
+        return punchMinutes > workStart;
+      }).length;
+    }
+
+    function getProductiveWindow(records) {
+      const windows = [
+        { label: "8 AM - 11 AM", start: 8 * 60, end: 11 * 60, totalMs: 0 },
+        { label: "11 AM - 2 PM", start: 11 * 60, end: 14 * 60, totalMs: 0 },
+        { label: "2 PM - 5 PM", start: 14 * 60, end: 17 * 60, totalMs: 0 },
+        { label: "5 PM - 8 PM", start: 17 * 60, end: 20 * 60, totalMs: 0 }
+      ];
+
+      records.forEach((record) => {
+        if (record.status === "absent") {
+          return;
+        }
+
+        const punchIn = timestampToDate(record.punchIn);
+        const punchOut = timestampToDate(record.punchOut);
+
+        if (!punchIn || !punchOut || punchOut <= punchIn) {
+          return;
+        }
+
+        const dayStart = new Date(punchIn);
+        dayStart.setHours(0, 0, 0, 0);
+
+        windows.forEach((windowBlock) => {
+          const windowStart = new Date(dayStart);
+          windowStart.setMinutes(windowBlock.start);
+          const windowEnd = new Date(dayStart);
+          windowEnd.setMinutes(windowBlock.end);
+          const overlapMs = Math.max(Math.min(punchOut, windowEnd) - Math.max(punchIn, windowStart), 0);
+          windowBlock.totalMs += overlapMs;
+        });
+      });
+
+      const bestWindow = windows.sort((a, b) => b.totalMs - a.totalMs)[0];
+      return bestWindow && bestWindow.totalMs > 0 ? bestWindow.label : null;
+    }
+
+    function renderSmartInsights(insights) {
+      smartInsightsList.innerHTML = insights.map((insight) => `
+        <div class="insight-item">
+          <div class="insight-icon">${insight.icon}</div>
+          <div>
+            <div class="insight-title">${insight.title}</div>
+            <p class="insight-copy">${insight.copy}</p>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    async function loadSmartInsights(user) {
+      if (!smartInsightsList) {
+        return;
+      }
+
+      renderSmartInsights([{
+        icon: "AI",
+        title: "Analyzing work patterns",
+        copy: "Checking recent attendance, break time, and schedule data."
+      }]);
+
+      const [attendanceSnap, breakSnap] = await Promise.all([
+        getDocs(query(collection(db, "attendance"), where("userId", "==", user.uid))),
+        getDocs(query(collection(db, "breaks"), where("userId", "==", user.uid)))
+      ]);
+
+      const cutoffText = getDateInputValue(getRecentCutoffDate(30));
+      const currentDateText = getDateInputValue(new Date());
+      const records = [];
+      const breaksByDate = {};
+
+      attendanceSnap.forEach((docSnap) => {
+        const data = docSnap.data();
+
+        if (data.date >= cutoffText && data.date <= currentDateText) {
+          records.push({ id: docSnap.id, ...data });
+        }
+      });
+
+      breakSnap.forEach((docSnap) => {
+        const data = docSnap.data();
+
+        if (data.date >= cutoffText && data.date <= currentDateText) {
+          breaksByDate[data.date] ||= [];
+          breaksByDate[data.date].push({ id: docSnap.id, ...data });
+        }
+      });
+
+      const completedRecords = records.filter((record) => record.status === "completed" || record.status === "missed-punch-out");
+      const workedDurations = completedRecords
+        .map((record) => getRecordWorkMs(record, breaksByDate[record.date] || []))
+        .filter((duration) => duration > 0);
+      const averageMs = workedDurations.length
+        ? workedDurations.reduce((sum, duration) => sum + duration, 0) / workedDurations.length
+        : 0;
+      const lateDays = countLateDaysThisWeek(currentEmployeeProfile, records);
+      const productiveWindow = getProductiveWindow(completedRecords);
+
+      renderSmartInsights([
+        {
+          icon: "L",
+          title: "Late arrivals",
+          copy: lateDays === null
+            ? "Your working start time is not assigned yet, so lateness tracking is waiting for schedule setup."
+            : `You were late ${lateDays} ${lateDays === 1 ? "time" : "times"} this week.`
+        },
+        {
+          icon: "A",
+          title: "Average working time",
+          copy: averageMs
+            ? `Your average working time is ${formatDuration(averageMs)} across recent completed shifts.`
+            : "Complete a punch in and punch out cycle to calculate your average working time."
+        },
+        {
+          icon: "P",
+          title: "Most productive window",
+          copy: productiveWindow
+            ? `You are most productive between ${productiveWindow}, based on your recent logged hours.`
+            : "More completed attendance records are needed to detect your strongest work window."
+        }
+      ]);
+    }
+
+    function getTimeMinutes(timeText) {
+      if (!timeText) return null;
+
+      const [hours, minutes] = timeText.split(":").map(Number);
+
+      if (!Number.isFinite(hours) || !Number.isFinite(minutes)) {
+        return null;
+      }
+
+      return (hours * 60) + minutes;
+    }
+
+    function getExpectedDailyMinutes(profile) {
+      const start = getTimeMinutes(profile?.workStart);
+      const end = getTimeMinutes(profile?.workEnd);
+
+      if (start === null || end === null) {
+        return 480;
+      }
+
+      const minutes = end > start ? end - start : (24 * 60) - start + end;
+      return minutes > 0 ? minutes : 480;
+    }
+
+    function countWorkingDaysInMonth(monthValue) {
+      const [year, month] = monthValue.split("-").map(Number);
+
+      if (!year || !month) {
+        return 0;
+      }
+
+      const daysInMonth = new Date(year, month, 0).getDate();
+      let workingDays = 0;
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month - 1, day);
+
+        if (date.getDay() !== 0) {
+          workingDays++;
+        }
+      }
+
+      return workingDays;
+    }
+
+    function getPayrollSettings(profile) {
+      const monthlySalary = Number(profile?.monthlySalary ?? profile?.salary ?? 0);
+      const salaryType = profile?.salaryType === "fixed" || profile?.salaryBasis === "days" ? "fixed" : "hourly";
+      const hourlyRate = Number(profile?.hourlyRate ?? profile?.perHourSalary ?? 0);
+      const defaultDeduction = Number(profile?.payrollDeduction ?? profile?.deduction ?? 0);
+      const lateDeductionPerDay = Number(profile?.lateDeductionPerDay ?? 0);
+      const bonus = Number(profile?.payrollBonus ?? profile?.bonus ?? 0);
+
+      return {
+        salaryType,
+        hourlyRate: Number.isFinite(hourlyRate) && hourlyRate > 0 ? hourlyRate : 0,
+        monthlySalary: Number.isFinite(monthlySalary) && monthlySalary > 0 ? monthlySalary : 0,
+        defaultDeduction: Number.isFinite(defaultDeduction) && defaultDeduction > 0 ? defaultDeduction : 0,
+        lateDeductionPerDay: Number.isFinite(lateDeductionPerDay) && lateDeductionPerDay > 0 ? lateDeductionPerDay : 0,
+        bonus: Number.isFinite(bonus) && bonus > 0 ? bonus : 0,
+        deductionRules: profile?.deductionRules || ""
+      };
+    }
+
+    function getPayrollDocId(uid, monthValue) {
+      return `${uid}_${monthValue}`.replace(/[^a-zA-Z0-9_-]/g, "_");
+    }
+
+    function countLateDays(profile, records) {
+      const workStart = getTimeMinutes(profile?.workStart);
+
+      if (workStart === null) return 0;
+
+      const lateDates = new Set();
+
+      records.forEach((record) => {
+        if (record.status === "absent") return;
+
+        const punchIn = timestampToDate(record.punchIn);
+        if (!punchIn) return;
+
+        const punchMinutes = (punchIn.getHours() * 60) + punchIn.getMinutes();
+        if (punchMinutes > workStart) {
+          lateDates.add(record.date);
+        }
+      });
+
+      return lateDates.size;
+    }
+
+    async function getMonthlySalarySlip(user, monthValue) {
+      const profile = currentEmployeeProfile;
+
+      if (!profile) {
+        throw new Error("Employee profile not loaded");
+      }
+
+      const [attendanceSnap, breakSnap, payrollStatusSnap] = await Promise.all([
+        getDocs(query(collection(db, "attendance"), where("userId", "==", user.uid))),
+        getDocs(query(collection(db, "breaks"), where("userId", "==", user.uid))),
+        getDoc(doc(db, "payrollStatus", getPayrollDocId(profile.uid || user.uid, monthValue)))
+      ]);
+
+      const records = [];
+      const breaksByDate = {};
+      let breakMs = 0;
+
+      attendanceSnap.forEach((docSnap) => {
+        const data = docSnap.data();
+
+        if (String(data.date || "").startsWith(monthValue)) {
+          records.push({ id: docSnap.id, ...data });
+        }
+      });
+
+      breakSnap.forEach((docSnap) => {
+        const data = docSnap.data();
+
+        if (!String(data.date || "").startsWith(monthValue)) {
+          return;
+        }
+
+        breaksByDate[data.date] ||= [];
+        breaksByDate[data.date].push({ id: docSnap.id, ...data });
+
+        const start = timestampToDate(data.breakStart);
+        const end = timestampToDate(data.breakEnd);
+
+        if (start && end) {
+          breakMs += Math.max(end - start, 0);
+        }
+      });
+
+      const settings = getPayrollSettings(profile);
+      const totalDays = countWorkingDaysInMonth(monthValue);
+      const presentDays = new Set(records.filter((record) => record.status !== "absent").map((record) => record.date)).size;
+      const absentRecords = records.filter((record) => record.status === "absent").length;
+      const absentDays = Math.max(totalDays - presentDays, absentRecords, 0);
+      const workedMs = records
+        .filter((record) => record.status !== "absent")
+        .reduce((sum, record) => sum + getRecordWorkMs(record, breaksByDate[record.date] || []), 0);
+      const workedHours = workedMs / 3600000;
+      const expectedMonthlyHours = (totalDays * getExpectedDailyMinutes(profile)) / 60;
+      const computedHourlyRate = expectedMonthlyHours ? settings.monthlySalary / expectedMonthlyHours : 0;
+      const hourlyRate = settings.hourlyRate || computedHourlyRate;
+      const dailyRate = totalDays ? settings.monthlySalary / totalDays : 0;
+      const lateDays = countLateDays(profile, records);
+      const lateDeduction = lateDays * settings.lateDeductionPerDay;
+      const absentDeduction = settings.salaryType === "fixed" ? absentDays * dailyRate : 0;
+      const grossSalary = settings.salaryType === "fixed" ? settings.monthlySalary : workedHours * hourlyRate;
+      const totalDeduction = settings.defaultDeduction + lateDeduction + absentDeduction;
+      const netSalary = Math.max(grossSalary + settings.bonus - totalDeduction, 0);
+      const hasSalarySetup = Boolean(settings.hourlyRate || settings.monthlySalary);
+
+      return {
+        companyName: "Mindque India Pvt. Ltd.",
+        companyAddress: "Plot No-211, Ground Floor, District Center Chandrasekharpur, Bhubaneswar-751016, Odisha India",
+        employeeName: profile.name || user.email || "Employee",
+        employeeId: profile.employeeId || profile.employeeCode || profile.uid || user.uid,
+        employeeEmail: profile.email || user.email || "-",
+        month: monthValue,
+        monthLabel: formatPayslipMonth(monthValue),
+        payDate: formatPayslipDate(),
+        salaryType: settings.salaryType,
+        totalDays,
+        presentDays,
+        absentDays,
+        workedMs,
+        breakMs,
+        hourlyRate,
+        grossSalary,
+        bonus: settings.bonus,
+        defaultDeduction: settings.defaultDeduction,
+        lateDeduction,
+        absentDeduction,
+        totalDeduction,
+        netSalary,
+        status: payrollStatusSnap.exists() ? payrollStatusSnap.data().status : (hasSalarySetup ? "Calculated" : "Draft"),
+        deductionRules: settings.deductionRules || "Standard attendance deduction rules"
+      };
+    }
+
+    function renderSalarySlipSummary(slip) {
+      currentSalarySlip = slip;
+      salarySlipSummary.innerHTML = `
+        <div class="salary-slip-stat">
+          <span>Month</span>
+          <strong>${slip.month}</strong>
+        </div>
+        <div class="salary-slip-stat">
+          <span>Net Salary</span>
+          <strong>${formatCurrency(slip.netSalary)}</strong>
+        </div>
+        <div class="salary-slip-stat">
+          <span>Total Hours</span>
+          <strong>${formatDuration(slip.workedMs)}</strong>
+        </div>
+        <div class="salary-slip-stat">
+          <span>Status</span>
+          <strong>${slip.status}</strong>
+        </div>
+      `;
+    }
+
+    function drawMonthlyPayslipPdf(pdf, slip) {
+      const pageWidth = 210;
+      const margin = 14;
+      const rightX = 132;
+      const grossEarnings = slip.grossSalary + slip.bonus;
+      const totalDeductions = slip.totalDeduction;
+
+      pdf.setDrawColor(229, 231, 235);
+      pdf.setFillColor(255, 255, 255);
+      pdf.roundedRect(10, 10, 190, 277, 3, 3, "FD");
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(8);
+      pdf.setTextColor(107, 114, 128);
+      pdf.text("Powered by Workforce By Mindque", pageWidth - margin, 17, { align: "right" });
+
+      pdf.setTextColor(17, 24, 39);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(13);
+      pdf.text(slip.companyName, margin, 28);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(8.5);
+      pdf.setTextColor(75, 85, 99);
+      pdf.text(pdf.splitTextToSize(slip.companyAddress, 95), margin, 34);
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(9);
+      pdf.setTextColor(107, 114, 128);
+      pdf.text("Payslip For the Month", pageWidth - margin, 30, { align: "right" });
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(15);
+      pdf.setTextColor(17, 24, 39);
+      pdf.text(slip.monthLabel, pageWidth - margin, 39, { align: "right" });
+
+      pdf.setDrawColor(229, 231, 235);
+      pdf.line(margin, 52, pageWidth - margin, 52);
+
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(10);
+      pdf.setTextColor(17, 24, 39);
+      pdf.text("EMPLOYEE SUMMARY", margin, 64);
+
+      const summaryRows = [
+        ["Employee Name", slip.employeeName],
+        ["Employee ID", slip.employeeId],
+        ["Pay Period", slip.monthLabel],
+        ["Pay Date", slip.payDate]
+      ];
+
+      let y = 75;
+      summaryRows.forEach(([label, value]) => {
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(9);
+        pdf.setTextColor(107, 114, 128);
+        pdf.text(label, margin, y);
+        pdf.setFont("helvetica", "bold");
+        pdf.setTextColor(17, 24, 39);
+        pdf.text(String(value || "-"), 55, y);
+        y += 8;
+      });
+
+      pdf.setFillColor(240, 253, 244);
+      pdf.setDrawColor(187, 247, 208);
+      pdf.roundedRect(rightX, 62, 58, 42, 3, 3, "FD");
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(17);
+      pdf.setTextColor(5, 150, 105);
+      pdf.text(formatPayslipAmount(slip.netSalary), rightX + 29, 78, { align: "center" });
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(8.5);
+      pdf.setTextColor(75, 85, 99);
+      pdf.text("Total Net Pay", rightX + 29, 88, { align: "center" });
+
+      pdf.setDrawColor(229, 231, 235);
+      pdf.roundedRect(rightX, 110, 27, 18, 2, 2);
+      pdf.roundedRect(rightX + 31, 110, 27, 18, 2, 2);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(8);
+      pdf.setTextColor(107, 114, 128);
+      pdf.text("Paid Days", rightX + 13.5, 116, { align: "center" });
+      pdf.text("LOP Days", rightX + 44.5, 116, { align: "center" });
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(11);
+      pdf.setTextColor(17, 24, 39);
+      pdf.text(String(slip.presentDays), rightX + 13.5, 124, { align: "center" });
+      pdf.text(String(slip.absentDays), rightX + 44.5, 124, { align: "center" });
+
+      const tableY = 140;
+      const tableW = 86;
+
+      function drawTable(x, title, rows, totalLabel, totalAmount) {
+        pdf.setFillColor(248, 250, 252);
+        pdf.setDrawColor(229, 231, 235);
+        pdf.rect(x, tableY, tableW, 11, "FD");
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(8.5);
+        pdf.setTextColor(75, 85, 99);
+        pdf.text(title, x + 3, tableY + 7);
+        pdf.text("AMOUNT", x + tableW - 3, tableY + 7, { align: "right" });
+
+        let rowY = tableY + 20;
+        rows.forEach(([label, amount]) => {
+          pdf.setFont("helvetica", "normal");
+          pdf.setFontSize(8.5);
+          pdf.setTextColor(17, 24, 39);
+          pdf.text(label, x + 3, rowY);
+          pdf.text(formatPayslipAmount(amount), x + tableW - 3, rowY, { align: "right" });
+          rowY += 9;
+        });
+
+        pdf.line(x, tableY + 50, x + tableW, tableY + 50);
+        pdf.setFont("helvetica", "bold");
+        pdf.setTextColor(17, 24, 39);
+        pdf.text(totalLabel, x + 3, tableY + 58);
+        pdf.text(formatPayslipAmount(totalAmount), x + tableW - 3, tableY + 58, { align: "right" });
+      }
+
+      drawTable(margin, "EARNINGS", [
+        ["Basic", slip.grossSalary],
+        ["House Rent Allowance", 0],
+        ["Bonus / Incentive", slip.bonus]
+      ], "Gross Earnings", grossEarnings);
+
+      drawTable(110, "DEDUCTIONS", [
+        ["Income Tax", 0],
+        ["Provident Fund", 0],
+        ["Attendance Deduction", totalDeductions]
+      ], "Total Deductions", totalDeductions);
+
+      pdf.setFillColor(240, 253, 244);
+      pdf.setDrawColor(187, 247, 208);
+      pdf.roundedRect(margin, 214, 182, 28, 3, 3, "FD");
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(10);
+      pdf.setTextColor(17, 24, 39);
+      pdf.text("TOTAL NET PAYABLE", margin + 4, 224);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(8.5);
+      pdf.setTextColor(75, 85, 99);
+      pdf.text("Gross Earnings - Total Deductions", margin + 4, 233);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(14);
+      pdf.setTextColor(5, 150, 105);
+      pdf.text(formatPayslipAmount(slip.netSalary), pageWidth - margin - 4, 230, { align: "right" });
+
+      pdf.setTextColor(75, 85, 99);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(8.5);
+      pdf.text(`Amount In Words: ${numberToWordsIndian(slip.netSalary)}`, margin, 254);
+      pdf.setTextColor(107, 114, 128);
+      pdf.text("-- This is a system-generated document. --", pageWidth / 2, 274, { align: "center" });
+    }
+
+    window.loadSalarySlipSummary = async function () {
+      const user = auth.currentUser;
+      const monthValue = salarySlipMonth.value || getCurrentMonthValue();
+
+      if (!user) return;
+
+      salarySlipMonth.value = monthValue;
+      salarySlipSummary.innerHTML = `
+        <div class="holiday-item" style="grid-column:1 / -1;">
+          <div>
+            <div class="holiday-name">Loading salary slip...</div>
+          </div>
+        </div>
+      `;
+
+      try {
+        const slip = await getMonthlySalarySlip(user, monthValue);
+        renderSalarySlipSummary(slip);
+      } catch (error) {
+        console.error(error);
+        currentSalarySlip = null;
+        salarySlipSummary.innerHTML = `
+          <div class="holiday-item" style="grid-column:1 / -1;">
+            <div>
+              <div class="holiday-name">Salary slip could not load</div>
+              <div class="holiday-date">${error.message}</div>
+            </div>
+          </div>
+        `;
+      }
+    };
+
+    window.downloadMonthlySalarySlip = async function () {
+      const user = auth.currentUser;
+      const monthValue = salarySlipMonth.value || getCurrentMonthValue();
+
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+
+      if (!currentSalarySlip || currentSalarySlip.month !== monthValue) {
+        currentSalarySlip = await getMonthlySalarySlip(user, monthValue);
+        renderSalarySlipSummary(currentSalarySlip);
+      }
+
+      const jsPDF = window.jspdf?.jsPDF;
+
+      if (!jsPDF) {
+        alert("PDF library could not load. Please check your internet connection.");
+        return;
+      }
+
+      const slip = currentSalarySlip;
+      const pdf = new jsPDF();
+      drawMonthlyPayslipPdf(pdf, slip);
+      pdf.save(`Salary_Slip_${slip.employeeName.replace(/[^a-z0-9]+/gi, "_")}_${slip.month}.pdf`);
+    };
+
     function createMapLink(location) {
       if (!location) {
         return "-";
@@ -3108,6 +4200,7 @@
 
       try {
         await loadEmployeeProfile(user);
+        salarySlipMonth.value ||= getCurrentMonthValue();
       } catch (error) {
         console.error(error);
         greetingTitle.innerText = `${getGreetingText()}, Employee`;
@@ -3115,10 +4208,12 @@
 
       refreshStatus(user).catch((error) => console.error(error));
       startScheduleWatcher(user);
+      loadSmartInsights(user).catch((error) => console.error(error));
       loadUpcomingHolidays().catch((error) => console.error(error));
       loadEmployeeNotifications(user).catch((error) => console.error(error));
       loadEmployeeLeaves(user).catch((error) => console.error(error));
       loadAttendanceHistory(user).catch((error) => console.error(error));
+      loadSalarySlipSummary().catch((error) => console.error(error));
     });
   </script>
 </body>
