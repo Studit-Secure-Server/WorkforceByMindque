@@ -4,6 +4,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Workforce By Mindque Employee Dashboard</title>
+  <script>
+    (() => {
+      let savedTheme = "";
+
+      try {
+        savedTheme = localStorage.getItem("workforceTheme") || "";
+      } catch (error) {
+        savedTheme = "";
+      }
+
+      const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const theme = savedTheme || (prefersDark ? "dark" : "light");
+
+      if (theme === "dark") {
+        document.documentElement.classList.add("theme-dark");
+      }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <style>
     * {
@@ -11,6 +32,7 @@
     }
 
     :root {
+      --app-font: "Inter", Arial, sans-serif;
       --motion-fast: 0.18s ease;
       --motion-smooth: 0.48s cubic-bezier(0.16, 1, 0.3, 1);
       --shadow-lift: 0 26px 76px rgba(15, 23, 42, 0.12);
@@ -19,7 +41,8 @@
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: Inter, Arial, sans-serif;
+      font-family: var(--app-font);
+      font-optical-sizing: auto;
       background: linear-gradient(135deg, #eef7f3, #f8f7ef);
       background-size: 180% 180%;
       color: #111827;
@@ -69,6 +92,44 @@
       display: flex;
       align-items: center;
       gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 54px;
+      border: 0;
+      border-radius: 999px;
+      padding: 0 18px;
+      background: #ffffff;
+      color: #111827;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+      transition: transform var(--motion-fast), box-shadow var(--motion-fast), background var(--motion-fast), color var(--motion-fast);
+    }
+
+    .theme-toggle:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
+    }
+
+    .theme-icon {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #eef4ff;
+      color: #2563eb;
+      font-size: 12px;
+      font-weight: 900;
     }
 
     .profile-trigger {
@@ -558,6 +619,104 @@
       font-size: 14px;
       font-weight: 700;
       line-height: 1.45;
+    }
+
+    .task-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .task-card {
+      padding: 16px;
+      border-radius: 20px;
+      background: #f5f6fa;
+      transition: transform var(--motion-fast), background var(--motion-fast), box-shadow var(--motion-fast);
+      animation: listItemRise 0.42s var(--motion-smooth) both;
+    }
+
+    .task-card:hover {
+      transform: translateX(4px);
+      background: #ffffff;
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    .task-title {
+      margin-bottom: 8px;
+      color: #111827;
+      font-size: 16px;
+      font-weight: 900;
+      line-height: 1.3;
+    }
+
+    .task-description {
+      margin-bottom: 12px;
+      color: #6b7280;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.45;
+      white-space: pre-line;
+    }
+
+    .task-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .priority-badge,
+    .deadline-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .priority-low {
+      background: #d1fae5;
+      color: #059669;
+    }
+
+    .priority-medium {
+      background: #fef3c7;
+      color: #ca8a04;
+    }
+
+    .priority-high {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .deadline-badge {
+      background: #dbeafe;
+      color: #2563eb;
+    }
+
+    .deadline-badge.due-today {
+      background: #fef3c7;
+      color: #ca8a04;
+    }
+
+    .deadline-badge.overdue {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .task-status-select {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 0 12px;
+      background: #ffffff;
+      color: #111827;
+      font: inherit;
+      font-weight: 900;
+      outline: none;
     }
 
     .salary-slip-form {
@@ -1091,6 +1250,170 @@
       text-align: right;
     }
 
+    html.theme-dark body {
+      background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.2), transparent 32%),
+        linear-gradient(135deg, #07111f, #101827 48%, #111827);
+      color: #e5edf7;
+    }
+
+    html.theme-dark .panel,
+    html.theme-dark .modal-card {
+      background: #111827;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+    }
+
+    html.theme-dark .panel::before {
+      background: linear-gradient(105deg, transparent 0%, rgba(96, 165, 250, 0.12) 50%, transparent 100%);
+    }
+
+    html.theme-dark h1,
+    html.theme-dark h2,
+    html.theme-dark h3,
+    html.theme-dark .brand-name,
+    html.theme-dark .timer,
+    html.theme-dark .total-hours,
+    html.theme-dark .holiday-name,
+    html.theme-dark .step-title,
+    html.theme-dark .insight-title,
+    html.theme-dark .history-day,
+    html.theme-dark .history-detail-value,
+    html.theme-dark .profile-name,
+    html.theme-dark .profile-value,
+    html.theme-dark .modal-title,
+    html.theme-dark .salary-slip-stat strong {
+      color: #f8fafc;
+    }
+
+    html.theme-dark .subtitle,
+    html.theme-dark .holiday-date,
+    html.theme-dark .notification-message,
+    html.theme-dark .step-copy,
+    html.theme-dark .insight-copy,
+    html.theme-dark .history-meta,
+    html.theme-dark .history-detail-label,
+    html.theme-dark .profile-label,
+    html.theme-dark .profile-editor-copy,
+    html.theme-dark .modal-subtitle,
+    html.theme-dark .confirm-help,
+    html.theme-dark .salary-slip-stat span {
+      color: #94a3b8;
+    }
+
+    html.theme-dark .profile-trigger,
+    html.theme-dark .theme-toggle,
+    html.theme-dark .holiday-item,
+    html.theme-dark .step,
+    html.theme-dark .leave-stat,
+    html.theme-dark .schedule-notice,
+    html.theme-dark .insight-item,
+    html.theme-dark .salary-slip-stat,
+    html.theme-dark .history-item,
+    html.theme-dark .history-detail-field,
+    html.theme-dark .history-empty-photo,
+    html.theme-dark .profile-editor-head,
+    html.theme-dark .profile-field,
+    html.theme-dark .profile-input-field input[readonly],
+    html.theme-dark .modal-section,
+    html.theme-dark .modal-close,
+    html.theme-dark .history-controls {
+      background: #1f2937;
+      color: #e5edf7;
+      border-color: #334155;
+    }
+
+    html.theme-dark .holiday-item:hover,
+    html.theme-dark .step:hover,
+    html.theme-dark .leave-stat:hover,
+    html.theme-dark .insight-item:hover,
+    html.theme-dark .task-card:hover,
+    html.theme-dark .salary-slip-stat:hover,
+    html.theme-dark .history-item:hover,
+    html.theme-dark .history-detail-field:hover,
+    html.theme-dark .profile-field:hover,
+    html.theme-dark .modal-section:hover {
+      background: #243449;
+    }
+
+    html.theme-dark .task-card {
+      background: #1f2937;
+    }
+
+    html.theme-dark .task-title {
+      color: #f8fafc;
+    }
+
+    html.theme-dark .task-description {
+      color: #94a3b8;
+    }
+
+    html.theme-dark .status-pill,
+    html.theme-dark .theme-icon,
+    html.theme-dark .history-range-btn.active,
+    html.theme-dark .profile-role,
+    html.theme-dark .insight-icon {
+      background: rgba(37, 99, 235, 0.18);
+      color: #93c5fd;
+    }
+
+    html.theme-dark .history-range-btn {
+      color: #94a3b8;
+    }
+
+    html.theme-dark .history-range-btn:hover {
+      background: #243449;
+      color: #f8fafc;
+    }
+
+    html.theme-dark .schedule-notice.warning {
+      background: rgba(250, 204, 21, 0.14);
+      color: #fde68a;
+    }
+
+    html.theme-dark .schedule-notice.danger {
+      background: rgba(220, 38, 38, 0.16);
+      color: #fca5a5;
+    }
+
+    html.theme-dark .leave-control,
+    html.theme-dark .task-status-select,
+    html.theme-dark .salary-slip-form input,
+    html.theme-dark .profile-input-field input,
+    html.theme-dark .profile-input-field textarea {
+      background: #0f172a;
+      border-color: #334155;
+      color: #e5edf7;
+    }
+
+    html.theme-dark .leave-control::placeholder,
+    html.theme-dark .profile-input-field input::placeholder,
+    html.theme-dark .profile-input-field textarea::placeholder {
+      color: #64748b;
+    }
+
+    html.theme-dark .btn-muted {
+      background: #334155;
+      color: #f8fafc;
+    }
+
+    html.theme-dark .logout-btn {
+      background: #020617;
+    }
+
+    html.theme-dark .modal {
+      background: rgba(2, 6, 23, 0.72);
+    }
+
+    html.theme-dark video,
+    html.theme-dark .selfie-preview,
+    html.theme-dark .history-photo {
+      background: #020617;
+    }
+
+    html.theme-dark .map-frame {
+      background: #1f2937;
+    }
+
     @keyframes dashboardAura {
       0%, 100% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
@@ -1218,6 +1541,11 @@
         display: grid;
       }
 
+      .top-actions {
+        width: 100%;
+        justify-content: space-between;
+      }
+
       .actions {
         grid-template-columns: 1fr;
       }
@@ -1253,6 +1581,10 @@
         <span class="brand-name">Workforce By Mindque</span>
       </div>
       <div class="top-actions">
+        <button id="themeToggle" class="theme-toggle" type="button" onclick="toggleTheme()" aria-label="Switch theme">
+          <span class="theme-icon">N</span>
+          <span>Night Mode</span>
+        </button>
         <button class="profile-trigger" type="button" onclick="openProfileModal()" aria-label="Open profile">
           <img id="topProfilePhoto" src="assets/studit-logo-cropped.png" alt="Profile photo">
         </button>
@@ -1342,6 +1674,18 @@
           </div>
         </div>
         <button id="notificationToggle" class="link-button" type="button" onclick="toggleNotifications()">Show All</button>
+      </aside>
+
+      <aside class="panel">
+        <h2>My Tasks</h2>
+        <p class="subtitle">Assigned work from your admin team with deadline alerts.</p>
+        <div id="employeeTaskList" class="task-list">
+          <div class="holiday-item">
+            <div>
+              <div class="holiday-name">Loading tasks...</div>
+            </div>
+          </div>
+        </div>
       </aside>
 
       <aside class="panel">
@@ -1600,6 +1944,7 @@
 
     const statusEl = document.getElementById("status");
     const greetingTitle = document.getElementById("greetingTitle");
+    const themeToggle = document.getElementById("themeToggle");
     const timerEl = document.getElementById("timer");
     const totalHoursEl = document.getElementById("totalHours");
     const scheduleNotice = document.getElementById("scheduleNotice");
@@ -1624,6 +1969,7 @@
     const holidayList = document.getElementById("holidayList");
     const notificationList = document.getElementById("notificationList");
     const notificationToggle = document.getElementById("notificationToggle");
+    const employeeTaskList = document.getElementById("employeeTaskList");
     const leaveBalance = document.getElementById("leaveBalance");
     const leaveUsed = document.getElementById("leaveUsed");
     const leavePending = document.getElementById("leavePending");
@@ -1677,6 +2023,40 @@
     let selfiePreviewUrl = null;
     let scheduleInterval = null;
     let autoLogoutInProgress = false;
+
+    function updateThemeToggle() {
+      if (!themeToggle) {
+        return;
+      }
+
+      const isDark = document.documentElement.classList.contains("theme-dark");
+      themeToggle.innerHTML = `
+        <span class="theme-icon">${isDark ? "D" : "N"}</span>
+        <span>${isDark ? "Day Mode" : "Night Mode"}</span>
+      `;
+      themeToggle.setAttribute("aria-label", isDark ? "Switch to day mode" : "Switch to night mode");
+      themeToggle.setAttribute("title", isDark ? "Switch to day mode" : "Switch to night mode");
+    }
+
+    function setTheme(theme) {
+      const isDark = theme === "dark";
+      document.documentElement.classList.toggle("theme-dark", isDark);
+
+      try {
+        localStorage.setItem("workforceTheme", isDark ? "dark" : "light");
+      } catch (error) {
+        console.warn("Theme preference could not be saved:", error.message);
+      }
+
+      updateThemeToggle();
+    }
+
+    window.toggleTheme = function () {
+      const isDark = document.documentElement.classList.contains("theme-dark");
+      setTheme(isDark ? "light" : "dark");
+    };
+
+    updateThemeToggle();
 
     window.logout = async function () {
       stopScheduleWatcher();
@@ -2675,6 +3055,153 @@
     window.toggleNotifications = function () {
       showAllNotifications = !showAllNotifications;
       renderNotifications();
+    };
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function normalizeTaskStatus(status) {
+      return ["todo", "in-progress", "completed"].includes(status) ? status : "todo";
+    }
+
+    function getTaskStatusLabel(status) {
+      const normalized = normalizeTaskStatus(status);
+      if (normalized === "in-progress") return "In Progress";
+      if (normalized === "completed") return "Completed";
+      return "To Do";
+    }
+
+    function getTaskPriorityClass(priority) {
+      return `priority-${String(priority || "Medium").toLowerCase()}`;
+    }
+
+    function getTaskDeadlineState(deadline, status = "todo") {
+      if (!deadline || status === "completed") {
+        return {
+          className: "",
+          label: deadline ? formatDisplayDate(deadline) : "No deadline"
+        };
+      }
+
+      if (deadline < today) {
+        return {
+          className: "overdue",
+          label: `Overdue · ${formatDisplayDate(deadline)}`
+        };
+      }
+
+      if (deadline === today) {
+        return {
+          className: "due-today",
+          label: "Due Today"
+        };
+      }
+
+      return {
+        className: "",
+        label: formatDisplayDate(deadline)
+      };
+    }
+
+    function renderEmployeeTaskCard(task) {
+      const status = normalizeTaskStatus(task.status);
+      const priority = task.priority || "Medium";
+      const deadline = getTaskDeadlineState(task.deadline, status);
+
+      return `
+        <div class="task-card">
+          <div class="task-title">${escapeHtml(task.title || "Untitled Task")}</div>
+          <div class="task-description">${escapeHtml(task.description || "No description added.")}</div>
+          <div class="task-meta">
+            <span class="priority-badge ${getTaskPriorityClass(priority)}">${escapeHtml(priority)}</span>
+            <span class="deadline-badge ${deadline.className}">${escapeHtml(deadline.label)}</span>
+          </div>
+          <select class="task-status-select" onchange="updateMyTaskStatus('${task.id}', this.value)">
+            <option value="todo" ${status === "todo" ? "selected" : ""}>To Do</option>
+            <option value="in-progress" ${status === "in-progress" ? "selected" : ""}>In Progress</option>
+            <option value="completed" ${status === "completed" ? "selected" : ""}>Completed</option>
+          </select>
+        </div>
+      `;
+    }
+
+    async function loadEmployeeTasks(user) {
+      try {
+        const taskSnap = await getDocs(query(
+          collection(db, "tasks"),
+          where("assignedTo", "==", user.uid)
+        ));
+        const tasks = [];
+        const statusOrder = {
+          "todo": 0,
+          "in-progress": 1,
+          "completed": 2
+        };
+
+        taskSnap.forEach((docSnap) => {
+          tasks.push({ id: docSnap.id, ...docSnap.data() });
+        });
+
+        tasks.sort((a, b) => {
+          const statusDiff = (statusOrder[normalizeTaskStatus(a.status)] ?? 0) - (statusOrder[normalizeTaskStatus(b.status)] ?? 0);
+          if (statusDiff) return statusDiff;
+          return String(a.deadline || "9999-12-31").localeCompare(String(b.deadline || "9999-12-31"));
+        });
+
+        if (!tasks.length) {
+          employeeTaskList.innerHTML = `
+            <div class="holiday-item">
+              <div>
+                <div class="holiday-name">No tasks assigned</div>
+                <div class="holiday-date">New work from admin will appear here.</div>
+              </div>
+            </div>
+          `;
+          return;
+        }
+
+        employeeTaskList.innerHTML = tasks.map(renderEmployeeTaskCard).join("");
+      } catch (error) {
+        console.error(error);
+        employeeTaskList.innerHTML = `
+          <div class="holiday-item">
+            <div>
+              <div class="holiday-name">Tasks could not load</div>
+              <div class="holiday-date">${escapeHtml(error.message)}</div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    window.updateMyTaskStatus = async function (taskId, status) {
+      const normalizedStatus = normalizeTaskStatus(status);
+      const user = auth.currentUser;
+
+      if (!user) {
+        window.location.href = "index.html";
+        return;
+      }
+
+      await updateDoc(doc(db, "tasks", taskId), {
+        status: normalizedStatus,
+        updatedAt: new Date().toISOString(),
+        completedAt: normalizedStatus === "completed" ? new Date().toISOString() : "",
+        lastActivity: {
+          action: "employee-status-updated",
+          at: new Date().toISOString(),
+          by: user.uid,
+          text: `Employee changed status to ${getTaskStatusLabel(normalizedStatus)}`
+        }
+      });
+
+      loadEmployeeTasks(user).catch((error) => console.error(error));
     };
 
     async function loadEmployeeLeaves(user) {
@@ -4211,6 +4738,7 @@
       loadSmartInsights(user).catch((error) => console.error(error));
       loadUpcomingHolidays().catch((error) => console.error(error));
       loadEmployeeNotifications(user).catch((error) => console.error(error));
+      loadEmployeeTasks(user).catch((error) => console.error(error));
       loadEmployeeLeaves(user).catch((error) => console.error(error));
       loadAttendanceHistory(user).catch((error) => console.error(error));
       loadSalarySlipSummary().catch((error) => console.error(error));

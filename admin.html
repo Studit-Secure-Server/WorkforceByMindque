@@ -5,6 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Workforce By Mindque Admin</title>
 
+  <script>
+    (() => {
+      let savedTheme = "";
+
+      try {
+        savedTheme = localStorage.getItem("workforceTheme") || "";
+      } catch (error) {
+        savedTheme = "";
+      }
+
+      const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const theme = savedTheme || (prefersDark ? "dark" : "light");
+
+      if (theme === "dark") {
+        document.documentElement.classList.add("theme-dark");
+      }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
@@ -12,6 +33,7 @@
     * { box-sizing: border-box; }
 
     :root {
+      --app-font: "Inter", Arial, sans-serif;
       --motion-fast: 0.18s ease;
       --motion-smooth: 0.42s cubic-bezier(0.16, 1, 0.3, 1);
       --shadow-lift: 0 24px 70px rgba(15, 23, 42, 0.12);
@@ -19,7 +41,8 @@
 
     body {
       margin: 0;
-      font-family: Inter, Arial, sans-serif;
+      font-family: var(--app-font);
+      font-optical-sizing: auto;
       background: linear-gradient(135deg, #eef7f3, #f8f7ef);
       background-size: 180% 180%;
       color: #111827;
@@ -157,6 +180,50 @@
       align-items: center;
       margin-bottom: 28px;
       animation: contentRise 0.55s var(--motion-smooth) 0.06s both;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 50px;
+      border: 0;
+      border-radius: 999px;
+      padding: 0 18px;
+      background: #ffffff;
+      color: #111827;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
+      transition: transform var(--motion-fast), box-shadow var(--motion-fast), background var(--motion-fast), color var(--motion-fast);
+    }
+
+    .theme-toggle:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
+    }
+
+    .theme-icon {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #eef4ff;
+      color: #2563eb;
+      font-size: 12px;
+      font-weight: 900;
     }
 
     h1 {
@@ -1124,6 +1191,151 @@
       line-height: 1.45;
     }
 
+    .task-board {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(240px, 1fr));
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .task-column {
+      min-height: 320px;
+      padding: 16px;
+      border-radius: 24px;
+      background: #f5f6fa;
+    }
+
+    .task-column-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .task-column-title {
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .task-count {
+      display: inline-flex;
+      min-width: 30px;
+      justify-content: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #ffffff;
+      color: #2563eb;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .task-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .task-card {
+      padding: 16px;
+      border-radius: 20px;
+      background: #ffffff;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+      transition: transform var(--motion-fast), box-shadow var(--motion-fast);
+    }
+
+    .task-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 18px 38px rgba(15, 23, 42, 0.1);
+    }
+
+    .task-title {
+      margin-bottom: 8px;
+      color: #111827;
+      font-size: 16px;
+      font-weight: 900;
+      line-height: 1.3;
+    }
+
+    .task-description {
+      margin-bottom: 12px;
+      color: #6b7280;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.45;
+      white-space: pre-line;
+    }
+
+    .task-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .priority-badge,
+    .deadline-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .priority-low {
+      background: #d1fae5;
+      color: #059669;
+    }
+
+    .priority-medium {
+      background: #fef3c7;
+      color: #ca8a04;
+    }
+
+    .priority-high {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .deadline-badge {
+      background: #dbeafe;
+      color: #2563eb;
+    }
+
+    .deadline-badge.due-today {
+      background: #fef3c7;
+      color: #ca8a04;
+    }
+
+    .deadline-badge.overdue {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .task-assignee {
+      color: #374151;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .task-status-select {
+      width: 100%;
+      height: 42px;
+      margin-top: 12px;
+      border-radius: 14px;
+      font-weight: 900;
+    }
+
+    .task-empty {
+      padding: 18px;
+      border-radius: 18px;
+      background: #ffffff;
+      color: #6b7280;
+      font-weight: 800;
+      text-align: center;
+    }
+
     .request-actions {
       display: flex;
       align-items: center;
@@ -1176,6 +1388,168 @@
 
     .salary-slip-line strong {
       color: #111827;
+    }
+
+    html.theme-dark body {
+      background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.2), transparent 32%),
+        linear-gradient(135deg, #07111f, #101827 48%, #111827);
+      color: #e5edf7;
+    }
+
+    html.theme-dark .sidebar,
+    html.theme-dark .panel,
+    html.theme-dark .photo-modal-card {
+      background: #111827;
+      border-color: #263244;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+    }
+
+    html.theme-dark .panel::before,
+    html.theme-dark .nav-item::after {
+      background: linear-gradient(105deg, transparent 0%, rgba(96, 165, 250, 0.12) 50%, transparent 100%);
+    }
+
+    html.theme-dark h1,
+    html.theme-dark .section-title,
+    html.theme-dark .card-value,
+    html.theme-dark .action-title,
+    html.theme-dark .holiday-name,
+    html.theme-dark .photo-modal-title,
+    html.theme-dark .member-name,
+    html.theme-dark .week-range,
+    html.theme-dark td,
+    html.theme-dark .salary-slip-line strong {
+      color: #f8fafc;
+    }
+
+    html.theme-dark .subtitle,
+    html.theme-dark .card-label,
+    html.theme-dark .action-sub,
+    html.theme-dark .holiday-date,
+    html.theme-dark .notification-message,
+    html.theme-dark .nav-item,
+    html.theme-dark .filter-chip,
+    html.theme-dark th,
+    html.theme-dark .salary-slip-line {
+      color: #94a3b8;
+    }
+
+    html.theme-dark .brand-name,
+    html.theme-dark .brand,
+    html.theme-dark a,
+    html.theme-dark .nav-item.active,
+    html.theme-dark .nav-item:hover {
+      color: #93c5fd;
+    }
+
+    html.theme-dark .nav-item.active,
+    html.theme-dark .nav-item:hover {
+      background: rgba(37, 99, 235, 0.16);
+      box-shadow: 0 10px 22px rgba(37, 99, 235, 0.16);
+    }
+
+    html.theme-dark .card,
+    html.theme-dark .chart-box,
+    html.theme-dark .donut,
+    html.theme-dark .action,
+    html.theme-dark .holiday-item,
+    html.theme-dark .calendar-day,
+    html.theme-dark .timesheet-top,
+    html.theme-dark .filter-strip,
+    html.theme-dark .timesheet-wrap,
+    html.theme-dark .timesheet-table thead th,
+    html.theme-dark .timesheet-row,
+    html.theme-dark .timesheet-row:nth-child(even),
+    html.theme-dark .mode-btn.active,
+    html.theme-dark .nav-circle,
+    html.theme-dark .photo-modal-close,
+    html.theme-dark .theme-toggle,
+    html.theme-dark .task-column,
+    html.theme-dark .task-count,
+    html.theme-dark th {
+      background: #1f2937;
+      color: #e5edf7;
+      border-color: #334155;
+    }
+
+    html.theme-dark .task-card,
+    html.theme-dark .task-empty {
+      background: #111827;
+      color: #e5edf7;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
+    }
+
+    html.theme-dark .task-title,
+    html.theme-dark .task-column-title,
+    html.theme-dark .task-assignee {
+      color: #f8fafc;
+    }
+
+    html.theme-dark .task-description {
+      color: #94a3b8;
+    }
+
+    html.theme-dark .card:hover,
+    html.theme-dark .action:hover,
+    html.theme-dark .holiday-item:hover,
+    html.theme-dark .calendar-day:hover,
+    html.theme-dark .calendar-day.selected {
+      background: #243449;
+    }
+
+    html.theme-dark input,
+    html.theme-dark select,
+    html.theme-dark textarea {
+      background: #0f172a;
+      border-color: #334155;
+      color: #e5edf7;
+    }
+
+    html.theme-dark input::placeholder,
+    html.theme-dark textarea::placeholder {
+      color: #64748b;
+    }
+
+    html.theme-dark table td {
+      border-bottom-color: #263244;
+    }
+
+    html.theme-dark tbody tr:hover {
+      background: #172033;
+      box-shadow: inset 4px 0 0 #60a5fa;
+    }
+
+    html.theme-dark .monthly-table .total-head,
+    html.theme-dark .monthly-table .total-cell,
+    html.theme-dark .monthly-table thead .total-head {
+      background: #111827;
+      box-shadow: -8px 0 18px rgba(0, 0, 0, 0.22);
+    }
+
+    html.theme-dark .circle-inner {
+      background: #111827;
+      color: #f8fafc;
+    }
+
+    html.theme-dark .theme-icon,
+    html.theme-dark .status.blue,
+    html.theme-dark .table-badge.blue {
+      background: rgba(37, 99, 235, 0.18);
+      color: #93c5fd;
+    }
+
+    html.theme-dark .logout {
+      background: rgba(220, 38, 38, 0.16);
+      color: #fca5a5;
+    }
+
+    html.theme-dark .photo-modal {
+      background: rgba(2, 6, 23, 0.72);
+    }
+
+    html.theme-dark .photo-modal-image {
+      background: #020617;
     }
 
     @keyframes dashboardAura {
@@ -1315,8 +1689,9 @@
 
       .main { margin-left: 0; width: 100%; padding: 18px; }
       .topbar { flex-direction: column; align-items: flex-start; gap: 16px; }
+      .topbar-actions { width: 100%; justify-content: space-between; }
       .search { width: 100%; }
-      .cards, .grid-2, .action-list, .form-grid, .calendar-grid {
+      .cards, .grid-2, .action-list, .form-grid, .calendar-grid, .task-board {
         grid-template-columns: 1fr;
       }
     }
@@ -1335,6 +1710,7 @@
       <div id="navEmployees" class="nav-item" onclick="switchView('employees')">Employees</div>
       <div id="navAttendance" class="nav-item" onclick="switchView('attendance')">Attendance</div>
       <div id="navPayroll" class="nav-item" onclick="switchView('payroll')">Payroll</div>
+      <div id="navTasks" class="nav-item" onclick="switchView('tasks')">Tasks</div>
       <div id="navReports" class="nav-item" onclick="switchView('reports')">Reports</div>
       <button class="logout" onclick="logout()">Logout</button>
     </aside>
@@ -1346,7 +1722,13 @@
           <h1 id="pageTitle">Admin Dashboard</h1>
           <div id="pageSubtitle" class="subtitle">Attendance overview for your in-house team.</div>
         </div>
-        <input class="search" id="searchInput" placeholder="Search employee..." onkeyup="handleSearch()" style="display:none;">
+        <div class="topbar-actions">
+          <input class="search" id="searchInput" placeholder="Search employee..." onkeyup="handleSearch()" style="display:none;">
+          <button id="themeToggle" class="theme-toggle" type="button" onclick="toggleTheme()" aria-label="Switch theme">
+            <span class="theme-icon">N</span>
+            <span>Night Mode</span>
+          </button>
+        </div>
       </div>
 
       <section class="panel view-section dashboard-view active">
@@ -1751,6 +2133,51 @@
         </div>
       </section>
 
+      <section class="panel view-section tasks-view">
+        <div class="calendar-toolbar">
+          <div>
+            <div class="section-title" style="margin:0;">Task Management</div>
+            <div class="subtitle">Create work, assign it to employees, and track progress in simple Kanban columns.</div>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <input type="text" id="taskTitle" placeholder="Task Title">
+          <select id="taskAssignee">
+            <option value="">Assign To</option>
+          </select>
+          <input type="date" id="taskDeadline">
+          <select id="taskPriority">
+            <option value="Medium">Medium Priority</option>
+            <option value="Low">Low Priority</option>
+            <option value="High">High Priority</option>
+          </select>
+        </div>
+        <textarea id="taskDescription" placeholder="Task Description"></textarea>
+        <div class="inline-actions" style="margin-top:14px;">
+          <button class="btn green-btn" type="button" onclick="createTask()">Create Task</button>
+        </div>
+      </section>
+
+      <section class="panel view-section tasks-view">
+        <div class="calendar-toolbar">
+          <div>
+            <div class="section-title" style="margin:0;">Task Board</div>
+            <div class="subtitle">To Do, In Progress, and Completed tasks for the team.</div>
+          </div>
+        </div>
+
+        <div id="taskBoard" class="task-board">
+          <div class="task-column">
+            <div class="task-column-head">
+              <div class="task-column-title">To Do</div>
+              <span class="task-count">0</span>
+            </div>
+            <div class="task-empty">Loading tasks...</div>
+          </div>
+        </div>
+      </section>
+
       <section class="panel view-section reports-view">
         <div class="calendar-toolbar">
           <div>
@@ -1887,6 +2314,41 @@
     let currentView = "dashboard";
     let realtimeUnsubscribers = [];
     let realtimeRefreshTimer = null;
+    const themeToggle = document.getElementById("themeToggle");
+
+    function updateThemeToggle() {
+      if (!themeToggle) {
+        return;
+      }
+
+      const isDark = document.documentElement.classList.contains("theme-dark");
+      themeToggle.innerHTML = `
+        <span class="theme-icon">${isDark ? "D" : "N"}</span>
+        <span>${isDark ? "Day Mode" : "Night Mode"}</span>
+      `;
+      themeToggle.setAttribute("aria-label", isDark ? "Switch to day mode" : "Switch to night mode");
+      themeToggle.setAttribute("title", isDark ? "Switch to day mode" : "Switch to night mode");
+    }
+
+    function setTheme(theme) {
+      const isDark = theme === "dark";
+      document.documentElement.classList.toggle("theme-dark", isDark);
+
+      try {
+        localStorage.setItem("workforceTheme", isDark ? "dark" : "light");
+      } catch (error) {
+        console.warn("Theme preference could not be saved:", error.message);
+      }
+
+      updateThemeToggle();
+    }
+
+    window.toggleTheme = function () {
+      const isDark = document.documentElement.classList.contains("theme-dark");
+      setTheme(isDark ? "light" : "dark");
+    };
+
+    updateThemeToggle();
 
     const viewMeta = {
       dashboard: {
@@ -1908,6 +2370,11 @@
         title: "Payroll",
         subtitle: "Calculate monthly salary, approve payroll, and export salary slips.",
         search: "Search payroll..."
+      },
+      tasks: {
+        title: "Tasks",
+        subtitle: "Create, assign, and track employee work.",
+        search: "Search tasks..."
       },
       reports: {
         title: "Reports",
@@ -2170,7 +2637,7 @@
     function startRealtimeDashboard() {
       stopRealtimeDashboard();
 
-      ["employees", "attendance", "leaves", "breaks", "payrollStatus"].forEach((collectionName) => {
+      ["employees", "attendance", "leaves", "breaks", "payrollStatus", "tasks"].forEach((collectionName) => {
         realtimeUnsubscribers.push(
           onSnapshot(
             collection(db, collectionName),
@@ -3298,6 +3765,218 @@
       ].some((value) => String(value || "").toLowerCase().includes(searchText));
     }
 
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function normalizeTaskStatus(status) {
+      return ["todo", "in-progress", "completed"].includes(status) ? status : "todo";
+    }
+
+    function getTaskStatusLabel(status) {
+      const normalized = normalizeTaskStatus(status);
+      if (normalized === "in-progress") return "In Progress";
+      if (normalized === "completed") return "Completed";
+      return "To Do";
+    }
+
+    function getTaskPriorityClass(priority) {
+      return `priority-${String(priority || "Medium").toLowerCase()}`;
+    }
+
+    function getTaskDeadlineState(deadline, status = "todo") {
+      if (!deadline || status === "completed") {
+        return {
+          className: "",
+          label: deadline ? formatDisplayDate(deadline) : "No deadline"
+        };
+      }
+
+      const todayText = getDateInputValue(new Date());
+
+      if (deadline < todayText) {
+        return {
+          className: "overdue",
+          label: `Overdue · ${formatDisplayDate(deadline)}`
+        };
+      }
+
+      if (deadline === todayText) {
+        return {
+          className: "due-today",
+          label: "Due Today"
+        };
+      }
+
+      return {
+        className: "",
+        label: formatDisplayDate(deadline)
+      };
+    }
+
+    function matchesTaskSearch(task, employeesByUid, searchText) {
+      if (!searchText) return true;
+
+      const assignee = employeesByUid[task.assignedTo] || {};
+
+      return [
+        task.title,
+        task.description,
+        task.priority,
+        getTaskStatusLabel(task.status),
+        task.deadline,
+        assignee.name,
+        assignee.email,
+        assignee.employeeId,
+        assignee.employeeCode
+      ].some((value) => String(value || "").toLowerCase().includes(searchText));
+    }
+
+    function renderTaskAssigneeOptions(employees) {
+      const taskAssignee = document.getElementById("taskAssignee");
+
+      if (!taskAssignee) return;
+
+      const currentValue = taskAssignee.value;
+      const options = employees
+        .filter((employee) => (employee.role || "employee") === "employee")
+        .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
+        .map((employee) => `<option value="${employee.uid}">${escapeHtml(employee.name || employee.email || employee.uid)}</option>`)
+        .join("");
+
+      taskAssignee.innerHTML = `<option value="">Assign To</option>${options}`;
+
+      if ([...taskAssignee.options].some((option) => option.value === currentValue)) {
+        taskAssignee.value = currentValue;
+      }
+    }
+
+    function renderTaskCard(task, employeesByUid) {
+      const assignee = employeesByUid[task.assignedTo] || {};
+      const status = normalizeTaskStatus(task.status);
+      const deadline = getTaskDeadlineState(task.deadline, status);
+      const priority = task.priority || "Medium";
+
+      return `
+        <div class="task-card">
+          <div class="task-title">${escapeHtml(task.title || "Untitled Task")}</div>
+          <div class="task-description">${escapeHtml(task.description || "No description added.")}</div>
+          <div class="task-meta">
+            <span class="priority-badge ${getTaskPriorityClass(priority)}">${escapeHtml(priority)}</span>
+            <span class="deadline-badge ${deadline.className}">${escapeHtml(deadline.label)}</span>
+          </div>
+          <div class="task-assignee">Assigned to: ${escapeHtml(assignee.name || assignee.email || "Unknown")}</div>
+          <select class="task-status-select" onchange="updateTaskStatus('${task.id}', this.value)">
+            <option value="todo" ${status === "todo" ? "selected" : ""}>To Do</option>
+            <option value="in-progress" ${status === "in-progress" ? "selected" : ""}>In Progress</option>
+            <option value="completed" ${status === "completed" ? "selected" : ""}>Completed</option>
+          </select>
+        </div>
+      `;
+    }
+
+    function renderTasks(employees, tasks) {
+      const taskBoard = document.getElementById("taskBoard");
+
+      if (!taskBoard) return;
+
+      const employeesByUid = Object.fromEntries(employees.map((employee) => [employee.uid, employee]));
+      const searchText = currentView === "tasks" ? getSearchText() : "";
+      const visibleTasks = tasks
+        .filter((task) => matchesTaskSearch(task, employeesByUid, searchText))
+        .sort((a, b) => String(a.deadline || "9999-12-31").localeCompare(String(b.deadline || "9999-12-31")));
+      const columns = [
+        { status: "todo", title: "To Do" },
+        { status: "in-progress", title: "In Progress" },
+        { status: "completed", title: "Completed" }
+      ];
+
+      taskBoard.innerHTML = columns.map((column) => {
+        const columnTasks = visibleTasks.filter((task) => normalizeTaskStatus(task.status) === column.status);
+        const cards = columnTasks.length
+          ? columnTasks.map((task) => renderTaskCard(task, employeesByUid)).join("")
+          : `<div class="task-empty">No ${column.title.toLowerCase()} tasks</div>`;
+
+        return `
+          <div class="task-column">
+            <div class="task-column-head">
+              <div class="task-column-title">${column.title}</div>
+              <span class="task-count">${columnTasks.length}</span>
+            </div>
+            <div class="task-list">${cards}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    window.createTask = async function () {
+      const title = document.getElementById("taskTitle").value.trim();
+      const description = document.getElementById("taskDescription").value.trim();
+      const assignedTo = document.getElementById("taskAssignee").value;
+      const deadline = document.getElementById("taskDeadline").value;
+      const priority = document.getElementById("taskPriority").value;
+
+      if (!title || !assignedTo || !deadline) {
+        alert("Please add title, employee, and deadline");
+        return;
+      }
+
+      const assignee = employeeDirectoryStore[assignedTo] || {};
+      const taskRef = doc(collection(db, "tasks"));
+      const nowIso = new Date().toISOString();
+
+      await setDoc(taskRef, {
+        title,
+        description,
+        assignedTo,
+        assignedToName: assignee.name || "",
+        assignedToEmail: assignee.email || "",
+        status: "todo",
+        priority,
+        deadline,
+        createdAt: nowIso,
+        updatedAt: nowIso,
+        createdBy: auth.currentUser?.uid || "",
+        activityLog: [{
+          action: "created",
+          at: nowIso,
+          text: `Task created for ${assignee.name || assignee.email || assignedTo}`
+        }]
+      });
+
+      document.getElementById("taskTitle").value = "";
+      document.getElementById("taskDescription").value = "";
+      document.getElementById("taskAssignee").value = "";
+      document.getElementById("taskDeadline").value = "";
+      document.getElementById("taskPriority").value = "Medium";
+
+      alert("Task created successfully");
+      loadData();
+    };
+
+    window.updateTaskStatus = async function (taskId, status) {
+      const normalizedStatus = normalizeTaskStatus(status);
+      const nowIso = new Date().toISOString();
+
+      await setDoc(doc(db, "tasks", taskId), {
+        status: normalizedStatus,
+        updatedAt: nowIso,
+        completedAt: normalizedStatus === "completed" ? nowIso : "",
+        lastActivity: {
+          action: "status-updated",
+          at: nowIso,
+          text: `Status changed to ${getTaskStatusLabel(normalizedStatus)}`
+        }
+      }, { merge: true });
+
+      loadData();
+    };
+
     function getLeaveAllowance(employee) {
       const allowance = Number(employee?.leaveAllowance ?? employee?.leaveBalance);
       return Number.isFinite(allowance) && allowance >= 0 ? allowance : 12;
@@ -3980,6 +4659,13 @@
       const leaveSnap = await getDocs(collection(db, "leaves"));
       const breakSnap = await getDocs(collection(db, "breaks"));
       const payrollStatusSnap = await getDocs(collection(db, "payrollStatus"));
+      let taskSnap = null;
+
+      try {
+        taskSnap = await getDocs(collection(db, "tasks"));
+      } catch (error) {
+        console.error("Tasks could not load:", error);
+      }
 
       const employeeMap = {};
       const employeeById = {};
@@ -3988,6 +4674,7 @@
       const leaves = [];
       const breaks = [];
       const payrollStatuses = [];
+      const tasks = [];
 
       employeeSnap.forEach((docSnap) => {
         const data = docSnap.data();
@@ -4013,13 +4700,21 @@
         payrollStatuses.push({ id: docSnap.id, ...docSnap.data() });
       });
 
+      if (taskSnap) {
+        taskSnap.forEach((docSnap) => {
+          tasks.push({ id: docSnap.id, ...docSnap.data() });
+        });
+      }
+
       const searchText = getSearchText();
       const dashboardEmployees = employees;
 
       renderNotificationEmployeeOptions(employees);
       renderPayrollEmployeeOptions(employees);
+      renderTaskAssigneeOptions(employees);
       renderEmployeeDirectory(employees, leaves);
       renderLeaveRequests(leaves, employees);
+      renderTasks(employees, tasks);
       updateTimesheetModeUI();
       renderWeeklyTimesheet(employees, attendanceRecords, leaves);
       renderMonthlyTimesheet(employees, attendanceRecords, leaves);
