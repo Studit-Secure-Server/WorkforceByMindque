@@ -28,10 +28,11 @@
       background-size: 180% 180%;
       color: #111827;
       animation: loginAura 18s ease-in-out infinite;
+      overflow-x: hidden;
     }
 
     main {
-      width: min(100% - 36px, 1080px);
+      width: min(100% - 32px, 1080px);
       min-height: 100vh;
       margin: 0 auto;
       display: grid;
@@ -85,6 +86,10 @@
       padding: 34px;
       box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
       animation: slideInRight 0.58s var(--motion-smooth) 0.08s both;
+    }
+
+    .mobile-logo-block {
+      display: none;
     }
 
     .brand {
@@ -402,6 +407,32 @@
         padding: 18px 0;
       }
 
+      .mobile-logo-block {
+        display: flex;
+        justify-content: center;
+        order: 1;
+      }
+
+      .mobile-logo-block img {
+        width: min(100%, 280px);
+        height: auto;
+        object-fit: contain;
+        animation: brandFloat 5.5s ease-in-out infinite;
+      }
+
+      .login-panel {
+        order: 2;
+      }
+
+      .intro {
+        order: 3;
+      }
+
+      .intro .brand,
+      .intro .logo {
+        display: none;
+      }
+
       .intro,
       .login-panel {
         padding: 28px;
@@ -429,13 +460,76 @@
         flex-direction: column;
       }
     }
+
+    @media (max-width: 520px) {
+      main {
+        width: min(100% - 20px, 1080px);
+        gap: 16px;
+        padding: 12px 0;
+      }
+
+      .intro,
+      .login-panel {
+        border-radius: 24px;
+        padding: 22px;
+      }
+
+      .brand {
+        margin-bottom: 18px;
+        font-size: 20px;
+      }
+
+      .logo {
+        width: min(100%, 240px);
+        margin-bottom: 22px;
+      }
+
+      .mobile-logo-block img {
+        width: min(100%, 230px);
+      }
+
+      h1 {
+        font-size: 34px;
+      }
+
+      h2 {
+        font-size: 26px;
+      }
+
+      .subtitle {
+        font-size: 15px;
+      }
+
+      .stats {
+        gap: 10px;
+        margin-top: 24px;
+      }
+
+      .stat {
+        min-height: auto;
+        padding: 16px;
+        border-radius: 18px;
+      }
+
+      input[type="email"],
+      input[type="password"],
+      input[type="text"],
+      .login-button {
+        height: 52px;
+        border-radius: 16px;
+      }
+    }
   </style>
 </head>
 <body>
   <main>
+    <div class="mobile-logo-block">
+      <img src="assets/mindque-logo-light.png" alt="Workforce By Mindque logo">
+    </div>
+
     <section class="intro">
       <div class="brand">Workforce By Mindque</div>
-      <img class="logo" src="assets/studit-logo-cropped.png" alt="Workforce By Mindque logo">
+      <img class="logo" src="assets/mindque-logo-light.png" alt="Workforce By Mindque logo">
       <h1>Attendance that feels effortless.</h1>
       <p class="subtitle">Sign in to manage punch in, breaks, location-backed attendance, and team reports.</p>
 
