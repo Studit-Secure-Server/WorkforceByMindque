@@ -356,6 +356,15 @@
       animation: cardPop 0.48s var(--motion-smooth) both;
     }
 
+    .snapshot-card {
+      cursor: pointer;
+      outline: none;
+    }
+
+    .snapshot-card:focus-visible {
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.18), 0 18px 42px rgba(15, 23, 42, 0.1);
+    }
+
     .card:nth-child(2) { animation-delay: 0.08s; }
     .card:nth-child(3) { animation-delay: 0.14s; }
     .card:nth-child(4) { animation-delay: 0.2s; }
@@ -529,6 +538,85 @@
     .action-sub {
       color: #6b7280;
       font-size: 14px;
+    }
+
+    .admin-insight-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .admin-insight-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      min-height: 136px;
+      padding: 20px;
+      border-radius: 22px;
+      background: #f5f6fa;
+      border: 1px solid transparent;
+      transition: transform var(--motion-smooth), background var(--motion-fast), box-shadow var(--motion-smooth), border-color var(--motion-fast);
+      animation: cardPop 0.48s var(--motion-smooth) both;
+    }
+
+    .admin-insight-card:nth-child(2) { animation-delay: 0.06s; }
+    .admin-insight-card:nth-child(3) { animation-delay: 0.12s; }
+    .admin-insight-card:nth-child(4) { animation-delay: 0.18s; }
+    .admin-insight-card:nth-child(5) { animation-delay: 0.24s; }
+    .admin-insight-card:nth-child(6) { animation-delay: 0.3s; }
+
+    .admin-insight-card:hover {
+      transform: translateY(-5px);
+      background: #ffffff;
+      box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+    }
+
+    .admin-insight-icon {
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 16px;
+      background: #dbeafe;
+      color: #2563eb;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .admin-insight-card.good .admin-insight-icon {
+      background: #d1fae5;
+      color: #059669;
+    }
+
+    .admin-insight-card.warn .admin-insight-icon {
+      background: #fef3c7;
+      color: #ca8a04;
+    }
+
+    .admin-insight-card.danger .admin-insight-icon {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .admin-insight-title {
+      margin-bottom: 6px;
+      color: #111827;
+      font-size: 16px;
+      font-weight: 900;
+    }
+
+    .admin-insight-copy {
+      color: #6b7280;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .admin-insight-meta {
+      margin-top: 12px;
+      color: #2563eb;
+      font-size: 12px;
+      font-weight: 900;
     }
 
     .btn {
@@ -737,6 +825,10 @@
       box-shadow: 0 30px 90px rgba(15, 23, 42, 0.28);
     }
 
+    .snapshot-modal-card {
+      width: min(100%, 720px);
+    }
+
     .photo-modal-header {
       display: flex;
       align-items: center;
@@ -770,6 +862,38 @@
       border-radius: 20px;
       object-fit: contain;
       background: #111827;
+    }
+
+    .snapshot-detail-list {
+      display: grid;
+      gap: 12px;
+      max-height: 62vh;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .snapshot-detail-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 16px;
+      border-radius: 18px;
+      background: #f5f6fa;
+    }
+
+    .snapshot-detail-name {
+      color: #111827;
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .snapshot-detail-meta {
+      margin-top: 4px;
+      color: #6b7280;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.35;
     }
 
     .employee-photo {
@@ -1459,6 +1583,8 @@
     html.theme-dark .section-title,
     html.theme-dark .card-value,
     html.theme-dark .action-title,
+    html.theme-dark .admin-insight-title,
+    html.theme-dark .snapshot-detail-name,
     html.theme-dark .holiday-name,
     html.theme-dark .photo-modal-title,
     html.theme-dark .member-name,
@@ -1471,6 +1597,8 @@
     html.theme-dark .subtitle,
     html.theme-dark .card-label,
     html.theme-dark .action-sub,
+    html.theme-dark .admin-insight-copy,
+    html.theme-dark .snapshot-detail-meta,
     html.theme-dark .holiday-date,
     html.theme-dark .notification-message,
     html.theme-dark .nav-item,
@@ -1498,6 +1626,8 @@
     html.theme-dark .chart-box,
     html.theme-dark .donut,
     html.theme-dark .action,
+    html.theme-dark .admin-insight-card,
+    html.theme-dark .snapshot-detail-item,
     html.theme-dark .holiday-item,
     html.theme-dark .calendar-day,
     html.theme-dark .timesheet-top,
@@ -1955,25 +2085,25 @@
         <div class="section-title">Performance Snapshot</div>
 
         <div class="cards">
-          <div class="card">
+          <div class="card snapshot-card" role="button" tabindex="0" onclick="openSnapshotDetails('total')" onkeydown="handleSnapshotCardKey(event, 'total')">
             <div class="card-label">Total Employees</div>
             <div class="card-value" id="totalEmployees">0</div>
             <span class="badge blue">Team Size</span>
           </div>
 
-          <div class="card">
+          <div class="card snapshot-card" role="button" tabindex="0" onclick="openSnapshotDetails('present')" onkeydown="handleSnapshotCardKey(event, 'present')">
             <div class="card-label">Present Today</div>
             <div class="card-value" id="presentToday">0</div>
             <span class="badge green">Active</span>
           </div>
 
-          <div class="card">
+          <div class="card snapshot-card" role="button" tabindex="0" onclick="openSnapshotDetails('absent')" onkeydown="handleSnapshotCardKey(event, 'absent')">
             <div class="card-label">Absent</div>
             <div class="card-value" id="absentToday">0</div>
             <span class="badge red">Need Check</span>
           </div>
 
-          <div class="card">
+          <div class="card snapshot-card" role="button" tabindex="0" onclick="openSnapshotDetails('break')" onkeydown="handleSnapshotCardKey(event, 'break')">
             <div class="card-label">On Break</div>
             <div class="card-value" id="onBreak">0</div>
             <span class="badge yellow">Break Mode</span>
@@ -2022,6 +2152,21 @@
               <div class="action-sub">Employees still working.</div>
             </div>
             <span class="badge yellow" id="pendingPunchOut">0</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel view-section dashboard-view active">
+        <div class="section-title">AI Work Assistant</div>
+        <div class="subtitle" style="margin-bottom:22px;">Daily smart insights from attendance, schedules, and employee activity.</div>
+
+        <div id="adminInsightList" class="admin-insight-grid">
+          <div class="admin-insight-card">
+            <div class="admin-insight-icon">AI</div>
+            <div>
+              <div class="admin-insight-title">Reading today’s workforce data</div>
+              <div class="admin-insight-copy">Insights will appear once attendance records finish loading.</div>
+            </div>
           </div>
         </div>
       </section>
@@ -2473,6 +2618,19 @@
     </div>
   </div>
 
+  <div id="snapshotDetailModal" class="photo-modal" aria-hidden="true">
+    <div class="photo-modal-card snapshot-modal-card">
+      <div class="photo-modal-header">
+        <div>
+          <h2 id="snapshotDetailTitle" class="photo-modal-title">Snapshot Details</h2>
+          <div id="snapshotDetailSubtitle" class="holiday-date">Daily employee details</div>
+        </div>
+        <button class="photo-modal-close" type="button" onclick="closeSnapshotDetails()">×</button>
+      </div>
+      <div id="snapshotDetailList" class="snapshot-detail-list"></div>
+    </div>
+  </div>
+
   <div id="salarySlipModal" class="photo-modal" aria-hidden="true">
     <div class="photo-modal-card">
       <div class="photo-modal-header">
@@ -2530,6 +2688,7 @@
     let absenceAutomationRunning = false;
     let absenceAutomationTimer = null;
     let employeeDirectoryStore = {};
+    let snapshotDetailStore = {};
     let editingEmployeeUid = "";
     let currentView = "dashboard";
     let realtimeUnsubscribers = [];
@@ -3901,6 +4060,148 @@
       return "red";
     }
 
+    function getTodayEmployeeRecord(uid, attendanceRecords, dateText) {
+      return attendanceRecords
+        .filter((record) => record.userId === uid && record.date === dateText)
+        .sort((a, b) => {
+          const first = getTimestampDate(a.punchIn)?.getTime() || 0;
+          const second = getTimestampDate(b.punchIn)?.getTime() || 0;
+          return second - first;
+        })[0] || null;
+    }
+
+    function formatSnapshotTime(timestamp) {
+      const date = getTimestampDate(timestamp);
+
+      if (!date) {
+        return "-";
+      }
+
+      return date.toLocaleTimeString(undefined, {
+        hour: "numeric",
+        minute: "2-digit"
+      });
+    }
+
+    function getSnapshotBadgeClass(record, statusText) {
+      if (record?.status) {
+        return getStatusClass(record.status);
+      }
+
+      if (statusText === "present") return "green";
+      if (statusText === "break") return "yellow";
+      if (statusText === "absent") return "red";
+      return "blue";
+    }
+
+    function buildSnapshotEmployeeRow(employee, record, statusText) {
+      const workHours = formatWorkHours(employee);
+      const punchIn = record ? formatSnapshotTime(record.punchIn) : "-";
+      const punchOut = record ? formatSnapshotTime(record.punchOut) : "-";
+      const totalHours = record?.totalHours || "-";
+
+      return {
+        name: getEmployeeDisplayName(employee),
+        badge: record?.status || statusText || employee.role || "employee",
+        badgeClass: getSnapshotBadgeClass(record, statusText),
+        meta: [
+          employee.email || "No email",
+          `Work hours: ${workHours}`,
+          `Punch in: ${punchIn}`,
+          `Punch out: ${punchOut}`,
+          `Total: ${totalHours}`
+        ].join(" · ")
+      };
+    }
+
+    function updateSnapshotDetails({ employees, employeeById, attendanceRecords, presentTodayUsers, breakTodayUsers, employeeIds, todayText }) {
+      const employeeList = employees
+        .filter((employee) => (employee.role || "employee") === "employee")
+        .sort((a, b) => getEmployeeDisplayName(a).localeCompare(getEmployeeDisplayName(b)));
+      const expectedEmployees = employeeList.filter((employee) => employeeIds.has(employee.uid));
+      const presentEmployees = expectedEmployees.filter((employee) => presentTodayUsers.has(employee.uid));
+      const absentEmployees = expectedEmployees.filter((employee) => !presentTodayUsers.has(employee.uid));
+      const breakEmployees = expectedEmployees.filter((employee) => breakTodayUsers.has(employee.uid));
+      const makeRows = (items, fallbackStatus) => items.map((employee) => {
+        const record = getTodayEmployeeRecord(employee.uid, attendanceRecords, todayText);
+        return buildSnapshotEmployeeRow(employeeById[employee.uid] || employee, record, fallbackStatus);
+      });
+
+      snapshotDetailStore = {
+        total: {
+          title: "Total Employees",
+          subtitle: `${employeeList.length} employees in the company directory.`,
+          empty: "No employees found.",
+          rows: makeRows(employeeList, "employee")
+        },
+        present: {
+          title: "Present Today",
+          subtitle: `${presentEmployees.length} employees punched in today.`,
+          empty: "No employees have punched in today.",
+          rows: makeRows(presentEmployees, "present")
+        },
+        absent: {
+          title: "Absent Today",
+          subtitle: `${absentEmployees.length} expected employees have not punched in today.`,
+          empty: "No absent employees today.",
+          rows: makeRows(absentEmployees, "absent")
+        },
+        break: {
+          title: "Employees On Break",
+          subtitle: `${breakEmployees.length} employees are currently on break.`,
+          empty: "No employees are on break right now.",
+          rows: makeRows(breakEmployees, "break")
+        }
+      };
+    }
+
+    window.openSnapshotDetails = function (type) {
+      const details = snapshotDetailStore[type];
+      const modal = document.getElementById("snapshotDetailModal");
+      const title = document.getElementById("snapshotDetailTitle");
+      const subtitle = document.getElementById("snapshotDetailSubtitle");
+      const list = document.getElementById("snapshotDetailList");
+
+      if (!details || !modal || !title || !subtitle || !list) {
+        return;
+      }
+
+      title.innerText = details.title;
+      subtitle.innerText = details.subtitle;
+      list.innerHTML = details.rows.length
+        ? details.rows.map((row) => `
+          <div class="snapshot-detail-item">
+            <div>
+              <div class="snapshot-detail-name">${escapeHtml(row.name)}</div>
+              <div class="snapshot-detail-meta">${escapeHtml(row.meta)}</div>
+            </div>
+            <span class="status ${row.badgeClass}">${escapeHtml(row.badge)}</span>
+          </div>
+        `).join("")
+        : `<div class="snapshot-detail-item"><div class="snapshot-detail-name">${escapeHtml(details.empty)}</div></div>`;
+
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+    };
+
+    window.closeSnapshotDetails = function () {
+      const modal = document.getElementById("snapshotDetailModal");
+
+      if (!modal) {
+        return;
+      }
+
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+    };
+
+    window.handleSnapshotCardKey = function (event, type) {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        window.openSnapshotDetails(type);
+      }
+    };
+
     function calculatePayrollRow(employee, attendanceRecords, breaks, statusMap, monthValue) {
       const records = attendanceRecords.filter((record) => record.userId === employee.uid && String(record.date || "").startsWith(monthValue));
       const settings = getPayrollSettings(employee);
@@ -4825,6 +5126,251 @@
       return leaveUsers;
     }
 
+    function getEmployeeDisplayName(employee) {
+      return employee?.name || employee?.employeeId || employee?.email || employee?.uid || "Employee";
+    }
+
+    function getPunchInDate(record) {
+      return getTimestampDate(record?.punchIn);
+    }
+
+    function getDailyRecordsByUser(attendanceRecords, dateText) {
+      const recordsByUser = {};
+
+      attendanceRecords
+        .filter((record) => record.date === dateText)
+        .forEach((record) => {
+          recordsByUser[record.userId] ||= [];
+          recordsByUser[record.userId].push(record);
+        });
+
+      return recordsByUser;
+    }
+
+    function getFirstPunchIn(records) {
+      return records
+        .map(getPunchInDate)
+        .filter(Boolean)
+        .sort((a, b) => a - b)[0] || null;
+    }
+
+    function getLiveRecordMinutes(record, now) {
+      if (!record || record.status === "absent") {
+        return 0;
+      }
+
+      const savedMinutes = durationToMinutes(record.totalHours);
+
+      if (savedMinutes && !["working", "break"].includes(record.status)) {
+        return savedMinutes;
+      }
+
+      const punchIn = getTimestampDate(record.punchIn);
+      const punchOut = getTimestampDate(record.punchOut);
+
+      if (!punchIn) {
+        return 0;
+      }
+
+      const end = punchOut || (["working", "break"].includes(record.status) ? now : null);
+      return end ? Math.max(Math.round((end - punchIn) / 60000), 0) : savedMinutes;
+    }
+
+    function getDailyBreakMinutes(uid, dateText, breaks, now) {
+      return breaks
+        .filter((item) => item.userId === uid && item.date === dateText)
+        .reduce((sum, item) => {
+          const start = getTimestampDate(item.breakStart);
+          const end = getTimestampDate(item.breakEnd) || (start ? now : null);
+
+          if (!start || !end) return sum;
+          return sum + Math.max(Math.round((end - start) / 60000), 0);
+        }, 0);
+    }
+
+    function formatInsightNames(items, limit = 3) {
+      if (!items.length) {
+        return "";
+      }
+
+      const visible = items.slice(0, limit).map((item) => escapeHtml(item));
+      const extra = items.length > limit ? ` +${items.length - limit} more` : "";
+      return `${visible.join(", ")}${extra}`;
+    }
+
+    function renderInsightCard({ className = "", icon = "AI", title, copy, meta = "" }) {
+      return `
+        <div class="admin-insight-card ${className}">
+          <div class="admin-insight-icon">${escapeHtml(icon)}</div>
+          <div>
+            <div class="admin-insight-title">${escapeHtml(title)}</div>
+            <div class="admin-insight-copy">${copy}</div>
+            ${meta ? `<div class="admin-insight-meta">${escapeHtml(meta)}</div>` : ""}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAdminInsights(employees, attendanceRecords, leaves, breaks) {
+      const insightList = document.getElementById("adminInsightList");
+
+      if (!insightList) {
+        return;
+      }
+
+      const todayText = refreshToday();
+      const now = new Date();
+      const leaveTodayUsers = getApprovedLeaveUsersForDate(leaves, todayText);
+      const expectedEmployees = employees
+        .filter((employee) => (
+          (employee.role || "employee") === "employee" &&
+          !isBeforeEmployeeCreated(employee, todayText) &&
+          !leaveTodayUsers.has(employee.uid)
+        ));
+      const recordsByUser = getDailyRecordsByUser(attendanceRecords, todayText);
+      const punctual = [];
+      const late = [];
+      const absent = [];
+      const active = [];
+      const missedPunchOut = [];
+      const missingSchedule = [];
+      let topWorker = null;
+      let totalWorkedMinutes = 0;
+
+      expectedEmployees.forEach((employee) => {
+        const employeeRecords = recordsByUser[employee.uid] || [];
+        const presentRecords = employeeRecords.filter((record) => record.status !== "absent" && getPunchInDate(record));
+        const firstPunchIn = getFirstPunchIn(presentRecords);
+        const name = getEmployeeDisplayName(employee);
+        const hasActiveRecord = employeeRecords.some((record) => ["working", "break"].includes(record.status));
+        const hasMissedPunchOut = employeeRecords.some((record) => record.status === "missed-punch-out" || record.missedPunchOut);
+        const workStartMinutes = getTimeMinutes(employee.workStart);
+
+        if (!presentRecords.length) {
+          absent.push(name);
+          return;
+        }
+
+        if (hasActiveRecord) {
+          active.push(name);
+        }
+
+        if (hasMissedPunchOut) {
+          missedPunchOut.push(name);
+        }
+
+        if (firstPunchIn && workStartMinutes !== null) {
+          const punchMinutes = (firstPunchIn.getHours() * 60) + firstPunchIn.getMinutes();
+
+          if (punchMinutes <= workStartMinutes) {
+            punctual.push(name);
+          } else {
+            late.push({
+              name,
+              minutes: punchMinutes - workStartMinutes
+            });
+          }
+        } else {
+          missingSchedule.push(name);
+        }
+
+        const workedMinutes = Math.max(
+          presentRecords.reduce((sum, record) => sum + getLiveRecordMinutes(record, now), 0) -
+          getDailyBreakMinutes(employee.uid, todayText, breaks, now),
+          0
+        );
+
+        totalWorkedMinutes += workedMinutes;
+
+        if (!topWorker || workedMinutes > topWorker.minutes) {
+          topWorker = { name, minutes: workedMinutes };
+        }
+      });
+
+      const expectedCount = expectedEmployees.length;
+      const presentCount = Math.max(expectedCount - absent.length, 0);
+      const attendancePercent = expectedCount ? Math.round((presentCount / expectedCount) * 100) : 0;
+      const lateSummary = late
+        .sort((a, b) => b.minutes - a.minutes)
+        .map((item) => `${item.name} (${item.minutes}m late)`);
+      const insightCards = [
+        renderInsightCard({
+          className: attendancePercent >= 90 ? "good" : attendancePercent >= 70 ? "warn" : "danger",
+          icon: "AI",
+          title: "Daily team pulse",
+          copy: expectedCount
+            ? `${presentCount}/${expectedCount} employees are present today. ${leaveTodayUsers.size} employee${leaveTodayUsers.size === 1 ? "" : "s"} on approved leave.`
+            : "No employees are expected today based on current employee and leave records.",
+          meta: `Today attendance: ${attendancePercent}%`
+        }),
+        renderInsightCard({
+          className: punctual.length ? "good" : "warn",
+          icon: "ON",
+          title: "Punctual employees",
+          copy: punctual.length
+            ? `${formatInsightNames(punctual)} punched in on or before their scheduled start time.`
+            : "No punctual punch-ins detected yet for employees with assigned work start time.",
+          meta: `On-time count: ${punctual.length}`
+        }),
+        renderInsightCard({
+          className: late.length ? "warn" : "good",
+          icon: "LT",
+          title: "Late arrival watch",
+          copy: late.length
+            ? `${formatInsightNames(lateSummary)} need attention for late arrival today.`
+            : "No late arrivals detected against assigned work start times.",
+          meta: `Late count: ${late.length}`
+        }),
+        renderInsightCard({
+          className: absent.length ? "danger" : "good",
+          icon: "AB",
+          title: "Not punched in",
+          copy: absent.length
+            ? `${formatInsightNames(absent)} have not punched in today.`
+            : "Everyone expected today has punched in.",
+          meta: `Absent count: ${absent.length}`
+        }),
+        renderInsightCard({
+          className: active.length ? "warn" : "good",
+          icon: "RUN",
+          title: "Still active",
+          copy: active.length
+            ? `${formatInsightNames(active)} are still working or on break.`
+            : "No employees are currently pending punch out.",
+          meta: `Active sessions: ${active.length}`
+        }),
+        renderInsightCard({
+          className: missedPunchOut.length ? "danger" : "good",
+          icon: "OUT",
+          title: "Missed punch out",
+          copy: missedPunchOut.length
+            ? `${formatInsightNames(missedPunchOut)} missed punch out and may need admin review.`
+            : "No missed punch out cases found today.",
+          meta: `Missed punch outs: ${missedPunchOut.length}`
+        }),
+        renderInsightCard({
+          className: topWorker?.minutes ? "good" : "",
+          icon: "TOP",
+          title: "Top working time",
+          copy: topWorker?.minutes
+            ? `${escapeHtml(topWorker.name)} has the highest tracked time today with ${formatMinutes(topWorker.minutes)}.`
+            : "Working time will appear after employees complete or continue tracked sessions.",
+          meta: `Team tracked time: ${formatMinutes(totalWorkedMinutes)}`
+        }),
+        renderInsightCard({
+          className: missingSchedule.length ? "warn" : "good",
+          icon: "SET",
+          title: "Schedule setup",
+          copy: missingSchedule.length
+            ? `${formatInsightNames(missingSchedule)} need work start time to judge punctuality accurately.`
+            : "All present employees have schedules available for punctuality checks.",
+          meta: `Missing schedules: ${missingSchedule.length}`
+        })
+      ];
+
+      insightList.innerHTML = insightCards.join("");
+    }
+
     function renderDashboardOverview(employees, attendanceRecords, leaves) {
       const employeeList = employees.filter((employee) => (employee.role || "employee") === "employee");
       const weekDates = getCurrentWeekDates();
@@ -4941,6 +5487,7 @@
       renderReports(employees, attendanceRecords);
       renderPayroll(employees, attendanceRecords, breaks, payrollStatuses);
       renderDashboardOverview(dashboardEmployees, attendanceRecords, leaves);
+      renderAdminInsights(dashboardEmployees, attendanceRecords, leaves, breaks);
 
       const tableBody = document.getElementById("tableBody");
       const selectedDate = document.getElementById("filterDate").value;
@@ -5019,6 +5566,16 @@
       const onBreak = breakTodayUsers.size;
       const absent = Math.max(expectedTodayEmployees - presentToday, 0);
       const percent = expectedTodayEmployees ? Math.round((presentToday / expectedTodayEmployees) * 100) : 0;
+
+      updateSnapshotDetails({
+        employees: dashboardEmployees,
+        employeeById,
+        attendanceRecords,
+        presentTodayUsers,
+        breakTodayUsers,
+        employeeIds,
+        todayText: today
+      });
 
       document.getElementById("totalEmployees").innerText = totalEmployees;
       document.getElementById("presentToday").innerText = presentToday;

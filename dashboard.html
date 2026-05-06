@@ -2403,6 +2403,12 @@
     let notificationStorageKey = "";
     let notificationShakeInterval = null;
     let notificationUnsubscribe = null;
+    let knownNotificationIds = new Set();
+    let notificationListenerReady = false;
+    let taskUnsubscribe = null;
+    let knownTaskIds = new Set();
+    let taskListenerReady = false;
+    let employeeAudioContext = null;
     let currentEmployeeProfile = null;
     let attendanceHistoryRange = 7;
     let attendanceHistoryItems = {};
@@ -2478,6 +2484,10 @@
       if (notificationUnsubscribe) {
         notificationUnsubscribe();
         notificationUnsubscribe = null;
+      }
+      if (taskUnsubscribe) {
+        taskUnsubscribe();
+        taskUnsubscribe = null;
       }
       stopCamera();
       await signOut(auth);
@@ -3425,6 +3435,57 @@
       ].join("|");
     }
 
+    function getEmployeeAudioContext() {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+
+      if (!AudioContextClass) {
+        return null;
+      }
+
+      if (!employeeAudioContext) {
+        employeeAudioContext = new AudioContextClass();
+      }
+
+      return employeeAudioContext;
+    }
+
+    function unlockEmployeeAlertSound() {
+      const audioContext = getEmployeeAudioContext();
+
+      if (audioContext?.state === "suspended") {
+        audioContext.resume().catch(() => {});
+      }
+    }
+
+    function playEmployeeAlertSound() {
+      const audioContext = getEmployeeAudioContext();
+
+      if (!audioContext || audioContext.state !== "running") {
+        return;
+      }
+
+      const now = audioContext.currentTime;
+      const gainNode = audioContext.createGain();
+      gainNode.gain.setValueAtTime(0.0001, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.16, now + 0.02);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
+      gainNode.connect(audioContext.destination);
+
+      [740, 980].forEach((frequency, index) => {
+        const oscillator = audioContext.createOscillator();
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(frequency, now + (index * 0.16));
+        oscillator.connect(gainNode);
+        oscillator.start(now + (index * 0.16));
+        oscillator.stop(now + 0.22 + (index * 0.16));
+      });
+
+      window.setTimeout(() => gainNode.disconnect(), 600);
+    }
+
+    document.addEventListener("pointerdown", unlockEmployeeAlertSound, { once: true });
+    document.addEventListener("keydown", unlockEmployeeAlertSound, { once: true });
+
     function loadSeenNotifications(user) {
       notificationStorageKey = `workforceSeenNotifications_${user.uid}`;
 
@@ -3551,6 +3612,9 @@
           notificationUnsubscribe();
         }
 
+        knownNotificationIds = new Set();
+        notificationListenerReady = false;
+
         notificationUnsubscribe = onSnapshot(collection(db, "notifications"), (notificationSnap) => {
           employeeNotifications = [];
           showAllNotifications = false;
@@ -3568,6 +3632,18 @@
           });
 
           employeeNotifications.sort((a, b) => getNotificationTime(b) - getNotificationTime(a));
+          const currentNotificationIds = new Set(employeeNotifications.map(getNotificationId));
+          const hasNewUnreadNotification = employeeNotifications.some((notification) => {
+            const notificationId = getNotificationId(notification);
+            return !knownNotificationIds.has(notificationId) && !seenNotificationIds.has(notificationId);
+          });
+
+          if (notificationListenerReady && hasNewUnreadNotification) {
+            playEmployeeAlertSound();
+          }
+
+          knownNotificationIds = currentNotificationIds;
+          notificationListenerReady = true;
           renderNotifications();
           updateNotificationIndicator();
         }, (error) => {
@@ -3737,40 +3813,70 @@
 
     async function loadEmployeeTasks(user) {
       try {
-        const taskSnap = await getDocs(query(
+        if (taskUnsubscribe) {
+          taskUnsubscribe();
+        }
+
+        knownTaskIds = new Set();
+        taskListenerReady = false;
+
+        const taskQuery = query(
           collection(db, "tasks"),
           where("assignedTo", "==", user.uid)
-        ));
-        const tasks = [];
-        const statusOrder = {
-          "todo": 0,
-          "in-progress": 1,
-          "completed": 2
-        };
+        );
 
-        taskSnap.forEach((docSnap) => {
-          tasks.push({ id: docSnap.id, ...docSnap.data() });
-        });
+        taskUnsubscribe = onSnapshot(taskQuery, (taskSnap) => {
+          const tasks = [];
+          const statusOrder = {
+            "todo": 0,
+            "in-progress": 1,
+            "completed": 2
+          };
 
-        tasks.sort((a, b) => {
-          const statusDiff = (statusOrder[normalizeTaskStatus(a.status)] ?? 0) - (statusOrder[normalizeTaskStatus(b.status)] ?? 0);
-          if (statusDiff) return statusDiff;
-          return String(a.deadline || "9999-12-31").localeCompare(String(b.deadline || "9999-12-31"));
-        });
+          taskSnap.forEach((docSnap) => {
+            tasks.push({ id: docSnap.id, ...docSnap.data() });
+          });
 
-        if (!tasks.length) {
+          const currentTaskIds = new Set(tasks.map((task) => task.id));
+          const hasNewTask = tasks.some((task) => !knownTaskIds.has(task.id));
+
+          if (taskListenerReady && hasNewTask) {
+            playEmployeeAlertSound();
+          }
+
+          knownTaskIds = currentTaskIds;
+          taskListenerReady = true;
+
+          tasks.sort((a, b) => {
+            const statusDiff = (statusOrder[normalizeTaskStatus(a.status)] ?? 0) - (statusOrder[normalizeTaskStatus(b.status)] ?? 0);
+            if (statusDiff) return statusDiff;
+            return String(a.deadline || "9999-12-31").localeCompare(String(b.deadline || "9999-12-31"));
+          });
+
+          if (!tasks.length) {
+            employeeTaskList.innerHTML = `
+              <div class="holiday-item">
+                <div>
+                  <div class="holiday-name">No tasks assigned</div>
+                  <div class="holiday-date">New work from admin will appear here.</div>
+                </div>
+              </div>
+            `;
+            return;
+          }
+
+          employeeTaskList.innerHTML = tasks.map(renderEmployeeTaskCard).join("");
+        }, (error) => {
+          console.error(error);
           employeeTaskList.innerHTML = `
             <div class="holiday-item">
               <div>
-                <div class="holiday-name">No tasks assigned</div>
-                <div class="holiday-date">New work from admin will appear here.</div>
+                <div class="holiday-name">Tasks could not load</div>
+                <div class="holiday-date">${escapeHtml(error.message)}</div>
               </div>
             </div>
           `;
-          return;
-        }
-
-        employeeTaskList.innerHTML = tasks.map(renderEmployeeTaskCard).join("");
+        });
       } catch (error) {
         console.error(error);
         employeeTaskList.innerHTML = `
@@ -3804,8 +3910,6 @@
           text: `Employee changed status to ${getTaskStatusLabel(normalizedStatus)}`
         }
       });
-
-      loadEmployeeTasks(user).catch((error) => console.error(error));
     };
 
     async function loadEmployeeLeaves(user) {
