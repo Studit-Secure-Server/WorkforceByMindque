@@ -25,6 +25,8 @@ Workforce By Mindque is a browser-based employee attendance and HR management ap
 - `index.html` - Login screen
 - `dashboard.html` - Employee dashboard
 - `admin.html` - Admin dashboard
+- `css/` - Page stylesheets
+- `js/` - Page JavaScript modules
 - `assets/` - Workforce By Mindque logo assets
 
 ## Firebase Collections
