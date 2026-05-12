@@ -1856,9 +1856,18 @@ function getLeaveAllowance(employee) {
   return Number.isFinite(allowance) && allowance >= 0 ? allowance : 12;
 }
 
+function isUnpaidLeave(leave) {
+  return String(leave?.leaveType || "").toLowerCase().includes("unpaid");
+}
+
 function getApprovedLeaveDays(leaves, uid, excludeLeaveId = "") {
   return leaves
-    .filter((leave) => leave.userId === uid && leave.status === "approved" && leave.id !== excludeLeaveId)
+    .filter((leave) => (
+      leave.userId === uid &&
+      leave.status === "approved" &&
+      leave.id !== excludeLeaveId &&
+      !isUnpaidLeave(leave)
+    ))
     .reduce((sum, leave) => sum + Number(leave.days || 0), 0);
 }
 
@@ -1956,6 +1965,7 @@ function renderLeaveRequests(leaves, employees) {
   sortedLeaves.slice(0, 12).forEach((leave) => {
     const employee = employeeMap[leave.userId] || {};
     const balance = employee.uid ? getLeaveBalance(employee, leaves, leave.id) : 0;
+    const balanceText = isUnpaidLeave(leave) ? "No balance deduction" : `Balance: ${balance}`;
     const statusClass =
       leave.status === "approved" ? "green" :
       leave.status === "rejected" ? "red" : "yellow";
@@ -1964,7 +1974,7 @@ function renderLeaveRequests(leaves, employees) {
       <div class="holiday-item">
         <div>
           <div class="holiday-name">${leave.employeeName || employee.name || "Employee"} · ${leave.leaveType || "Leave"}</div>
-          <div class="holiday-date">${formatDisplayDate(leave.startDate)} - ${formatDisplayDate(leave.endDate)} · ${leave.days || 0} day(s) · Balance: ${balance}</div>
+          <div class="holiday-date">${formatDisplayDate(leave.startDate)} - ${formatDisplayDate(leave.endDate)} · ${leave.days || 0} day(s) · ${balanceText}</div>
           <div class="notification-message">${leave.reason || ""}</div>
         </div>
         <div class="request-actions">
@@ -2004,7 +2014,7 @@ window.reviewLeave = async function (leaveId, status) {
       : { uid: leave.userId, leaveAllowance: 12 };
     const balance = getLeaveBalance(employee, leaves, leaveId);
 
-    if (Number(leave.days || 0) > balance) {
+    if (!isUnpaidLeave(leave) && Number(leave.days || 0) > balance) {
       alert("Insufficient leave balance");
       return;
     }

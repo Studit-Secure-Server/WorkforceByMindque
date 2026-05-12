@@ -341,6 +341,10 @@ function getLeaveAllowance(profile) {
   return Number.isFinite(allowance) && allowance >= 0 ? allowance : 12;
 }
 
+function isUnpaidLeave(leave) {
+  return String(leave?.leaveType || "").toLowerCase().includes("unpaid");
+}
+
 function formatScheduleTime(timeText) {
   if (!timeText) return "--";
 
@@ -1653,10 +1657,10 @@ async function loadEmployeeLeaves(user) {
 
     const allowance = getLeaveAllowance(currentEmployeeProfile);
     const approvedDays = leaves
-      .filter((leave) => leave.status === "approved")
+      .filter((leave) => leave.status === "approved" && !isUnpaidLeave(leave))
       .reduce((sum, leave) => sum + Number(leave.days || 0), 0);
     const pendingDays = leaves
-      .filter((leave) => leave.status === "pending")
+      .filter((leave) => leave.status === "pending" && !isUnpaidLeave(leave))
       .reduce((sum, leave) => sum + Number(leave.days || 0), 0);
     const balance = Math.max(allowance - approvedDays, 0);
 
@@ -1681,13 +1685,14 @@ async function loadEmployeeLeaves(user) {
       const statusClass =
         leave.status === "approved" ? "green" :
         leave.status === "rejected" ? "red" : "yellow";
+      const deductionText = isUnpaidLeave(leave) ? " · No balance deduction" : "";
 
       leaveList.innerHTML += `
         <div class="holiday-item">
           <div>
             <div class="holiday-name">${leave.leaveType || "Leave"} · ${leave.days || 0} day(s)</div>
             <div class="holiday-date">${formatDisplayDate(leave.startDate)} - ${formatDisplayDate(leave.endDate)}</div>
-            <div class="notification-message">${leave.reason || ""}</div>
+            <div class="notification-message">${leave.reason || ""}${deductionText}</div>
           </div>
           <span class="holiday-badge ${statusClass}">${leave.status || "pending"}</span>
         </div>
@@ -1736,14 +1741,14 @@ window.applyLeave = async function () {
   leaveSnap.forEach((docSnap) => {
     const leave = docSnap.data();
 
-    if (leave.userId === user.uid && leave.status === "approved") {
+    if (leave.userId === user.uid && leave.status === "approved" && !isUnpaidLeave(leave)) {
       approvedDays += Number(leave.days || 0);
     }
   });
 
   const availableDays = Math.max(getLeaveAllowance(currentEmployeeProfile) - approvedDays, 0);
 
-  if (days > availableDays) {
+  if (!isUnpaidLeave({ leaveType }) && days > availableDays) {
     alert("You do not have enough leave balance");
     return;
   }
