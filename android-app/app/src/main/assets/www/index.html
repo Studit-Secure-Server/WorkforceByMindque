@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workforce By Mindque</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+  <main>
+    <div class="mobile-logo-block">
+      <img src="assets/mindque-logo-light.png" alt="Workforce By Mindque logo">
+    </div>
+
+    <section class="intro">
+      <div class="brand">Workforce By Mindque</div>
+      <img class="logo" src="assets/mindque-logo-light.png" alt="Workforce By Mindque logo">
+      <h1>Attendance that feels effortless.</h1>
+      <p class="subtitle">Sign in to manage punch in, breaks, location-backed attendance, and team reports.</p>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-value">Live</div>
+          <div class="stat-label">Attendance tracking</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">HR</div>
+          <div class="stat-label">Admin reporting</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">Safe</div>
+          <div class="stat-label">Role based access</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="login-panel">
+      <h2>Welcome back</h2>
+      <p class="subtitle" style="margin-bottom:32px;">Login to continue to Workforce By Mindque.</p>
+
+      <div class="field">
+        <label for="email">Email <span class="required">*</span></label>
+        <input type="email" id="email" placeholder="Enter your mail address" autocomplete="email">
+      </div>
+
+      <div class="field">
+        <label for="password">Password <span class="required">*</span></label>
+        <div class="input-wrap">
+          <input type="password" id="password" placeholder="Enter password" autocomplete="current-password">
+          <button class="toggle-password" type="button" onclick="togglePassword()" aria-label="Show password">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M3 3L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M10.6 10.8A2 2 0 0 0 13.2 13.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M7.5 7.8C5.5 8.9 4 10.6 3 12c2.2 3.2 5.2 5 9 5 1.3 0 2.4-.2 3.5-.7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M10.2 5.2C10.8 5.1 11.4 5 12 5c3.8 0 6.8 1.8 9 5-0.5.8-1.2 1.6-2 2.3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="options">
+        <label class="remember" for="remember">
+          <input type="checkbox" id="remember" checked>
+          <span>Remember me</span>
+        </label>
+        <a href="#">Forgot password?</a>
+      </div>
+
+      <button class="login-button" onclick="login()">Log In</button>
+    </section>
+  </main>
+  <script src="js/index.js"></script>
+</body>
+</html>

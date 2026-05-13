@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "891531257178",
+    "project_id": "studit-attendance",
+    "storage_bucket": "studit-attendance.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:891531257178:android:fcacae366fdf8f9a00bf63",
+        "android_client_info": {
+          "package_name": "com.mindqueindia.workforce"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDSHecWGvKJBe8aXfauLsjug-rg-_arJVg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

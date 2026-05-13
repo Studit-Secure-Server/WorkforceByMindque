@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workforce By Mindque Admin</title>
+
+  <script>
+    (() => {
+      let savedTheme = "";
+
+      try {
+        savedTheme = localStorage.getItem("workforceTheme") || "";
+      } catch (error) {
+        savedTheme = "";
+      }
+
+      const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const theme = savedTheme || (prefersDark ? "dark" : "light");
+
+      if (theme === "dark") {
+        document.documentElement.classList.add("theme-dark");
+      }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+
+<body>
+  <div class="app">
+    <div class="sidebar-overlay" onclick="closeMobileMenu()" aria-hidden="true"></div>
+    <aside class="sidebar">
+      <div class="brand">
+        <img class="brand-logo theme-logo-light" src="assets/mindque-logo-light.png" alt="Workforce By Mindque logo">
+        <img class="brand-logo theme-logo-dark" src="assets/mindque-logo-dark.png" alt="Workforce By Mindque logo">
+        <div class="brand-name">Workforce By Mindque</div>
+      </div>
+      <div id="navDashboard" class="nav-item active" onclick="switchView('dashboard')">Dashboard</div>
+      <div id="navEmployees" class="nav-item" onclick="switchView('employees')">Employees</div>
+      <div id="navAttendance" class="nav-item" onclick="switchView('attendance')">Attendance</div>
+      <div id="navPayroll" class="nav-item" onclick="switchView('payroll')">Payroll</div>
+      <div id="navTasks" class="nav-item" onclick="switchView('tasks')">Tasks</div>
+      <div id="navReports" class="nav-item" onclick="switchView('reports')">Reports</div>
+      <button class="logout" onclick="logout()">Logout</button>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div class="topbar-brand" aria-label="Workforce By Mindque">
+          <img class="brand-logo theme-logo-light" src="assets/mindque-logo-light.png" alt="Workforce By Mindque logo">
+          <img class="brand-logo theme-logo-dark" src="assets/mindque-logo-dark.png" alt="Workforce By Mindque logo">
+        </div>
+        <div class="topbar-actions">
+          <input class="search" id="searchInput" placeholder="Search employee..." onkeyup="handleSearch()" style="display:none;">
+          <button class="mobile-menu-btn" type="button" onclick="toggleMobileMenu()" aria-label="Open admin menu">Menu</button>
+          <button id="themeToggle" class="theme-toggle" type="button" onclick="toggleTheme()" aria-label="Switch theme">
+            <span class="theme-icon">N</span>
+            <span>Night Mode</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="page-heading">
+        <h1 id="pageTitle">Admin Dashboard</h1>
+        <div id="pageSubtitle" class="subtitle">Attendance overview for your in-house team.</div>
+      </div>
+
+      <section class="panel view-section dashboard-view active">
+        <div class="section-title">Performance Snapshot</div>
+
+        <div class="cards">
+          <div class="card snapshot-card" role="button" tabindex="0" onclick="openSnapshotDetails('total')" onkeydown="handleSnapshotCardKey(event, 'total')">
+            <div class="card-label">Total Employees</div>
+            <div class="card-value" id="totalEmployees">0</div>
+            <span class="badge blue">Team Size</span>
+          </div>
+
+          <div class="card snapshot-card" role="button" tabindex="0" onclick="openSnapshotDetails('present')" onkeydown="handleSnapshotCardKey(event, 'present')">
+            <div class="card-label">Present Today</div>
+            <div class="card-value" id="presentToday">0</div>
+            <span class="badge green">Active</span>
+          </div>
+
+          <div class="card snapshot-card" role="button" tabindex="0" onclick="openSnapshotDetails('absent')" onkeydown="handleSnapshotCardKey(event, 'absent')">
+            <div class="card-label">Absent</div>
+            <div class="card-value" id="absentToday">0</div>
+            <span class="badge red">Need Check</span>
+          </div>
+
+          <div class="card snapshot-card" role="button" tabindex="0" onclick="openSnapshotDetails('break')" onkeydown="handleSnapshotCardKey(event, 'break')">
+            <div class="card-label">On Break</div>
+            <div class="card-value" id="onBreak">0</div>
+            <span class="badge yellow">Break Mode</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel view-section dashboard-view active">
+        <div class="section-title">Attendance Overview</div>
+
+        <div class="grid-2">
+          <div id="weeklyAttendanceChart" class="chart-box">
+            <div class="bar-wrap">
+              <div class="bar-value">Loading</div>
+              <div class="bar" style="height:20px;background:#d1d5db"></div>
+              <div>--</div>
+            </div>
+          </div>
+
+          <div class="donut">
+            <div>
+              <div id="attendanceDonut" class="circle">
+                <div class="circle-inner" id="attendancePercent">0%</div>
+              </div>
+              <p style="color:#6b7280;font-weight:700;">Today Attendance</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel view-section dashboard-view active">
+        <div class="section-title">Needs Action & Attention</div>
+
+        <div class="action-list">
+          <div class="action">
+            <div>
+              <div class="action-title">Employees not punched in</div>
+              <div class="action-sub">Check absent employees for today.</div>
+            </div>
+            <span class="badge red" id="actionAbsent">0</span>
+          </div>
+
+          <div class="action">
+            <div>
+              <div class="action-title">Pending punch out</div>
+              <div class="action-sub">Employees still working.</div>
+            </div>
+            <span class="badge yellow" id="pendingPunchOut">0</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel view-section dashboard-view active">
+        <div class="section-title">AI Work Assistant</div>
+        <div class="subtitle" style="margin-bottom:22px;">Daily smart insights from attendance, schedules, and employee activity.</div>
+
+        <div id="adminInsightList" class="admin-insight-grid">
+          <div class="admin-insight-card">
+            <div class="admin-insight-icon">AI</div>
+            <div>
+              <div class="admin-insight-title">Reading today’s workforce data</div>
+              <div class="admin-insight-copy">Insights will appear once attendance records finish loading.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel view-section employees-view">
+        <div class="section-title" id="employeeFormTitle">Add / Update Employee</div>
+
+        <div class="form-grid">
+          <input type="text" id="empName" placeholder="Employee Name *" required>
+          <input type="email" id="empEmail" placeholder="Employee Email *" required>
+          <input type="text" id="empEmployeeId" placeholder="Company Employee ID">
+          <input type="text" id="empUID" placeholder="Firebase UID *" required>
+          <select id="empRole">
+            <option value="employee">Employee</option>
+            <option value="admin">Admin</option>
+          </select>
+          <label class="time-field">
+            Work Start
+            <input type="time" id="empWorkStart" title="Working Start Time" aria-label="Working Start Time">
+          </label>
+          <label class="time-field">
+            Work End
+            <input type="time" id="empWorkEnd" title="Working End Time" aria-label="Working End Time">
+          </label>
+          <input type="text" id="empWorkLocationName" placeholder="Work Location Name (optional)">
+          <input type="number" id="empWorkLat" placeholder="Employee Work Latitude (optional)" step="any">
+          <input type="number" id="empWorkLng" placeholder="Employee Work Longitude (optional)" step="any">
+          <input type="number" id="empWorkRadius" placeholder="Employee Work Radius (meters)" min="1">
+          <input type="number" id="empLeaveAllowance" placeholder="Leave Allowance (default 12)" min="0">
+          <input type="number" id="empMonthlySalary" placeholder="Monthly Salary (INR)" min="0" step="0.01">
+          <select id="empSalaryBasis">
+            <option value="hours">Calculate by Hours</option>
+            <option value="days">Calculate by Days</option>
+          </select>
+          <input type="file" id="empPhoto" accept="image/*">
+          <input type="tel" id="empPhone" placeholder="Phone Number (optional)">
+          <input type="text" id="empEmergency" placeholder="Emergency Contact (optional)">
+          <input type="text" id="empBlood" placeholder="Blood Group (optional)">
+          <input type="text" id="empBank" placeholder="Bank Account Number (optional)">
+          <input type="text" id="empIfsc" placeholder="IFSC Code (optional)">
+          <input type="text" id="empAddress" placeholder="Current Address (optional)">
+        </div>
+
+        <div class="inline-actions">
+          <button id="employeeSaveBtn" class="btn green-btn" onclick="addEmployee()">Save Employee</button>
+          <button id="cancelEmployeeEditBtn" class="btn red-btn" type="button" onclick="cancelEmployeeEdit()" style="display:none;">Cancel Edit</button>
+        </div>
+      </section>
+
+      <section class="panel view-section employees-view">
+        <div class="section-title">All Employees</div>
+
+        <div style="overflow-x:auto;">
+          <table class="employee-table">
+            <thead>
+              <tr>
+                <th>Photo</th>
+                <th>Employee ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Working Hours</th>
+                <th>Work Location</th>
+                <th>Leave Balance</th>
+                <th>Monthly Salary</th>
+                <th>Payroll Basis</th>
+                <th>Phone</th>
+                <th>Emergency</th>
+                <th>Blood</th>
+                <th>Bank</th>
+                <th>IFSC</th>
+                <th>Address</th>
+                <th>Actions</th>
+                <th>Firebase UID</th>
+              </tr>
+            </thead>
+            <tbody id="employeeTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel view-section dashboard-view active">
+        <div class="section-title">Holiday Calendar</div>
+
+        <div class="form-grid">
+          <input type="date" id="holidayDate">
+          <input type="text" id="holidayName" placeholder="Holiday Name">
+          <select id="holidayType">
+            <option value="company">Company Holiday</option>
+            <option value="public">Public Holiday</option>
+            <option value="optional">Optional Holiday</option>
+          </select>
+          <button class="btn green-btn" onclick="addHoliday()">Add Holiday</button>
+        </div>
+
+        <div id="holidayList" class="holiday-list"></div>
+      </section>
+
+      <section class="panel view-section dashboard-view active">
+        <div class="section-title">Office Locations</div>
+        <div class="subtitle">Add multiple offices for employee punch in and punch out radius checks.</div>
+
+        <div class="form-grid">
+          <input type="text" id="officeName" placeholder="Office Name">
+          <input type="number" id="officeLat" placeholder="Latitude" step="any">
+          <input type="number" id="officeLng" placeholder="Longitude" step="any">
+          <input type="number" id="officeRadius" placeholder="Radius in meters" min="1" value="100">
+          <select id="officeActive">
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+          <button class="btn green-btn" onclick="addOfficeLocation()">Add Office</button>
+        </div>
+
+        <div id="officeLocationList" class="holiday-list">
+          <div class="holiday-item">
+            <div>
+              <div class="holiday-name">Loading office locations...</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel view-section dashboard-view active">
+        <div class="section-title">Employee Notifications</div>
+
+        <div class="form-grid">
+          <input type="text" id="notificationTitle" placeholder="Notification Title">
+          <select id="notificationTarget" onchange="toggleNotificationEmployee()">
+            <option value="all">All Employees</option>
+            <option value="specific">Specific Employee</option>
+          </select>
+          <select id="notificationEmployee" disabled>
+            <option value="">Select Employee</option>
+          </select>
+          <button class="btn green-btn" onclick="addNotification()">Send Notification</button>
+        </div>
+
+        <textarea id="notificationMessage" placeholder="Write notification message"></textarea>
+
+        <div id="notificationList" class="holiday-list"></div>
+      </section>
+
+      <section class="panel view-section dashboard-view active">
+        <div class="section-title">Leave Requests</div>
+        <div id="adminLeaveList" class="holiday-list">
+          <div class="holiday-item">
+            <div>
+              <div class="holiday-name">Loading leave requests...</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel view-section attendance-view timesheet-panel">
+        <div class="timesheet-top">
+          <div class="timesheet-title-row">
+            <div class="timesheet-mode" aria-label="Timesheet view">
+              <button id="weeklyModeBtn" class="mode-btn active" type="button" onclick="switchTimesheetMode('weekly')">Weekly</button>
+              <button id="monthlyModeBtn" class="mode-btn" type="button" onclick="switchTimesheetMode('monthly')">Monthly</button>
+            </div>
+            <div id="weeklyControls" class="timesheet-week-nav">
+              <button class="nav-circle" type="button" onclick="changeTimesheetPeriod(-1)">‹</button>
+              <button class="nav-circle" type="button" onclick="changeTimesheetPeriod(1)">›</button>
+              <div id="weekRangeLabel" class="week-range">This Week</div>
+              <input class="week-picker" id="weekDatePicker" type="date" title="Pick week" onchange="setTimesheetWeek(this.value)">
+            </div>
+            <div id="monthlyControls" class="timesheet-week-nav" style="display:none;">
+              <button class="nav-circle" type="button" onclick="changeTimesheetPeriod(-1)">‹</button>
+              <button class="nav-circle" type="button" onclick="changeTimesheetPeriod(1)">›</button>
+              <div id="monthRangeLabel" class="week-range">This Month</div>
+              <input class="month-picker" id="monthlyTimesheetMonth" type="month" title="Pick month" onchange="setTimesheetMonth(this.value)">
+            </div>
+          </div>
+          <button id="timesheetExportBtn" class="btn" onclick="exportTimesheet()">Export Weekly</button>
+        </div>
+
+        <div class="filter-strip">
+          <button class="filter-chip" type="button">Payroll hours ▾</button>
+          <button class="filter-chip" type="button">Groups ▾</button>
+          <button class="filter-chip" type="button">Members ▾</button>
+          <button class="filter-chip" type="button">Schedules ▾</button>
+          <button class="filter-chip" type="button">Tracked hours ▾</button>
+          <button class="filter-chip add" type="button">＋ Add filter</button>
+        </div>
+
+        <div id="weeklyTimesheetWrap" class="timesheet-wrap">
+          <table class="timesheet-table">
+            <thead>
+              <tr>
+                <th class="member-head">
+                  <div class="timesheet-search">⌕ <input id="timesheetSearch" placeholder="Search..." onkeyup="syncTimesheetSearch(this.value)"></div>
+                </th>
+                <th id="weekDay0" class="day-head"></th>
+                <th id="weekDay1" class="day-head"></th>
+                <th id="weekDay2" class="day-head"></th>
+                <th id="weekDay3" class="day-head"></th>
+                <th id="weekDay4" class="day-head"></th>
+                <th id="weekDay5" class="day-head"></th>
+                <th id="weekDay6" class="day-head"></th>
+                <th class="total-head">Total</th>
+              </tr>
+            </thead>
+            <tbody id="weeklyTimesheetBody"></tbody>
+          </table>
+        </div>
+
+        <div id="monthlyTimesheetWrap" class="timesheet-wrap hidden">
+          <table class="timesheet-table monthly-table">
+            <thead>
+              <tr id="monthlyTimesheetHead"></tr>
+            </thead>
+            <tbody id="monthlyTimesheetBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel view-section attendance-view">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;">
+          <div class="section-title" style="margin:0;">Attendance Records</div>
+
+          <div class="inline-actions">
+            <input type="date" id="filterDate" onchange="loadData()">
+            <button class="btn" onclick="exportToExcel()">Export Excel</button>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto;margin-top:22px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Date</th>
+                <th>Punch In</th>
+                <th>Punch Out</th>
+                <th>Total Hours</th>
+                <th>Status</th>
+                <th>Punch In Photo</th>
+                <th>Punch Out Photo</th>
+                <th>Location</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel view-section payroll-view">
+        <div class="calendar-toolbar">
+          <div>
+            <div class="section-title" style="margin:0;">Payroll Dashboard</div>
+            <div class="subtitle">Monthly salary calculation from attendance, breaks, deductions, and bonuses.</div>
+          </div>
+          <div class="inline-actions">
+            <input type="month" id="payrollMonth" onchange="loadData()">
+            <select id="payrollEmployeeFilter" onchange="loadData()">
+              <option value="">All Employees</option>
+            </select>
+            <button class="btn" onclick="exportPayrollToExcel()">Export Payroll</button>
+          </div>
+        </div>
+
+        <div class="cards">
+          <div class="card">
+            <div class="card-label">Total Employees</div>
+            <div class="card-value" id="payrollTotalEmployees">0</div>
+            <span class="badge blue">Payroll Scope</span>
+          </div>
+          <div class="card">
+            <div class="card-label">Total Working Hours</div>
+            <div class="card-value" id="payrollTotalHours">0h</div>
+            <span class="badge green">Net Hours</span>
+          </div>
+          <div class="card">
+            <div class="card-label">Total Payroll Amount</div>
+            <div class="card-value" id="payrollTotalAmount">₹0</div>
+            <span class="badge blue">Payable</span>
+          </div>
+          <div class="card">
+            <div class="card-label">Pending Salary Slips</div>
+            <div class="card-value" id="payrollPendingSlips">0</div>
+            <span class="badge yellow">Action Needed</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel view-section payroll-view">
+        <div class="section-title">Employee Salary Setup</div>
+        <div class="form-grid">
+          <select id="payrollSetupEmployee" onchange="loadPayrollEmployeeSettings()">
+            <option value="">Select Employee</option>
+          </select>
+          <select id="payrollSalaryType">
+            <option value="hourly">Hourly</option>
+            <option value="fixed">Fixed Monthly</option>
+          </select>
+          <input type="number" id="payrollHourlyRate" placeholder="Per Hour Salary" min="0" step="0.01">
+          <input type="number" id="payrollMonthlySalary" placeholder="Monthly Salary" min="0" step="0.01">
+          <input type="number" id="payrollDeduction" placeholder="Deduction Amount" min="0" step="0.01">
+          <input type="number" id="payrollLateDeduction" placeholder="Late Deduction / Day" min="0" step="0.01">
+          <input type="number" id="payrollBonus" placeholder="Bonus / Incentive" min="0" step="0.01">
+          <input type="text" id="payrollDeductionRules" placeholder="Deduction Rules">
+        </div>
+        <button class="btn green-btn" onclick="savePayrollSettings()">Save Salary Setup</button>
+      </section>
+
+      <section class="panel view-section payroll-view">
+        <div class="section-title">Monthly Payroll</div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Month</th>
+                <th>Total Days</th>
+                <th>Present Days</th>
+                <th>Absent Days</th>
+                <th>Total Hours</th>
+                <th>Per Hour Rate</th>
+                <th>Gross Salary</th>
+                <th>Deduction</th>
+                <th>Net Salary</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="payrollTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel view-section tasks-view">
+        <div class="calendar-toolbar">
+          <div>
+            <div class="section-title" style="margin:0;">Task Management</div>
+            <div class="subtitle">Create work, assign it to employees, and track progress in simple Kanban columns.</div>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <input type="text" id="taskTitle" placeholder="Task Title">
+          <select id="taskAssignee">
+            <option value="">Assign To</option>
+          </select>
+          <input type="date" id="taskDeadline">
+          <select id="taskPriority">
+            <option value="Medium">Medium Priority</option>
+            <option value="Low">Low Priority</option>
+            <option value="High">High Priority</option>
+          </select>
+        </div>
+        <textarea id="taskDescription" placeholder="Task Description"></textarea>
+        <div class="inline-actions" style="margin-top:14px;">
+          <button class="btn green-btn" type="button" onclick="createTask()">Create Task</button>
+        </div>
+      </section>
+
+      <section class="panel view-section tasks-view">
+        <div class="calendar-toolbar">
+          <div>
+            <div class="section-title" style="margin:0;">Task Board</div>
+            <div class="subtitle">To Do, In Progress, and Completed tasks for the team.</div>
+          </div>
+        </div>
+
+        <div id="taskBoard" class="task-board">
+          <div class="task-column">
+            <div class="task-column-head">
+              <div class="task-column-title">To Do</div>
+              <span class="task-count">0</span>
+            </div>
+            <div class="task-empty">Loading tasks...</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel view-section reports-view">
+        <div class="calendar-toolbar">
+          <div>
+            <div class="section-title" style="margin:0;">Reports</div>
+            <div class="subtitle">Monthly summary for employees, attendance, missed punch outs, hours, and salary payout.</div>
+          </div>
+          <div class="inline-actions">
+            <input type="month" id="reportMonth" onchange="loadData()">
+            <button class="btn" onclick="exportReportToExcel()">Export Report</button>
+          </div>
+        </div>
+
+        <div class="cards">
+          <div class="card">
+            <div class="card-label">Employees</div>
+            <div class="card-value" id="reportEmployees">0</div>
+            <span class="badge blue">Report Scope</span>
+          </div>
+          <div class="card">
+            <div class="card-label">Present Days</div>
+            <div class="card-value" id="reportPresentDays">0</div>
+            <span class="badge green">Total</span>
+          </div>
+          <div class="card">
+            <div class="card-label">Missed Punch Out</div>
+            <div class="card-value" id="reportMissed">0</div>
+            <span class="badge red">Needs Review</span>
+          </div>
+          <div class="card">
+            <div class="card-label">Total Hours</div>
+            <div class="card-value" id="reportHours">0h</div>
+            <span class="badge yellow">Worked</span>
+          </div>
+          <div class="card">
+            <div class="card-label">Monthly Payout</div>
+            <div class="card-value" id="reportPayout">₹0</div>
+            <span class="badge blue">Payroll</span>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto;margin-top:22px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Email</th>
+                <th>Present Days</th>
+                <th>Absent Days</th>
+                <th>Completed</th>
+                <th>Missed Punch Out</th>
+                <th>Total Hours</th>
+                <th>Monthly Salary</th>
+                <th>Basis</th>
+                <th>Payable Days</th>
+                <th>Monthly Payout</th>
+                <th>Last Status</th>
+              </tr>
+            </thead>
+            <tbody id="reportTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="photoModal" class="photo-modal" aria-hidden="true">
+    <div class="photo-modal-card">
+      <div class="photo-modal-header">
+        <h2 id="photoModalTitle" class="photo-modal-title">Attendance Photo</h2>
+        <button class="photo-modal-close" type="button" onclick="closeAttendancePhoto()">×</button>
+      </div>
+      <img id="photoModalImage" class="photo-modal-image" src="" alt="Attendance photo">
+    </div>
+  </div>
+
+  <div id="snapshotDetailModal" class="photo-modal" aria-hidden="true">
+    <div class="photo-modal-card snapshot-modal-card">
+      <div class="photo-modal-header">
+        <div>
+          <h2 id="snapshotDetailTitle" class="photo-modal-title">Snapshot Details</h2>
+          <div id="snapshotDetailSubtitle" class="holiday-date">Daily employee details</div>
+        </div>
+        <button class="photo-modal-close" type="button" onclick="closeSnapshotDetails()">×</button>
+      </div>
+      <div id="snapshotDetailList" class="snapshot-detail-list"></div>
+    </div>
+  </div>
+
+  <div id="salarySlipModal" class="photo-modal" aria-hidden="true">
+    <div class="photo-modal-card">
+      <div class="photo-modal-header">
+        <h2 class="photo-modal-title">Salary Slip</h2>
+        <button class="photo-modal-close" type="button" onclick="closeSalarySlip()">×</button>
+      </div>
+      <div id="salarySlipContent" class="salary-slip-content"></div>
+      <div class="inline-actions" style="margin-top:18px;">
+        <button class="btn" type="button" onclick="downloadCurrentSalarySlip()">Download PDF</button>
+        <button class="btn red-btn" type="button" onclick="closeSalarySlip()">Close</button>
+      </div>
+    </div>
+  </div>
+  <script src="js/admin.js"></script>
+</body>
+</html>
