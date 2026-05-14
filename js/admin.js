@@ -49,6 +49,8 @@ let editingEmployeeUid = "";
 let currentView = "dashboard";
 let realtimeUnsubscribers = [];
 let realtimeRefreshTimer = null;
+let showAllNotifications = false;
+let showAllLeaveRequests = false;
 const themeToggle = document.getElementById("themeToggle");
 
 function updateThemeToggle() {
@@ -983,6 +985,7 @@ window.loadNotifications = async function () {
   const notificationSnap = await getDocs(collection(db, "notifications"));
   const notificationList = document.getElementById("notificationList");
   const notifications = [];
+  const visibleLimit = 4;
 
   notificationSnap.forEach((docSnap) => {
     notifications.push(docSnap.data());
@@ -996,7 +999,9 @@ window.loadNotifications = async function () {
     return;
   }
 
-  notifications.slice(0, 8).forEach((notification) => {
+  const visibleNotifications = showAllNotifications ? notifications : notifications.slice(0, visibleLimit);
+
+  visibleNotifications.forEach((notification) => {
     const createdDate = notification.createdAt
       ? new Date(notification.createdAt).toLocaleString()
       : "-";
@@ -1012,6 +1017,21 @@ window.loadNotifications = async function () {
       </div>
     `;
   });
+
+  if (notifications.length > visibleLimit) {
+    notificationList.innerHTML += `
+      <div class="list-toggle-row">
+        <button class="small-btn toggle" type="button" onclick="toggleNotificationRows()">
+          ${showAllNotifications ? "Show Less" : `Show More (${notifications.length - visibleLimit})`}
+        </button>
+      </div>
+    `;
+  }
+};
+
+window.toggleNotificationRows = function () {
+  showAllNotifications = !showAllNotifications;
+  loadNotifications();
 };
 
 function getDatesFromMonthStart() {
@@ -2240,6 +2260,7 @@ function renderEmployeeDirectory(employees, leaves = []) {
 function renderLeaveRequests(leaves, employees) {
   const leaveList = document.getElementById("adminLeaveList");
   const employeeMap = {};
+  const visibleLimit = 4;
 
   employees.forEach((employee) => {
     employeeMap[employee.uid] = employee;
@@ -2267,7 +2288,9 @@ function renderLeaveRequests(leaves, employees) {
     return;
   }
 
-  sortedLeaves.slice(0, 12).forEach((leave) => {
+  const visibleLeaves = showAllLeaveRequests ? sortedLeaves : sortedLeaves.slice(0, visibleLimit);
+
+  visibleLeaves.forEach((leave) => {
     const employee = employeeMap[leave.userId] || {};
     const balance = employee.uid ? getLeaveBalance(employee, leaves, leave.id) : 0;
     const balanceText = isUnpaidLeave(leave) ? "No balance deduction" : `Balance: ${balance}`;
@@ -2292,7 +2315,22 @@ function renderLeaveRequests(leaves, employees) {
       </div>
     `;
   });
+
+  if (sortedLeaves.length > visibleLimit) {
+    leaveList.innerHTML += `
+      <div class="list-toggle-row">
+        <button class="small-btn toggle" type="button" onclick="toggleLeaveRows()">
+          ${showAllLeaveRequests ? "Show Less" : `Show More (${sortedLeaves.length - visibleLimit})`}
+        </button>
+      </div>
+    `;
+  }
 }
+
+window.toggleLeaveRows = function () {
+  showAllLeaveRequests = !showAllLeaveRequests;
+  loadData();
+};
 
 window.reviewLeave = async function (leaveId, status) {
   const leaveRef = doc(db, "leaves", leaveId);

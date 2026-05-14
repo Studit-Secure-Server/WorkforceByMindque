@@ -1494,6 +1494,12 @@ tbody tr:hover {
 .small-btn.edit { background: #2563eb; }
 .small-btn.toggle { background: #4f46e5; }
 
+.list-toggle-row {
+  display: flex;
+  justify-content: center;
+  padding-top: 8px;
+}
+
 .payroll-action-row {
   display: flex;
   align-items: center;
