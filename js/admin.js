@@ -192,6 +192,7 @@ function formatWeekRange(dates) {
 
 function setDefaultMonthInputs() {
   const monthValue = getCurrentMonthValue();
+  document.getElementById("filterDate").value ||= refreshToday();
   document.getElementById("reportMonth").value ||= monthValue;
   document.getElementById("payrollMonth").value ||= monthValue;
   document.getElementById("monthlyTimesheetMonth").value ||= currentTimesheetMonth;
@@ -212,7 +213,7 @@ function updateTimesheetModeUI() {
 
 window.switchTimesheetMode = function (mode) {
   currentTimesheetMode = mode === "monthly" ? "monthly" : "weekly";
-  document.getElementById("filterDate").value = "";
+  document.getElementById("filterDate").value = refreshToday();
   updateTimesheetModeUI();
   loadData();
 };
@@ -228,7 +229,7 @@ window.changeTimesheetPeriod = function (offset) {
     document.getElementById("weekDatePicker").value = getDateInputValue(currentWeekStart);
   }
 
-  document.getElementById("filterDate").value = "";
+  document.getElementById("filterDate").value = refreshToday();
   loadData();
 };
 
@@ -237,7 +238,7 @@ window.setTimesheetWeek = function (dateText) {
 
   currentWeekStart = getWeekStart(new Date(dateText + "T00:00:00"));
   document.getElementById("weekDatePicker").value = getDateInputValue(currentWeekStart);
-  document.getElementById("filterDate").value = "";
+  document.getElementById("filterDate").value = refreshToday();
   loadData();
 };
 
@@ -246,7 +247,7 @@ window.setTimesheetMonth = function (monthText) {
 
   currentTimesheetMonth = monthText;
   document.getElementById("monthlyTimesheetMonth").value = currentTimesheetMonth;
-  document.getElementById("filterDate").value = "";
+  document.getElementById("filterDate").value = refreshToday();
   loadData();
 };
 
@@ -2340,7 +2341,7 @@ window.selectAttendanceDate = function (dateText) {
 };
 
 window.clearAttendanceDate = function () {
-  document.getElementById("filterDate").value = "";
+  document.getElementById("filterDate").value = refreshToday();
   loadData();
 };
 
@@ -3157,7 +3158,9 @@ window.loadData = async function () {
   renderAdminInsights(dashboardEmployees, attendanceRecords, leaves, breaks);
 
   const tableBody = document.getElementById("tableBody");
-  const selectedDate = document.getElementById("filterDate").value;
+  const filterDateInput = document.getElementById("filterDate");
+  filterDateInput.value ||= today;
+  const selectedDate = filterDateInput.value;
 
   tableBody.innerHTML = "";
   Object.keys(attendancePhotoStore).forEach((key) => {
@@ -3586,12 +3589,12 @@ window.exportToExcel = async function () {
     employeeMap[docSnap.id] = docSnap.data().name;
   });
 
-  const selectedDate = document.getElementById("filterDate").value;
+  const selectedDate = document.getElementById("filterDate").value || refreshToday();
   const exportData = [];
 
   attendanceSnap.forEach((docSnap) => {
     const data = docSnap.data();
-    if (selectedDate && data.date !== selectedDate) return;
+    if (data.date !== selectedDate) return;
 
     exportData.push({
       Employee: employeeMap[data.userId] || "Unknown",
