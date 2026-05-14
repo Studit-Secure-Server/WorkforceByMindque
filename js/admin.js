@@ -8,7 +8,8 @@ const {
   onSnapshot,
   doc,
   getDoc,
-  setDoc
+  setDoc,
+  Timestamp
 } = await import("https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js");
 
 const firebaseConfig = {
@@ -35,10 +36,12 @@ let latestMonthlyRows = [];
 let latestPayrollRows = [];
 let currentSalarySlipKey = "";
 const payrollSlipStore = {};
+const attendanceEditStore = {};
 let currentWeekStart = getWeekStart(new Date());
 let currentTimesheetMode = "weekly";
 let currentTimesheetMonth = getCurrentMonthValue();
 let absenceAutomationRunning = false;
+let missedPunchOutAutomationRunning = false;
 let absenceAutomationTimer = null;
 let employeeDirectoryStore = {};
 let snapshotDetailStore = {};
@@ -433,6 +436,7 @@ onAuthStateChanged(auth, async (user) => {
 
   setDefaultMonthInputs();
   document.getElementById("pageTitle").innerText = viewMeta.dashboard.title();
+  await autoCloseMissedPunchOuts();
   await autoMarkAbsences();
   startAbsenceAutomation();
   loadData();
@@ -495,6 +499,7 @@ function resetEmployeeForm() {
   document.getElementById("empRole").value = "employee";
   document.getElementById("empWorkStart").value = "";
   document.getElementById("empWorkEnd").value = "";
+  document.getElementById("empGraceMinutes").value = "";
   document.getElementById("empWorkLocationName").value = "";
   document.getElementById("empWorkLat").value = "";
   document.getElementById("empWorkLng").value = "";
@@ -532,6 +537,7 @@ window.editEmployee = function (uid) {
   document.getElementById("empRole").value = employee.role || "employee";
   document.getElementById("empWorkStart").value = employee.workStart || "";
   document.getElementById("empWorkEnd").value = employee.workEnd || "";
+  document.getElementById("empGraceMinutes").value = employee.graceMinutes ?? 30;
   document.getElementById("empWorkLocationName").value = employee.workLocationName || "";
   document.getElementById("empWorkLat").value = employee.workLocationLat ?? "";
   document.getElementById("empWorkLng").value = employee.workLocationLng ?? "";
@@ -558,6 +564,7 @@ window.addEmployee = async function () {
   const role = document.getElementById("empRole").value;
   const workStart = document.getElementById("empWorkStart").value;
   const workEnd = document.getElementById("empWorkEnd").value;
+  const graceMinutesInput = document.getElementById("empGraceMinutes").value.trim();
   const workLocationName = document.getElementById("empWorkLocationName").value.trim();
   const workLatInput = document.getElementById("empWorkLat").value.trim();
   const workLngInput = document.getElementById("empWorkLng").value.trim();
@@ -598,6 +605,9 @@ window.addEmployee = async function () {
   const monthlySalary = monthlySalaryInput
     ? Number(monthlySalaryInput)
     : Number(isEditing ? 0 : existingEmployee.monthlySalary ?? existingEmployee.salary ?? 0);
+  const graceMinutes = graceMinutesInput
+    ? Number(graceMinutesInput)
+    : Number(isEditing ? 30 : existingEmployee.graceMinutes ?? 30);
   const savedWorkLocationLat = hasWorkLocationInput
     ? workLocationLat
     : (isEditing ? "" : existingEmployee.workLocationLat ?? "");
@@ -625,7 +635,7 @@ window.addEmployee = async function () {
     leaveAllowance: Number.isFinite(leaveAllowance) ? leaveAllowance : 12,
     monthlySalary: Number.isFinite(monthlySalary) ? monthlySalary : 0,
     salaryBasis: salaryBasis === "days" ? "days" : "hours",
-    graceMinutes: existingEmployee.graceMinutes || 30,
+    graceMinutes: Number.isFinite(graceMinutes) && graceMinutes >= 0 ? graceMinutes : 30,
     phone: isEditing ? phone : phone || existingEmployee.phone || "",
     emergencyContact: isEditing ? emergencyContact : emergencyContact || existingEmployee.emergencyContact || "",
     bloodGroup: isEditing ? bloodGroup : bloodGroup || existingEmployee.bloodGroup || "",
@@ -1035,6 +1045,14 @@ function getEmployeeAbsenceCutoff(employee, dateText) {
   return new Date(`${dateText}T23:59:59`);
 }
 
+function getEmployeeMissedPunchOutCutoff(employee, dateText) {
+  if (!employee?.workEnd) {
+    return null;
+  }
+
+  return getEmployeeAbsenceCutoff(employee, dateText);
+}
+
 function shouldSkipAbsenceDate(dateText, holidaySet) {
   const date = new Date(`${dateText}T00:00:00`);
   const isSunday = date.getDay() === 0;
@@ -1160,15 +1178,251 @@ async function autoMarkAbsences() {
   }
 }
 
+function findEmployeeForRecord(record, employees) {
+  return employees.find((employee) => belongsToEmployee(record, employee)) || null;
+}
+
+function getBreakMinutesForWindow(breaks, employee, dateText, punchIn, punchOut) {
+  if (!punchIn || !punchOut) {
+    return 0;
+  }
+
+  return breaks
+    .filter((item) => belongsToEmployee(item, employee) && item.date === dateText)
+    .reduce((sum, item) => {
+      const breakStart = getTimestampDate(item.breakStart);
+      const breakEnd = getTimestampDate(item.breakEnd) || punchOut;
+
+      if (!breakStart || !breakEnd) {
+        return sum;
+      }
+
+      const overlapStart = Math.max(breakStart.getTime(), punchIn.getTime());
+      const overlapEnd = Math.min(breakEnd.getTime(), punchOut.getTime());
+      const overlapMinutes = Math.max(Math.round((overlapEnd - overlapStart) / 60000), 0);
+
+      return sum + overlapMinutes;
+    }, 0);
+}
+
+function calculateWorkedMinutesForWindow(breaks, employee, dateText, punchIn, punchOut) {
+  if (!punchIn || !punchOut || punchOut <= punchIn) {
+    return 0;
+  }
+
+  const totalMinutes = Math.max(Math.round((punchOut - punchIn) / 60000), 0);
+  const breakMinutes = getBreakMinutesForWindow(breaks, employee, dateText, punchIn, punchOut);
+
+  return Math.max(totalMinutes - breakMinutes, 0);
+}
+
+window.updateAttendanceEditPreview = function () {
+  const attendanceId = document.getElementById("attendanceEditId")?.value;
+  const totalInput = document.getElementById("attendanceEditTotal");
+  const record = attendanceEditStore[attendanceId];
+
+  if (!totalInput || !record) {
+    return;
+  }
+
+  const punchIn = parseDateTimeLocal(document.getElementById("attendanceEditPunchIn").value);
+  const punchOut = parseDateTimeLocal(document.getElementById("attendanceEditPunchOut").value);
+  const status = document.getElementById("attendanceEditStatus").value;
+
+  if (!["completed", "missed-punch-out"].includes(status)) {
+    totalInput.value = "Timer still active";
+    return;
+  }
+
+  if (!punchIn || !punchOut || punchOut <= punchIn) {
+    totalInput.value = "--";
+    return;
+  }
+
+  const dateText = getDateInputValue(punchIn);
+  const minutes = calculateWorkedMinutesForWindow(record.breaks || [], record.employee, dateText, punchIn, punchOut);
+  totalInput.value = formatMinutes(minutes);
+};
+
+window.openAttendanceEdit = function (attendanceId) {
+  const record = attendanceEditStore[attendanceId];
+
+  if (!record) {
+    alert("Attendance record not found");
+    return;
+  }
+
+  document.getElementById("attendanceEditId").value = attendanceId;
+  document.getElementById("attendanceEditEmployee").innerText = `${record.employeeName || "Employee"} · ${record.date || "-"}`;
+  document.getElementById("attendanceEditPunchIn").value = toDateTimeLocalValue(record.punchIn);
+  document.getElementById("attendanceEditPunchOut").value = toDateTimeLocalValue(record.punchOut);
+  document.getElementById("attendanceEditStatus").value = record.status || "completed";
+  window.updateAttendanceEditPreview();
+
+  const modal = document.getElementById("attendanceEditModal");
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+};
+
+window.closeAttendanceEdit = function () {
+  const modal = document.getElementById("attendanceEditModal");
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+};
+
+window.saveAttendanceEdit = async function () {
+  const attendanceId = document.getElementById("attendanceEditId").value;
+  const record = attendanceEditStore[attendanceId];
+
+  if (!record) {
+    alert("Attendance record not found");
+    return;
+  }
+
+  const punchIn = parseDateTimeLocal(document.getElementById("attendanceEditPunchIn").value);
+  const punchOut = parseDateTimeLocal(document.getElementById("attendanceEditPunchOut").value);
+  const status = document.getElementById("attendanceEditStatus").value;
+  const isClosedStatus = ["completed", "missed-punch-out"].includes(status);
+
+  if (!punchIn) {
+    alert("Please select punch in time");
+    return;
+  }
+
+  if (isClosedStatus && !punchOut) {
+    alert("Please select punch out time");
+    return;
+  }
+
+  if (isClosedStatus && punchOut <= punchIn) {
+    alert("Punch out time must be after punch in time");
+    return;
+  }
+
+  const dateText = getDateInputValue(punchIn);
+  const workedMinutes = isClosedStatus
+    ? calculateWorkedMinutesForWindow(record.breaks || [], record.employee, dateText, punchIn, punchOut)
+    : 0;
+
+  await setDoc(doc(db, "attendance", attendanceId), {
+    date: dateText,
+    punchIn: Timestamp.fromDate(punchIn),
+    punchOut: isClosedStatus ? Timestamp.fromDate(punchOut) : null,
+    status,
+    totalHours: isClosedStatus ? formatMinutes(workedMinutes) : "0h 0m",
+    missedPunchOut: status === "missed-punch-out",
+    punchOutType: status === "missed-punch-out" ? "auto-edited" : "admin",
+    autoLogoutAt: status === "missed-punch-out" ? Timestamp.fromDate(punchOut) : null,
+    editedByAdmin: true,
+    editedBy: auth.currentUser?.email || "admin",
+    editedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }, { merge: true });
+
+  alert("Attendance time updated");
+  window.closeAttendanceEdit();
+  loadData();
+};
+
+async function autoCloseMissedPunchOuts() {
+  if (missedPunchOutAutomationRunning) {
+    return false;
+  }
+
+  missedPunchOutAutomationRunning = true;
+
+  try {
+    const employeeSnap = await getDocs(collection(db, "employees"));
+    const attendanceSnap = await getDocs(collection(db, "attendance"));
+    const breakSnap = await getDocs(collection(db, "breaks"));
+    const employees = [];
+    const attendanceRecords = [];
+    const breaks = [];
+    const writes = [];
+    const now = new Date();
+
+    employeeSnap.forEach((docSnap) => {
+      const data = docSnap.data();
+
+      if ((data.role || "employee") === "employee") {
+        employees.push({ uid: docSnap.id, ...data });
+      }
+    });
+
+    attendanceSnap.forEach((docSnap) => {
+      attendanceRecords.push({ id: docSnap.id, ref: doc(db, "attendance", docSnap.id), ...docSnap.data() });
+    });
+
+    breakSnap.forEach((docSnap) => {
+      breaks.push({ id: docSnap.id, ref: doc(db, "breaks", docSnap.id), ...docSnap.data() });
+    });
+
+    attendanceRecords.forEach((record) => {
+      if (!["working", "break"].includes(record.status) || record.punchOut || !record.date) {
+        return;
+      }
+
+      const employee = findEmployeeForRecord(record, employees);
+      const cutoff = getEmployeeMissedPunchOutCutoff(employee, record.date);
+
+      if (!employee || !cutoff || now < cutoff) {
+        return;
+      }
+
+      const punchIn = getTimestampDate(record.punchIn);
+      const punchOut = punchIn && cutoff > punchIn ? cutoff : now;
+      const workedMinutes = calculateWorkedMinutesForWindow(breaks, employee, record.date, punchIn, punchOut);
+      const graceMinutes = Number(employee.graceMinutes) || 30;
+
+      breaks
+        .filter((item) => belongsToEmployee(item, employee) && item.date === record.date && item.breakStart && !item.breakEnd)
+        .forEach((item) => {
+          writes.push(setDoc(item.ref, {
+            breakEnd: Timestamp.fromDate(punchOut),
+            autoClosed: true,
+            autoClosedAt: new Date().toISOString()
+          }, { merge: true }));
+        });
+
+      writes.push(setDoc(record.ref, {
+        punchOut: Timestamp.fromDate(punchOut),
+        autoLogoutAt: Timestamp.fromDate(punchOut),
+        assignedWorkStart: employee.workStart || "",
+        assignedWorkEnd: employee.workEnd || "",
+        autoPunchOutGraceMinutes: graceMinutes,
+        missedPunchOut: true,
+        punchOutType: "auto",
+        status: "missed-punch-out",
+        totalHours: formatMinutes(workedMinutes),
+        autoClosedByAdminPanel: true,
+        updatedAt: new Date().toISOString()
+      }, { merge: true }));
+    });
+
+    if (writes.length) {
+      await Promise.all(writes);
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.error("Auto missed punch out check failed:", error);
+    return false;
+  } finally {
+    missedPunchOutAutomationRunning = false;
+  }
+}
+
 function startAbsenceAutomation() {
   if (absenceAutomationTimer) {
     clearInterval(absenceAutomationTimer);
   }
 
   absenceAutomationTimer = setInterval(async () => {
-    const changed = await autoMarkAbsences();
+    const missedChanged = await autoCloseMissedPunchOuts();
+    const absenceChanged = await autoMarkAbsences();
 
-    if (changed) {
+    if (missedChanged || absenceChanged) {
       loadData();
     }
   }, 60000);
@@ -1357,6 +1611,26 @@ function getTimestampDate(timestamp) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+function toDateTimeLocalValue(value) {
+  const date = getTimestampDate(value);
+
+  if (!date) {
+    return "";
+  }
+
+  const localDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
+  return localDate.toISOString().slice(0, 16);
+}
+
+function parseDateTimeLocal(value) {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 function getRawRecordMinutes(record) {
   const punchIn = getTimestampDate(record.punchIn);
   const punchOut = getTimestampDate(record.punchOut);
@@ -1368,9 +1642,39 @@ function getRawRecordMinutes(record) {
   return Math.max(Math.round((punchOut - punchIn) / 60000), 0);
 }
 
-function getMonthlyBreakMinutes(uid, monthValue, breaks) {
+function getEmployeeIdentityValues(employee) {
+  return new Set([
+    employee?.uid,
+    employee?.userId,
+    employee?.firebaseUid,
+    employee?.authUid,
+    employee?.employeeId,
+    employee?.employeeCode,
+    employee?.email
+  ].filter(Boolean).map(String));
+}
+
+function belongsToEmployee(record, employee) {
+  const identityValues = getEmployeeIdentityValues(employee);
+
+  if (!identityValues.size) {
+    return false;
+  }
+
+  return [
+    record?.userId,
+    record?.uid,
+    record?.employeeUid,
+    record?.employeeId,
+    record?.employeeCode,
+    record?.email,
+    record?.employeeEmail
+  ].filter(Boolean).some((value) => identityValues.has(String(value)));
+}
+
+function getMonthlyBreakMinutes(employee, monthValue, breaks) {
   return breaks
-    .filter((item) => item.userId === uid && String(item.date || "").startsWith(monthValue))
+    .filter((item) => belongsToEmployee(item, employee) && String(item.date || "").startsWith(monthValue))
     .reduce((sum, item) => {
       const start = getTimestampDate(item.breakStart);
       const end = getTimestampDate(item.breakEnd);
@@ -1556,13 +1860,13 @@ window.handleSnapshotCardKey = function (event, type) {
 };
 
 function calculatePayrollRow(employee, attendanceRecords, breaks, statusMap, monthValue) {
-  const records = attendanceRecords.filter((record) => record.userId === employee.uid && String(record.date || "").startsWith(monthValue));
+  const records = attendanceRecords.filter((record) => belongsToEmployee(record, employee) && String(record.date || "").startsWith(monthValue));
   const settings = getPayrollSettings(employee);
   const totalDays = countWorkingDaysInMonth(monthValue);
   const presentDays = new Set(records.filter((record) => record.status !== "absent").map((record) => record.date)).size;
   const absentRecords = records.filter((record) => record.status === "absent").length;
   const absentDays = Math.max(totalDays - presentDays, absentRecords, 0);
-  const breakMinutes = getMonthlyBreakMinutes(employee.uid, monthValue, breaks);
+  const breakMinutes = getMonthlyBreakMinutes(employee, monthValue, breaks);
   let rawMinutes = 0;
   let fallbackMinutes = 0;
 
@@ -2859,6 +3163,9 @@ window.loadData = async function () {
   Object.keys(attendancePhotoStore).forEach((key) => {
     delete attendancePhotoStore[key];
   });
+  Object.keys(attendanceEditStore).forEach((key) => {
+    delete attendanceEditStore[key];
+  });
 
   let presentToday = 0;
   let visibleAttendanceRows = 0;
@@ -2888,13 +3195,14 @@ window.loadData = async function () {
     const punchInPhotoKey = `${data.id}_punch_in`;
     const punchOutPhotoKey = `${data.id}_punch_out`;
 
-    const employee = employeeById[data.userId] || { uid: data.userId, name: employeeMap[data.userId] || "Unknown" };
-    const name = employeeMap[data.userId] || "Unknown";
+    const employee = findEmployeeForRecord(data, dashboardEmployees) || employeeById[data.userId] || { uid: data.userId, name: data.employeeName || employeeMap[data.userId] || "Unknown" };
+    const name = employee.name || data.employeeName || employeeMap[data.userId] || "Unknown";
     const matchSearch = !searchText || matchesEmployeeSearch(employee, searchText);
     const matchDate = selectedDate ? data.date === selectedDate : true;
 
     if (!matchSearch || !matchDate) return;
     visibleAttendanceRows++;
+    attendanceEditStore[data.id] = { ...data, employee, employeeName: name, breaks };
 
     const row = `
       <tr>
@@ -2912,6 +3220,7 @@ window.loadData = async function () {
             : "-"
           }
         </td>
+        <td><button class="small-btn edit" type="button" onclick="openAttendanceEdit('${data.id}')">Edit Time</button></td>
       </tr>
     `;
 
@@ -2919,7 +3228,7 @@ window.loadData = async function () {
   });
 
   if (!visibleAttendanceRows) {
-    tableBody.innerHTML = `<tr><td colspan="9">No attendance records found</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="10">No attendance records found</td></tr>`;
   }
 
   const totalEmployees = dashboardEmployees.filter((employee) => (employee.role || "employee") === "employee").length;
