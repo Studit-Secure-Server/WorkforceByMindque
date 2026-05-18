@@ -121,6 +121,7 @@ let currentLocation = null;
 let currentDistance = null;
 let currentOfficeMatch = null;
 let capturedSelfieBlob = null;
+let capturedSelfieAt = null;
 let latestAttendanceDoc = null;
 let latestAttendanceData = null;
 let employeeNotifications = [];
@@ -2922,6 +2923,7 @@ async function loadLiveLocation() {
 async function openPunchModal(action) {
   currentAction = action;
   capturedSelfieBlob = null;
+  capturedSelfieAt = null;
   currentLocation = null;
   currentDistance = null;
   currentOfficeMatch = null;
@@ -2961,6 +2963,7 @@ window.closePunchModal = function () {
   modal.setAttribute("aria-hidden", "true");
   stopCamera();
   capturedSelfieBlob = null;
+  capturedSelfieAt = null;
   if (selfiePreviewUrl) {
     URL.revokeObjectURL(selfiePreviewUrl);
     selfiePreviewUrl = null;
@@ -3054,6 +3057,7 @@ function drawCompressedSelfieFrame() {
 
 window.captureSelfie = function () {
   selfieBtn.disabled = true;
+  const selfieCapturedAt = new Date();
   drawCompressedSelfieFrame();
 
   canvas.toBlob((blob) => {
@@ -3064,6 +3068,7 @@ window.captureSelfie = function () {
     }
 
     capturedSelfieBlob = blob;
+    capturedSelfieAt = selfieCapturedAt;
     if (selfiePreviewUrl) {
       URL.revokeObjectURL(selfiePreviewUrl);
     }
@@ -3154,7 +3159,7 @@ window.confirmPunch = async function () {
 
       confirmHelp.innerText = "Preparing selfie...";
       const imageUrl = await uploadSelfie();
-      const punchOutTime = new Date();
+      const punchOutTime = capturedSelfieAt || new Date();
       const totalMs = punchOutTime - attendance.data.punchIn.toDate();
       const totalBreakMs = await getTotalBreakMs(user, punchOutTime);
       const workingMs = totalMs - totalBreakMs;
@@ -3165,13 +3170,17 @@ window.confirmPunch = async function () {
       confirmHelp.innerText = "Saving punch out...";
       await withTimeout(updateDoc(attendance.ref, {
         punchOut: Timestamp.fromDate(punchOutTime),
+        manualPunchOutAt: Timestamp.fromDate(punchOutTime),
         punchOutLocation: currentLocation,
         punchOutOfficeLocation: getOfficeLocationPayload(currentOfficeMatch),
         punchOutSelfie: imageUrl,
         punchOutType: "manual",
         missedPunchOut: false,
+        autoLogoutAt: null,
+        autoClosedByAdminPanel: false,
         status: "completed",
-        totalHours: hours
+        totalHours: hours,
+        updatedAt: new Date().toISOString()
       }), "Punch out save timed out. Please check Firestore rules or internet connection.");
 
       statusEl.innerText = "Completed";

@@ -439,6 +439,7 @@ onAuthStateChanged(auth, async (user) => {
 
   setDefaultMonthInputs();
   document.getElementById("pageTitle").innerText = viewMeta.dashboard.title();
+  await reconcileManualPunchOutRecords();
   await autoCloseMissedPunchOuts();
   await autoMarkAbsences();
   startAbsenceAutomation();
@@ -1329,6 +1330,7 @@ window.saveAttendanceEdit = async function () {
     date: dateText,
     punchIn: Timestamp.fromDate(punchIn),
     punchOut: isClosedStatus ? Timestamp.fromDate(punchOut) : null,
+    manualPunchOutAt: isClosedStatus && status === "completed" ? Timestamp.fromDate(punchOut) : null,
     status,
     totalHours: isClosedStatus ? formatMinutes(workedMinutes) : "0h 0m",
     missedPunchOut: status === "missed-punch-out",
@@ -1344,6 +1346,44 @@ window.saveAttendanceEdit = async function () {
   window.closeAttendanceEdit();
   loadData();
 };
+
+async function reconcileManualPunchOutRecords() {
+  try {
+    const attendanceSnap = await getDocs(collection(db, "attendance"));
+    const writes = [];
+
+    attendanceSnap.forEach((docSnap) => {
+      const data = docSnap.data();
+      const hasManualPunchOutProof = hasManualPunchOutData(data);
+      const punchOut = getManualPunchOutDate(data) || getTimestampDate(data.punchOut) || getTimestampDate(data.autoLogoutAt);
+
+      if (data.status !== "missed-punch-out" || !hasManualPunchOutProof || !punchOut) {
+        return;
+      }
+
+      writes.push(setDoc(doc(db, "attendance", docSnap.id), {
+        punchOut: Timestamp.fromDate(punchOut),
+        manualPunchOutAt: Timestamp.fromDate(punchOut),
+        status: "completed",
+        missedPunchOut: false,
+        punchOutType: "manual",
+        autoLogoutAt: null,
+        autoClosedByAdminPanel: false,
+        repairedAt: new Date().toISOString()
+      }, { merge: true }));
+    });
+
+    if (writes.length) {
+      await Promise.all(writes);
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.error("Manual punch out reconciliation failed:", error);
+    return false;
+  }
+}
 
 async function autoCloseMissedPunchOuts() {
   if (missedPunchOutAutomationRunning) {
@@ -1378,16 +1418,33 @@ async function autoCloseMissedPunchOuts() {
       breaks.push({ id: docSnap.id, ref: doc(db, "breaks", docSnap.id), ...docSnap.data() });
     });
 
-    attendanceRecords.forEach((record) => {
+    for (const record of attendanceRecords) {
       if (!["working", "break"].includes(record.status) || record.punchOut || !record.date) {
-        return;
+        continue;
       }
 
       const employee = findEmployeeForRecord(record, employees);
       const cutoff = getEmployeeMissedPunchOutCutoff(employee, record.date);
 
       if (!employee || !cutoff || now < cutoff) {
-        return;
+        continue;
+      }
+
+      const latestSnap = await getDoc(record.ref);
+
+      if (!latestSnap.exists()) {
+        continue;
+      }
+
+      const latestRecord = latestSnap.data();
+
+      if (
+        !["working", "break"].includes(latestRecord.status) ||
+        latestRecord.punchOut ||
+        latestRecord.punchOutSelfie ||
+        latestRecord.punchOutType === "manual"
+      ) {
+        continue;
       }
 
       const punchIn = getTimestampDate(record.punchIn);
@@ -1418,7 +1475,7 @@ async function autoCloseMissedPunchOuts() {
         autoClosedByAdminPanel: true,
         updatedAt: new Date().toISOString()
       }, { merge: true }));
-    });
+    }
 
     if (writes.length) {
       await Promise.all(writes);
@@ -1440,10 +1497,11 @@ function startAbsenceAutomation() {
   }
 
   absenceAutomationTimer = setInterval(async () => {
+    const repairedChanged = await reconcileManualPunchOutRecords();
     const missedChanged = await autoCloseMissedPunchOuts();
     const absenceChanged = await autoMarkAbsences();
 
-    if (missedChanged || absenceChanged) {
+    if (repairedChanged || missedChanged || absenceChanged) {
       loadData();
     }
   }, 60000);
@@ -1654,7 +1712,7 @@ function parseDateTimeLocal(value) {
 
 function getRawRecordMinutes(record) {
   const punchIn = getTimestampDate(record.punchIn);
-  const punchOut = getTimestampDate(record.punchOut);
+  const punchOut = getRecordPunchOutDate(record);
 
   if (!punchIn || !punchOut) {
     return 0;
@@ -2394,20 +2452,45 @@ function getRecordMinutes(record) {
     return savedMinutes;
   }
 
-  if (record.punchIn && record.punchOut) {
-    return Math.max(Math.round((record.punchOut.toDate() - record.punchIn.toDate()) / 60000), 0);
+  const punchIn = getTimestampDate(record.punchIn);
+  const punchOut = getTimestampDate(record.punchOut);
+
+  if (punchIn && punchOut) {
+    return Math.max(Math.round((punchOut - punchIn) / 60000), 0);
   }
 
   return 0;
 }
 
 function formatRecordTime(timestamp) {
-  if (!timestamp) return "-";
+  const date = getTimestampDate(timestamp);
 
-  return timestamp.toDate().toLocaleTimeString(undefined, {
+  if (!date) return "-";
+
+  return date.toLocaleTimeString(undefined, {
     hour: "numeric",
     minute: "2-digit"
   });
+}
+
+function hasManualPunchOutData(record) {
+  return record.punchOutType === "manual" || Boolean(record.punchOutSelfie || record.punchOutLocation);
+}
+
+function getManualPunchOutDate(record) {
+  return getTimestampDate(record.manualPunchOutAt) || (hasManualPunchOutData(record) ? getTimestampDate(record.updatedAt) : null);
+}
+
+function getRecordPunchOutDate(record) {
+  return getManualPunchOutDate(record) || getTimestampDate(record.punchOut);
+}
+
+function getAttendanceDisplayStatus(record) {
+  if (record.status === "missed-punch-out" && hasManualPunchOutData(record) && getRecordPunchOutDate(record)) {
+    return "completed";
+  }
+
+  return record.status || "-";
 }
 
 function renderWeeklyTimesheet(employees, attendanceRecords, leaves = []) {
@@ -3244,15 +3327,16 @@ window.loadData = async function () {
     if (!matchSearch || !matchDate) return;
     visibleAttendanceRows++;
     attendanceEditStore[data.id] = { ...data, employee, employeeName: name, breaks };
+    const displayStatus = getAttendanceDisplayStatus(data);
 
     const row = `
       <tr>
         <td><strong>${name}</strong></td>
         <td>${data.date || "-"}</td>
-        <td>${data.punchIn ? data.punchIn.toDate().toLocaleTimeString() : "-"}</td>
-        <td>${data.punchOut ? data.punchOut.toDate().toLocaleTimeString() : "-"}</td>
+        <td>${formatRecordTime(data.punchIn)}</td>
+        <td>${formatRecordTime(getRecordPunchOutDate(data))}</td>
         <td>${data.totalHours || "-"}</td>
-        <td><span class="status ${getStatusClass(data.status)}">${data.status || "-"}</span></td>
+        <td><span class="status ${getStatusClass(displayStatus)}">${displayStatus}</span></td>
         <td>${renderAttendancePhoto(data.selfie, punchInPhotoKey, "Punch In Photo")}</td>
         <td>${renderAttendancePhoto(data.punchOutSelfie, punchOutPhotoKey, "Punch Out Photo")}</td>
         <td>
@@ -3637,10 +3721,10 @@ window.exportToExcel = async function () {
     exportData.push({
       Employee: employeeMap[data.userId] || "Unknown",
       Date: data.date || "-",
-      PunchIn: data.punchIn ? data.punchIn.toDate().toLocaleString() : "-",
-      PunchOut: data.punchOut ? data.punchOut.toDate().toLocaleString() : "-",
+      PunchIn: getTimestampDate(data.punchIn) ? getTimestampDate(data.punchIn).toLocaleString() : "-",
+      PunchOut: getRecordPunchOutDate(data) ? getRecordPunchOutDate(data).toLocaleString() : "-",
       TotalHours: data.totalHours || "-",
-      Status: data.status || "-"
+      Status: getAttendanceDisplayStatus(data)
     });
   });
 
