@@ -1238,6 +1238,40 @@ function calculateWorkedMinutesForWindow(breaks, employee, dateText, punchIn, pu
   return Math.max(totalMinutes - breakMinutes, 0);
 }
 
+function getAttendanceEditClosedStatus(status, punchOut) {
+  if (["completed", "missed-punch-out"].includes(status)) {
+    return status;
+  }
+
+  return punchOut ? "completed" : status;
+}
+
+function getRecordTotalHours(record, breaks = [], employee = null) {
+  const savedMinutes = durationToMinutes(record.totalHours);
+
+  if (savedMinutes) {
+    return formatMinutes(savedMinutes);
+  }
+
+  const punchIn = getTimestampDate(record.punchIn);
+  const punchOut = getRecordPunchOutDate(record);
+
+  if (!punchIn || !punchOut || punchOut <= punchIn) {
+    return record.totalHours || "-";
+  }
+
+  const dateText = record.date || getDateInputValue(punchIn);
+  const workedMinutes = calculateWorkedMinutesForWindow(
+    breaks,
+    employee || record.employee,
+    dateText,
+    punchIn,
+    punchOut
+  );
+
+  return formatMinutes(workedMinutes);
+}
+
 window.updateAttendanceEditPreview = function () {
   const attendanceId = document.getElementById("attendanceEditId")?.value;
   const totalInput = document.getElementById("attendanceEditTotal");
@@ -1249,7 +1283,12 @@ window.updateAttendanceEditPreview = function () {
 
   const punchIn = parseDateTimeLocal(document.getElementById("attendanceEditPunchIn").value);
   const punchOut = parseDateTimeLocal(document.getElementById("attendanceEditPunchOut").value);
-  const status = document.getElementById("attendanceEditStatus").value;
+  const statusSelect = document.getElementById("attendanceEditStatus");
+  const status = getAttendanceEditClosedStatus(statusSelect.value, punchOut);
+
+  if (status !== statusSelect.value) {
+    statusSelect.value = status;
+  }
 
   if (!["completed", "missed-punch-out"].includes(status)) {
     totalInput.value = "Timer still active";
@@ -1277,8 +1316,9 @@ window.openAttendanceEdit = function (attendanceId) {
   document.getElementById("attendanceEditId").value = attendanceId;
   document.getElementById("attendanceEditEmployee").innerText = `${record.employeeName || "Employee"} · ${record.date || "-"}`;
   document.getElementById("attendanceEditPunchIn").value = toDateTimeLocalValue(record.punchIn);
-  document.getElementById("attendanceEditPunchOut").value = toDateTimeLocalValue(record.punchOut);
-  document.getElementById("attendanceEditStatus").value = record.status || "completed";
+  const punchOut = getRecordPunchOutDate(record);
+  document.getElementById("attendanceEditPunchOut").value = toDateTimeLocalValue(punchOut);
+  document.getElementById("attendanceEditStatus").value = getAttendanceEditClosedStatus(record.status || "completed", punchOut);
   window.updateAttendanceEditPreview();
 
   const modal = document.getElementById("attendanceEditModal");
@@ -1303,7 +1343,7 @@ window.saveAttendanceEdit = async function () {
 
   const punchIn = parseDateTimeLocal(document.getElementById("attendanceEditPunchIn").value);
   const punchOut = parseDateTimeLocal(document.getElementById("attendanceEditPunchOut").value);
-  const status = document.getElementById("attendanceEditStatus").value;
+  const status = getAttendanceEditClosedStatus(document.getElementById("attendanceEditStatus").value, punchOut);
   const isClosedStatus = ["completed", "missed-punch-out"].includes(status);
 
   if (!punchIn) {
@@ -1333,6 +1373,8 @@ window.saveAttendanceEdit = async function () {
     manualPunchOutAt: isClosedStatus && status === "completed" ? Timestamp.fromDate(punchOut) : null,
     status,
     totalHours: isClosedStatus ? formatMinutes(workedMinutes) : "0h 0m",
+    totalMinutes: workedMinutes,
+    workedMinutes,
     missedPunchOut: status === "missed-punch-out",
     punchOutType: status === "missed-punch-out" ? "auto-edited" : "admin",
     autoLogoutAt: status === "missed-punch-out" ? Timestamp.fromDate(punchOut) : null,
@@ -2453,7 +2495,7 @@ function getRecordMinutes(record) {
   }
 
   const punchIn = getTimestampDate(record.punchIn);
-  const punchOut = getTimestampDate(record.punchOut);
+  const punchOut = getRecordPunchOutDate(record);
 
   if (punchIn && punchOut) {
     return Math.max(Math.round((punchOut - punchIn) / 60000), 0);
@@ -3328,6 +3370,7 @@ window.loadData = async function () {
     visibleAttendanceRows++;
     attendanceEditStore[data.id] = { ...data, employee, employeeName: name, breaks };
     const displayStatus = getAttendanceDisplayStatus(data);
+    const totalHours = getRecordTotalHours(data, breaks, employee);
 
     const row = `
       <tr>
@@ -3335,7 +3378,7 @@ window.loadData = async function () {
         <td>${data.date || "-"}</td>
         <td>${formatRecordTime(data.punchIn)}</td>
         <td>${formatRecordTime(getRecordPunchOutDate(data))}</td>
-        <td>${data.totalHours || "-"}</td>
+        <td>${totalHours}</td>
         <td><span class="status ${getStatusClass(displayStatus)}">${displayStatus}</span></td>
         <td>${renderAttendancePhoto(data.selfie, punchInPhotoKey, "Punch In Photo")}</td>
         <td>${renderAttendancePhoto(data.punchOutSelfie, punchOutPhotoKey, "Punch Out Photo")}</td>
